@@ -1,0 +1,31 @@
+name: Android
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # ANDROID_HOME est défini sur les runners GitHub : le module :app est donc inclus.
+      - name: Tests (cœur, moteur Tarot)
+        run: ./gradlew :core:test :tarot-engine:test
+
+      - name: APK de test
+        run: ./gradlew :app:assembleDebug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: panagames-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
