@@ -1,11 +1,14 @@
 package com.panagames.tarot
 
+import kotlinx.serialization.Serializable
+
 /**
  * Déclaration de chelem (faire tous les plis) pour le camp d'attaque.
  *
  * - [annonce] : le chelem a été annoncé avant le début de la donne.
  * - [reussi] : le camp d'attaque a effectivement fait tous les plis.
  */
+@Serializable
 data class TarotChelem(
     val annonce: Boolean,
     val reussi: Boolean,
@@ -30,6 +33,7 @@ data class TarotChelem(
  *   Petit), ou `null` si le petit n'a pas été joué au dernier pli.
  * @param chelem déclaration de chelem, ou `null` si aucun chelem n'a eu lieu.
  */
+@Serializable
 data class TarotRound(
     val joueurs: List<String>,
     val preneurId: String,

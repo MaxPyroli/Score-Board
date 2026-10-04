@@ -4,6 +4,15 @@ pluginManagement {
         gradlePluginPortal()
         mavenCentral()
     }
+    // Versions déclarées ici : elles ne sont résolues que si un module applique le plugin.
+    plugins {
+        kotlin("jvm") version "2.0.21"
+        kotlin("android") version "2.0.21"
+        kotlin("plugin.serialization") version "2.0.21"
+        kotlin("plugin.compose") version "2.0.21"
+        id("com.android.application") version "8.7.3"
+        id("com.google.devtools.ksp") version "2.0.21-1.0.28"
+    }
 }
 
 dependencyResolutionManagement {
@@ -15,9 +24,18 @@ dependencyResolutionManagement {
 
 rootProject.name = "panagames"
 
-// Moteur de règles du Tarot : module Kotlin pur (aucune dépendance Android),
-// pour rester testable sur JVM et réutilisable plus tard (ex. version web).
+// Kotlin pur (aucune dépendance Android) : testable sur JVM et réutilisable (ex. version web).
+include(":core")
 include(":tarot-engine")
+include(":freecounter-engine")
+include(":skyjo-engine")
 
-// Le module "app" (Android + Jetpack Compose) sera ajouté à l'étape 2
-// de l'ordre de travail (écrans de base), une fois le moteur de règles validé.
+// Module Android : inclus seulement si un SDK Android est détecté
+// (Android Studio, GitHub Actions…). Les modules Kotlin purs restent
+// compilables et testables partout sans SDK.
+val hasAndroidSdk = System.getenv("ANDROID_HOME") != null ||
+    System.getenv("ANDROID_SDK_ROOT") != null ||
+    File(rootDir, "local.properties").let { it.exists() && it.readText().contains("sdk.dir") }
+if (hasAndroidSdk) {
+    include(":app")
+}

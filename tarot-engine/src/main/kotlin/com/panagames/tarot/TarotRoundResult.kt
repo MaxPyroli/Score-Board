@@ -10,7 +10,8 @@ package com.panagames.tarot
  * @param scoreContrat (25 + |ecart|) * multiplicateur du contrat, signé selon
  *   la réussite ou l'échec du contrat.
  * @param bonusPoignee delta signé (positif pour l'attaque) dû à la poignée.
- * @param bonusPetitAuBout delta signé (positif pour l'attaque) dû au petit au bout.
+ * @param bonusPetitAuBout delta signé (positif pour l'attaque) dû au petit au bout :
+ *   10 × multiplicateur du contrat.
  * @param bonusChelem delta signé (positif pour l'attaque) dû au chelem.
  * @param scoreAttaque somme de tous les bonus ci-dessus : c'est le montant "X"
  *   à partir duquel les points de chaque joueur sont dérivés.

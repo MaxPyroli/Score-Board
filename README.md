@@ -1,65 +1,77 @@
 # PanaGames
 
 Application Android de comptage de points pour jeux de société, en commençant
-par le Tarot. Voir la vision et les décisions détaillées dans le document de
-cadrage du projet (à ajouter au dépôt si besoin).
+par le Tarot. Kotlin + Jetpack Compose, 100 % hors-ligne, stockage local (Room).
 
 ## État actuel
 
-Étape 1 de l'ordre de travail : le moteur de règles du Tarot, en Kotlin pur.
+Étape 2 de l'ordre de travail : écrans de base, avec le Tarot comme premier jeu.
 
-- `tarot-engine/` : calcul des points d'une manche de Tarot (3, 4 ou 5
-  joueurs), sans aucune dépendance Android ni UI, testable sur JVM et
-  réutilisable tel quel dans une future version web.
+- Accueil : choix du jeu, liste des parties, suppression.
+- Nouvelle partie : nombre de joueurs selon le jeu, noms, réglages du jeu (demi-points au Tarot, objectif de points…).
+- Partie : tableau des scores, historique des manches (toucher une manche pour la
+  modifier ou la supprimer), annulation de la dernière manche avec « Rétablir ».
+- Saisie d'une manche de Tarot : preneur, appelé (à 5), contrat, bouts, curseur de
+  points (attaque / défense en miroir), poignée, petit au bout, chelem, aperçu
+  des points en direct.
 
-Pas encore implémenté : module `app` (écrans Compose), stockage Room,
-partage de session Nearby Connections. Voir "Ordre de travail" ci-dessous.
+Jeux disponibles : Tarot, Skyjo, 6 qui prend !, Compteur libre (objectif de points
+facultatif, sens du jeu réglable). Pour un jeu simple, il suffit d'un réglage du compteur ;
+un jeu avec règles propres (Tarot, Skyjo) a son propre module de règles et son écran de saisie.
 
-## Le moteur `tarot-engine`
+Pas encore fait : partage de session (étape 3), polissage du Tarot, publication.
 
-Barème implémenté (référentiel FFT) :
+## Modules
 
-- Seuil de points requis selon le nombre de bouts : 0 bout → 56, 1 bout → 51,
-  2 bouts → 41, 3 bouts → 36.
-- Score de contrat = `(25 + |écart|) × multiplicateur du contrat`, signé selon
-  la réussite ou l'échec du contrat (le signe de `25 + écart` seul n'indique
-  pas la réussite : c'est bien `écart >= 0` qui décide).
-- Multiplicateurs : Petite ×1, Garde ×2, Garde sans ×4, Garde contre ×6.
-- Poignée (simple +20, double +30, triple +40), petit au bout (±10) et
-  chelem (+400 annoncé et réussi, +200 réussi non annoncé, -200 annoncé et
-  raté) s'ajoutent/se retranchent selon le camp qui en bénéficie, pour former
-  le score final réparti entre les joueurs.
-- Répartition : à 3 ou 4 joueurs, le preneur joue seul contre les autres
-  (`(n-1)×X` pour le preneur, `-X` par défenseur). À 5 joueurs avec un appelé
-  distinct, le preneur touche `2X`, l'appelé `X`, chaque défenseur `-X`. En
-  cas d'« appelé à soi-même », le preneur joue seul contre les 4 autres
-  (`4X` pour le preneur, `-X` par joueur).
+| Module | Contenu | Android ? |
+| --- | --- | --- |
+| `core` | Cœur générique : joueurs, partie (liste de manches), interface `GameModule`, totaux | non (Kotlin pur) |
+| `tarot-engine` | Barème du Tarot, brouillon de manche (logique du formulaire), résumé d'une manche, adaptateur `GameModule` | non (Kotlin pur) |
+| `skyjo-engine` | Skyjo : points doublés pour celui qui termine sans avoir le score le plus bas | non (Kotlin pur) |
+| `freecounter-engine` | Compteur à points saisis à la main : « Compteur libre » et « 6 qui prend ! » (fin à 66) | non (Kotlin pur) |
+| `app` | Écrans Compose, Room, navigation | oui |
 
-Le module valide ses entrées (nombre de joueurs, bouts, points par pas de
-0,5, cohérence appelé/chelem, etc.) et garantit que la somme des points
-distribués à une manche est toujours nulle. Voir les tests dans
-`tarot-engine/src/test/kotlin/com/panagames/tarot/TarotScoringTest.kt` pour
-les cas couverts, y compris les cas limites.
-
-### Lancer les tests
+Les modules Kotlin purs se compilent et se testent partout, sans SDK Android :
 
 ```bash
-./gradlew :tarot-engine:test
+./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test
 ```
 
-## Architecture cible
+Le module `app` n'est inclus que si un SDK Android est détecté (`ANDROID_HOME`, ou
+`sdk.dir` dans `local.properties`, ce que crée Android Studio). Il n'a pas pu être
+compilé dans l'environnement de développement initial (accès réseau à Google
+bloqué) : la CI GitHub (`.github/workflows/android.yml`) le compile et publie un APK
+de test (onglet *Actions* → dernière exécution → artefact `panagames-debug-apk`).
 
-- Un cœur générique (parties, joueurs, historique des manches, annulation,
-  statistiques, partage de session) + un module par jeu. Le cœur générique
-  sera introduit quand un deuxième jeu rejoindra le Tarot, pour ne pas forcer
-  une abstraction prématurée sur un seul module.
-- Chaque moteur de règles reste du Kotlin pur, sans dépendance Android, pour
-  rester testable sur JVM et réutilisable dans une éventuelle version web.
+## Architecture
+
+- Une partie est une liste ordonnée de manches ; les scores se déduisent de cette liste
+  (annulation et modification d'une manche passée sont triviales, la synchronisation
+  entre téléphones le sera aussi).
+- Chaque jeu = un `GameModule` (Kotlin pur : calcul des points, encodage d'une manche)
+  + une `GameDefinition` côté app (réglages, description d'une manche, écran de saisie).
+  Ajouter un jeu = ajouter ces deux éléments et l'inscrire dans `Games.all`, sans
+  toucher aux écrans communs.
+- Toute la logique du formulaire Tarot vit en Kotlin pur (`TarotRoundDraft`) et est
+  testée sur JVM ; l'écran ne fait que l'afficher.
+- Identifiant de package provisoire : `com.panagames.app` (à définir avant publication).
+
+## Barème Tarot implémenté (règles FFT, recoupées avec plusieurs sources en ligne)
+
+- Seuil selon les bouts : 0 → 56, 1 → 51, 2 → 41, 3 → 36.
+- Score de contrat = `(25 + |écart|) × multiplicateur` (Petite ×1, Garde ×2, Garde sans ×4,
+  Garde contre ×6), signé selon la réussite du contrat.
+- Petit au bout : ±10 × multiplicateur du contrat. Poignée (+20 / +30 / +40) et chelem (+400
+  annoncé réussi, +200 réussi non annoncé, −200 annoncé raté) s'ajoutent sans multiplicateur,
+  selon le camp qui en bénéficie. Atouts requis pour une poignée : 13/15/18 à 3 joueurs,
+  10/13/15 à 4, 8/10/13 à 5.
+- Répartition : à 3 ou 4 joueurs, le preneur touche `(n−1)×X`, chaque défenseur `−X`.
+  À 5 avec appelé : preneur `2X`, appelé `X`, défenseurs `−X`. Appelé à soi-même :
+  preneur `4X`, les 4 autres `−X`.
 
 ## Ordre de travail
 
-1. ✅ Moteur de règles en Kotlin pur + tests, Tarot en premier.
-2. Écrans de base (Jetpack Compose) : joueurs, saisie d'une manche, tableau
-   des scores, historique. Stockage local avec Room.
+1. ✅ Moteur de règles en Kotlin pur + tests.
+2. ✅ Écrans de base (à valider sur un vrai téléphone via l'APK de la CI).
 3. Partage de session (code, QR code, Nearby Connections).
-4. Polissage, puis publication sur la Play Console.
+4. Polissage (dont le Tarot), puis publication sur la Play Console.

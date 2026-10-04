@@ -32,9 +32,11 @@ object TarotScoring {
             else -> -round.poignee.bonus
         }
 
+        // Seul le petit au bout est multiplié par le coefficient du contrat
+        // (poignée et chelem s'ajoutent après).
         val bonusPetitAuBout = when (round.petitAuBoutCamp) {
-            TarotCamp.ATTAQUE -> 10
-            TarotCamp.DEFENSE -> -10
+            TarotCamp.ATTAQUE -> 10 * round.contract.multiplier
+            TarotCamp.DEFENSE -> -10 * round.contract.multiplier
             null -> 0
         }
 
