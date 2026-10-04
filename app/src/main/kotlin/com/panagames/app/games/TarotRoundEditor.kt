@@ -139,9 +139,15 @@ fun TarotRoundEditor(
 
             if (match.players.size == 5) {
                 SectionTitle("Appelé")
+                Text(
+                    "« Seul » : le preneur a le roi appelé dans sa main ou au chien.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     match.players.forEach { player ->
-                        val label = if (player.id == draft.preneurId) "${player.name} (à soi-même)" else player.name
+                        val label = if (player.id == draft.preneurId) "${player.name} (seul)" else player.name
                         FilterChip(
                             selected = draft.appeleId == player.id,
                             onClick = { draft = draft.withAppele(player.id) },
