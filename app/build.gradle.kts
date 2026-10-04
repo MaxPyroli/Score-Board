@@ -18,6 +18,17 @@ android {
         versionName = "0.1.0"
     }
 
+    // Clé de debug fixe (non secrète) : sans elle, chaque build de la CI est signé
+    // avec une clé différente et Android refuse de mettre à jour l'appli installée.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             // À activer (avec règles ProGuard pour Room et kotlinx.serialization) avant la publication.
