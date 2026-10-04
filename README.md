@@ -56,13 +56,15 @@ de test (onglet *Actions* → dernière exécution → artefact `panagames-debug
   testée sur JVM ; l'écran ne fait que l'afficher.
 - Identifiant de package provisoire : `com.panagames.app` (à définir avant publication).
 
-## Barème Tarot implémenté (référentiel FFT)
+## Barème Tarot implémenté (règles FFT, recoupées avec plusieurs sources en ligne)
 
 - Seuil selon les bouts : 0 → 56, 1 → 51, 2 → 41, 3 → 36.
 - Score de contrat = `(25 + |écart|) × multiplicateur` (Petite ×1, Garde ×2, Garde sans ×4,
   Garde contre ×6), signé selon la réussite du contrat.
-- Poignée (+20 / +30 / +40), petit au bout (±10), chelem (+400 annoncé réussi, +200
-  réussi non annoncé, −200 annoncé raté) selon le camp qui en bénéficie.
+- Petit au bout : ±10 × multiplicateur du contrat. Poignée (+20 / +30 / +40) et chelem (+400
+  annoncé réussi, +200 réussi non annoncé, −200 annoncé raté) s'ajoutent sans multiplicateur,
+  selon le camp qui en bénéficie. Atouts requis pour une poignée : 13/15/18 à 3 joueurs,
+  10/13/15 à 4, 8/10/13 à 5.
 - Répartition : à 3 ou 4 joueurs, le preneur touche `(n−1)×X`, chaque défenseur `−X`.
   À 5 avec appelé : preneur `2X`, appelé `X`, défenseurs `−X`. Appelé à soi-même :
   preneur `4X`, les 4 autres `−X`.

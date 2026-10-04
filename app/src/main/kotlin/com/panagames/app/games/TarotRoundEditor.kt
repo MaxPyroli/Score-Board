@@ -235,7 +235,12 @@ fun TarotRoundEditor(
                     FilterChip(
                         selected = draft.poignee == poignee,
                         onClick = { draft = draft.copy(poignee = poignee) },
-                        label = { Text("${poignee.label.replaceFirstChar { it.uppercase() }} (${poignee.bonus})") },
+                        label = {
+                            Text(
+                                "${poignee.label.replaceFirstChar { it.uppercase() }} · " +
+                                    "${poignee.atouts(match.players.size)} atouts (+${poignee.bonus})",
+                            )
+                        },
                     )
                 }
             }
@@ -253,10 +258,10 @@ fun TarotRoundEditor(
             SectionTitle("Petit au bout")
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CampChip("Aucun", draft.petitAuBoutCamp == null) { draft = draft.copy(petitAuBoutCamp = null) }
-                CampChip("Attaque (+10)", draft.petitAuBoutCamp == TarotCamp.ATTAQUE) {
+                CampChip("Attaque (+10 × contrat)", draft.petitAuBoutCamp == TarotCamp.ATTAQUE) {
                     draft = draft.copy(petitAuBoutCamp = TarotCamp.ATTAQUE)
                 }
-                CampChip("Défense (−10)", draft.petitAuBoutCamp == TarotCamp.DEFENSE) {
+                CampChip("Défense (−10 × contrat)", draft.petitAuBoutCamp == TarotCamp.DEFENSE) {
                     draft = draft.copy(petitAuBoutCamp = TarotCamp.DEFENSE)
                 }
             }

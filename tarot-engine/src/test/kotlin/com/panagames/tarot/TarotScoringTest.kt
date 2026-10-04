@@ -216,6 +216,49 @@ class TarotScoringTest {
         assertSommeNulle(result)
     }
 
+    @Test
+    fun `petit au bout est multiplie par le contrat, pas la poignee ni le chelem`() {
+        // Garde (x2), 0 bout, 56 pts : base 25 -> contrat 50 ; petit au bout 10 x 2 = 20 ; poignee 20 non multipliee.
+        val round = TarotRound(
+            joueurs = listOf("A", "B", "C", "D"),
+            preneurId = "A",
+            contract = TarotContract.GARDE,
+            bouts = 0,
+            pointsRealises = 56.0,
+            petitAuBoutCamp = TarotCamp.ATTAQUE,
+            poignee = TarotPoignee.SIMPLE,
+            poigneeCamp = TarotCamp.ATTAQUE,
+        )
+        val result = TarotScoring.calculer(round)
+
+        assertEquals(20, result.bonusPetitAuBout)
+        assertEquals(20, result.bonusPoignee)
+        assertEquals(90.0, result.scoreAttaque) // 50 + 20 + 20
+        assertEquals(270.0, result.points["A"])
+        assertSommeNulle(result)
+    }
+
+    @Test
+    fun `petit au bout rate en garde contre coute 60`() {
+        val round = TarotRound(
+            joueurs = listOf("A", "B", "C", "D"),
+            preneurId = "A",
+            contract = TarotContract.GARDE_CONTRE,
+            bouts = 0,
+            pointsRealises = 56.0,
+            petitAuBoutCamp = TarotCamp.DEFENSE,
+        )
+        assertEquals(-60, TarotScoring.calculer(round).bonusPetitAuBout)
+    }
+
+    @Test
+    fun `atouts necessaires pour une poignee selon le nombre de joueurs`() {
+        assertEquals(listOf(13, 15, 18), TarotPoignee.entries.map { it.atouts(3) })
+        assertEquals(listOf(10, 13, 15), TarotPoignee.entries.map { it.atouts(4) })
+        assertEquals(listOf(8, 10, 13), TarotPoignee.entries.map { it.atouts(5) })
+        assertFailsWith<IllegalArgumentException> { TarotPoignee.SIMPLE.atouts(2) }
+    }
+
     // --- Chelem ---
 
     @Test
