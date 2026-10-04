@@ -1,6 +1,3 @@
 // Versions des plugins : voir settings.gradle.kts (pluginManagement).
-// Déclarés ici sans être appliqués pour que le plugin Kotlin soit chargé une seule fois.
-plugins {
-    kotlin("jvm") apply false
-    kotlin("plugin.serialization") apply false
-}
+// Rien à déclarer ici : le module Android doit charger les plugins Kotlin et Android
+// ensemble (les déclarer à la racine casse l'accès de Kotlin au plugin Android).
