@@ -2,12 +2,11 @@ package com.panagames.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -15,10 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -36,12 +35,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.panagames.app.games.GameDefinition
 import com.panagames.core.Player
 import com.panagames.core.ScoreInput
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewMatchScreen(
     game: GameDefinition,
@@ -85,14 +85,25 @@ fun NewMatchScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             SectionTitle("Nombre de joueurs", Modifier.padding(top = 4.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                (game.minPlayers..game.maxPlayers).forEach { count ->
-                    FilterChip(
-                        selected = playerCount == count,
-                        onClick = { playerCount = count },
-                        label = { Text("$count joueurs") },
-                    )
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                OutlinedIconButton(
+                    onClick = { playerCount-- },
+                    enabled = playerCount > game.minPlayers,
+                ) { Text("−", style = MaterialTheme.typography.titleLarge) }
+                Text(
+                    text = "$playerCount joueurs",
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.width(150.dp),
+                )
+                OutlinedIconButton(
+                    onClick = { playerCount++ },
+                    enabled = playerCount < game.maxPlayers,
+                ) { Text("+", style = MaterialTheme.typography.titleLarge) }
             }
 
             SectionTitle("Joueurs")

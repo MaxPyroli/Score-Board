@@ -19,7 +19,13 @@ Jeux disponibles : Tarot, Skyjo, 6 qui prend !, Compteur libre (objectif de poin
 facultatif, sens du jeu réglable). Pour un jeu simple, il suffit d'un réglage du compteur ;
 un jeu avec règles propres (Tarot, Skyjo) a son propre module de règles et son écran de saisie.
 
-Pas encore fait : partage de session (étape 3), polissage du Tarot, publication.
+Partage de session (hors-ligne, Nearby Connections) : l'hôte partage une partie depuis l'écran de la
+partie (icône Partager) ; les autres téléphones la rejoignent depuis l'accueil avec le code à 4
+caractères ou en scannant le QR code, et la suivent en direct **en lecture seule**. La connexion se
+rétablit automatiquement quand un spectateur revient à proximité. L'hôte garde la version de référence ;
+chaque modification est renvoyée en entier. Saisie des manches par les participants : à décider.
+
+Pas encore fait : polissage du Tarot, publication.
 
 ## Modules
 
@@ -29,12 +35,13 @@ Pas encore fait : partage de session (étape 3), polissage du Tarot, publication
 | `tarot-engine` | Barème du Tarot, brouillon de manche (logique du formulaire), résumé d'une manche, adaptateur `GameModule` | non (Kotlin pur) |
 | `skyjo-engine` | Skyjo : points doublés pour celui qui termine sans avoir le score le plus bas | non (Kotlin pur) |
 | `freecounter-engine` | Compteur à points saisis à la main : « Compteur libre » et « 6 qui prend ! » (fin à 66) | non (Kotlin pur) |
-| `app` | Écrans Compose, Room, navigation | oui |
+| `session` | Partage entre appareils, partie pure : code de session, format d'échange compressé, découpage des gros envois, liste des permissions | non (Kotlin pur) |
+| `app` | Écrans Compose, Room, navigation, Nearby Connections | oui |
 
 Les modules Kotlin purs se compilent et se testent partout, sans SDK Android :
 
 ```bash
-./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test
+./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test :session:test
 ```
 
 Le module `app` n'est inclus que si un SDK Android est détecté (`ANDROID_HOME`, ou
@@ -73,5 +80,5 @@ de test (onglet *Actions* → dernière exécution → artefact `panagames-debug
 
 1. ✅ Moteur de règles en Kotlin pur + tests.
 2. ✅ Écrans de base (à valider sur un vrai téléphone via l'APK de la CI).
-3. Partage de session (code, QR code, Nearby Connections).
+3. ✅ Partage de session (code, QR code, Nearby Connections) : à valider sur deux vrais téléphones.
 4. Polissage (dont le Tarot), puis publication sur la Play Console.

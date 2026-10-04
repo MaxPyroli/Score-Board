@@ -29,6 +29,7 @@ include(":core")
 include(":tarot-engine")
 include(":freecounter-engine")
 include(":skyjo-engine")
+include(":session")
 
 // Module Android : inclus seulement si un SDK Android est détecté
 // (Android Studio, GitHub Actions…). Les modules Kotlin purs restent

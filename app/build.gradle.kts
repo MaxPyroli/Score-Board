@@ -54,6 +54,7 @@ dependencies {
     implementation(project(":tarot-engine"))
     implementation(project(":freecounter-engine"))
     implementation(project(":skyjo-engine"))
+    implementation(project(":session"))
 
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
@@ -72,4 +73,9 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+    // Partage entre appareils : Nearby Connections (hors-ligne), scan et affichage de QR code.
+    implementation("com.google.android.gms:play-services-nearby:19.3.0")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.google.zxing:core:3.5.3")
 }

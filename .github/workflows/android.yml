@@ -20,7 +20,7 @@ jobs:
 
       # ANDROID_HOME est défini sur les runners GitHub : le module :app est donc inclus.
       - name: Tests (cœur et moteurs de règles)
-        run: ./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test
+        run: ./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test :session:test
 
       - name: APK de test
         run: ./gradlew :app:assembleDebug
