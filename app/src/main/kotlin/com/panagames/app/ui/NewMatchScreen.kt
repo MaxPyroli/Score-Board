@@ -2,6 +2,8 @@ package com.panagames.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -33,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.panagames.app.games.GameDefinition
 import com.panagames.core.Player
+import com.panagames.core.ScoreInput
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NewMatchScreen(
     game: GameDefinition,
@@ -47,6 +51,16 @@ fun NewMatchScreen(
     var playerCount by remember { mutableStateOf(game.minPlayers.coerceAtLeast(4).coerceAtMost(game.maxPlayers)) }
     val names = remember { mutableStateListOf(*Array(game.maxPlayers) { "" }) }
     val options = remember { mutableStateMapOf<String, Boolean>().also { map -> game.options.forEach { map[it.key] = it.default } } }
+
+    val numbers = remember {
+        mutableStateMapOf<String, String>().also { map ->
+            game.numberOptions.forEach { option -> option.default?.let { map[option.key] = it } }
+        }
+    }
+    val badNumber = game.numberOptions.any {
+        val text = numbers[it.key].orEmpty()
+        text.isNotBlank() && ScoreInput.parse(text) == null
+    }
 
     val finalNames = (0 until playerCount).map { names[it].trim().ifEmpty { "Joueur ${it + 1}" } }
     val hasDuplicates = finalNames.map { it.lowercase() }.toSet().size != finalNames.size
@@ -71,7 +85,7 @@ fun NewMatchScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             SectionTitle("Nombre de joueurs", Modifier.padding(top = 4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 (game.minPlayers..game.maxPlayers).forEach { count ->
                     FilterChip(
                         selected = playerCount == count,
@@ -106,7 +120,7 @@ fun NewMatchScreen(
                 )
             }
 
-            if (game.options.isNotEmpty()) {
+            if (game.options.isNotEmpty() || game.numberOptions.isNotEmpty()) {
                 SectionTitle("Réglages")
                 game.options.forEach { option ->
                     Row(
@@ -130,12 +144,29 @@ fun NewMatchScreen(
                 }
             }
 
+            game.numberOptions.forEach { option ->
+                OutlinedTextField(
+                    value = numbers[option.key].orEmpty(),
+                    onValueChange = { numbers[option.key] = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text(option.label) },
+                    supportingText = { Text(option.description) },
+                    isError = ScoreInput.parse(numbers[option.key].orEmpty()) == null &&
+                        numbers[option.key].orEmpty().isNotBlank(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                )
+            }
+
             Button(
                 onClick = {
                     val players = finalNames.mapIndexed { i, name -> Player("p${i + 1}", name) }
-                    onStart(players, options.mapValues { it.value.toString() })
+                    val numberSettings = game.numberOptions.mapNotNull { option ->
+                        ScoreInput.parse(numbers[option.key].orEmpty())?.let { option.key to it.toString() }
+                    }.toMap()
+                    onStart(players, options.mapValues { it.value.toString() } + game.fixedSettings + numberSettings)
                 },
-                enabled = !hasDuplicates,
+                enabled = !hasDuplicates && !badNumber,
                 modifier = Modifier.fillMaxWidth().padding(top = 24.dp, bottom = 16.dp),
             ) { Text("Commencer la partie") }
         }

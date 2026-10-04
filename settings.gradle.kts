@@ -27,6 +27,8 @@ rootProject.name = "panagames"
 // Kotlin pur (aucune dépendance Android) : testable sur JVM et réutilisable (ex. version web).
 include(":core")
 include(":tarot-engine")
+include(":freecounter-engine")
+include(":skyjo-engine")
 
 // Module Android : inclus seulement si un SDK Android est détecté
 // (Android Studio, GitHub Actions…). Les modules Kotlin purs restent

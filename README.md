@@ -8,12 +8,16 @@ par le Tarot. Kotlin + Jetpack Compose, 100 % hors-ligne, stockage local (Room).
 Étape 2 de l'ordre de travail : écrans de base, avec le Tarot comme premier jeu.
 
 - Accueil : choix du jeu, liste des parties, suppression.
-- Nouvelle partie : 3 à 5 joueurs, noms, réglage « demi-points ».
+- Nouvelle partie : nombre de joueurs selon le jeu, noms, réglages du jeu (demi-points au Tarot, objectif de points…).
 - Partie : tableau des scores, historique des manches (toucher une manche pour la
   modifier ou la supprimer), annulation de la dernière manche avec « Rétablir ».
 - Saisie d'une manche de Tarot : preneur, appelé (à 5), contrat, bouts, curseur de
   points (attaque / défense en miroir), poignée, petit au bout, chelem, aperçu
   des points en direct.
+
+Jeux disponibles : Tarot, Skyjo, 6 qui prend !, Compteur libre (objectif de points
+facultatif, sens du jeu réglable). Pour un jeu simple, il suffit d'un réglage du compteur ;
+un jeu avec règles propres (Tarot, Skyjo) a son propre module de règles et son écran de saisie.
 
 Pas encore fait : partage de session (étape 3), polissage du Tarot, publication.
 
@@ -23,12 +27,14 @@ Pas encore fait : partage de session (étape 3), polissage du Tarot, publication
 | --- | --- | --- |
 | `core` | Cœur générique : joueurs, partie (liste de manches), interface `GameModule`, totaux | non (Kotlin pur) |
 | `tarot-engine` | Barème du Tarot, brouillon de manche (logique du formulaire), résumé d'une manche, adaptateur `GameModule` | non (Kotlin pur) |
+| `skyjo-engine` | Skyjo : points doublés pour celui qui termine sans avoir le score le plus bas | non (Kotlin pur) |
+| `freecounter-engine` | Compteur à points saisis à la main : « Compteur libre » et « 6 qui prend ! » (fin à 66) | non (Kotlin pur) |
 | `app` | Écrans Compose, Room, navigation | oui |
 
-Les deux modules Kotlin purs se compilent et se testent partout, sans SDK Android :
+Les modules Kotlin purs se compilent et se testent partout, sans SDK Android :
 
 ```bash
-./gradlew :core:test :tarot-engine:test
+./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test
 ```
 
 Le module `app` n'est inclus que si un SDK Android est détecté (`ANDROID_HOME`, ou

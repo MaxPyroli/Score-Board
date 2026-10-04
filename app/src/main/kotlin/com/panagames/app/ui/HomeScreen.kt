@@ -114,8 +114,8 @@ private fun MatchCard(match: StoredMatch, onOpen: () -> Unit, onDelete: () -> Un
     }
     val leader = remember(match) {
         if (game == null || match.rounds.isEmpty()) null
-        else game.totals(match).maxByOrNull { it.value }?.let { (id, total) ->
-            (match.players.firstOrNull { it.id == id }?.name ?: id) to total
+        else game.leaderId(match)?.let { id ->
+            (match.players.firstOrNull { it.id == id }?.name ?: id) to (game.totals(match)[id] ?: 0.0)
         }
     }
 

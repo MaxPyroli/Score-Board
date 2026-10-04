@@ -70,10 +70,10 @@ fun ScoreCell(value: Double, signed: Boolean, size: TextUnit = 16.sp, bold: Bool
 }
 
 @Composable
-fun PlayerNameCell(name: String) {
+fun PlayerNameCell(name: String, compact: Boolean = false) {
     Text(
         text = name,
-        style = MaterialTheme.typography.labelLarge,
+        style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         textAlign = TextAlign.Center,

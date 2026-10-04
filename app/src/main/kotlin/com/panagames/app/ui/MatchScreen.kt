@@ -118,12 +118,27 @@ fun MatchScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
             ) {
+                val compact = match.players.size > 6
                 Column(Modifier.padding(vertical = 12.dp, horizontal = 8.dp)) {
-                    PlayerColumns(match.players) { PlayerNameCell(it.name) }
+                    PlayerColumns(match.players) { PlayerNameCell(it.name, compact) }
                     PlayerColumns(match.players, Modifier.padding(top = 4.dp)) { player ->
-                        ScoreCell(totals[player.id] ?: 0.0, signed = false, size = 24.sp, bold = true)
+                        ScoreCell(
+                            totals[player.id] ?: 0.0,
+                            signed = false,
+                            size = if (compact) 14.sp else if (match.players.size > 4) 20.sp else 24.sp,
+                            bold = true,
+                        )
                     }
                 }
+            }
+
+            game.status(match)?.let { status ->
+                Text(
+                    status,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+                )
             }
 
             if (match.rounds.isEmpty()) {
@@ -149,18 +164,25 @@ fun MatchScreen(
                             Column(Modifier.padding(horizontal = 8.dp, vertical = 10.dp)) {
                                 Column(Modifier.padding(horizontal = 8.dp)) {
                                     Text(
-                                        "${index + 1}. ${description.headline}",
+                                        if (description.headline.isBlank()) "Manche ${index + 1}"
+                                        else "${index + 1}. ${description.headline}",
                                         style = MaterialTheme.typography.titleSmall,
                                     )
-                                    Text(
-                                        description.detail,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                    if (description.detail.isNotBlank()) {
+                                        Text(
+                                            description.detail,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
                                 }
                                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                                 PlayerColumns(match.players) { player ->
-                                    ScoreCell(roundScores[index][player.id] ?: 0.0, signed = true)
+                                    ScoreCell(
+                                        roundScores[index][player.id] ?: 0.0,
+                                        signed = true,
+                                        size = if (match.players.size > 6) 13.sp else 16.sp,
+                                    )
                                 }
                             }
                         }

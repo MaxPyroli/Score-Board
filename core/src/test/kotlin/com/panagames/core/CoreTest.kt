@@ -77,3 +77,56 @@ class CoreTest {
         assertEquals("0", ScoreFormat.signed(0.0))
     }
 }
+
+class ScoreInputAndTargetTest {
+    private val players = listOf(Player("a", "Alice"), Player("b", "Bob"), Player("c", "Chloé"))
+
+    @Test
+    fun `lecture d'un nombre saisi`() {
+        assertEquals(12.0, ScoreInput.parse("12"))
+        assertEquals(12.5, ScoreInput.parse(" 12,5 "))
+        assertEquals(-3.0, ScoreInput.parse("-3"))
+        assertEquals(-3.0, ScoreInput.parse("3", negative = true))
+        assertEquals(-3.0, ScoreInput.parse("-3", negative = true))
+        assertEquals(null, ScoreInput.parse(""))
+        assertEquals(null, ScoreInput.parse("abc"))
+        assertEquals(null, ScoreInput.parse("Infinity"))
+        assertEquals(null, ScoreInput.parse("1e5"))
+        assertEquals(null, ScoreInput.parse("5."))
+    }
+
+    @Test
+    fun `meneur selon le sens du jeu, premier de la table en cas d'egalite`() {
+        val totals = mapOf("a" to 10.0, "b" to 30.0, "c" to 10.0)
+        assertEquals("b", TargetStatus.leader(players, totals, lowestWins = false)?.id)
+        assertEquals("a", TargetStatus.leader(players, totals, lowestWins = true)?.id)
+    }
+
+    @Test
+    fun `sans objectif, pas de message`() {
+        assertEquals(null, TargetStatus.describe(players, mapOf("a" to 5.0), null, false))
+    }
+
+    @Test
+    fun `objectif pas encore atteint`() {
+        val totals = mapOf("a" to 40.0, "b" to 99.0, "c" to 10.0)
+        assertEquals("Objectif : 100 points", TargetStatus.describe(players, totals, 100.0, true))
+    }
+
+    @Test
+    fun `objectif atteint, le plus petit score gagne`() {
+        val totals = mapOf("a" to 104.0, "b" to 60.0, "c" to 100.0)
+        assertEquals(
+            "Objectif de 100 atteint par Alice, Chloé. En tête : Bob (60).",
+            TargetStatus.describe(players, totals, 100.0, lowestWins = true),
+        )
+    }
+
+    @Test
+    fun `objectif lu dans les reglages de la partie`() {
+        val m = StoredMatch("m", "x", players, settings = mapOf("target" to "66.0"), createdAt = 0)
+        assertEquals(66.0, TargetStatus.target(m))
+        assertEquals(null, TargetStatus.target(m.copy(settings = emptyMap())))
+        assertEquals(null, TargetStatus.target(m.copy(settings = mapOf("target" to "oups"))))
+    }
+}
