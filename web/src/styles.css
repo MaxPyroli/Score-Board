@@ -247,3 +247,14 @@ button.card { text-align: left; width: 100%; }
   [data-game="skyjo"] { --primary: #7db7ff; --primary-soft: #18304f; }
   [data-game="sixquiprend"] { --primary: #ffa66b; --primary-soft: #4a2512; }
 }
+
+/* ---- Visuels facultatifs (voir src/games/themes.ts) : image à droite, fondu vers la couleur du jeu côté titre ---- */
+.game.has-bg::before, .board.has-bg::before {
+  content: ""; position: absolute; inset: 0; background: var(--bg-url) right center / cover no-repeat;
+}
+.game.has-bg::after, .board.has-bg::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--g1) 0%, var(--g1) 36%, transparent 100%);
+}
+.board.has-bg::after { background: linear-gradient(90deg, var(--g1) 0%, var(--g1) 25%, rgba(0,0,0,.25) 100%); }
+.game-logo { position: relative; z-index: 1; height: 34px; width: auto; max-width: 60%; object-fit: contain; object-position: left center; align-self: flex-start; margin-bottom: 2px; }

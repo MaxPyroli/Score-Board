@@ -8,6 +8,7 @@ import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
 import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
 import { GameArt } from "./GameArt";
+import { gameImage } from "../games/themes";
 import { GuestEntryCard, HostEntryPanel } from "./entry";
 import type { ClaimData } from "../backend";
 import type { Entries, Entry } from "../guestEntry";
@@ -32,13 +33,20 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
       <main className="content">
         <Section title="Nouvelle partie">
           <div className="games">
-            {GAMES.map((g) => (
-              <button key={g.id} className="card game" data-game={g.id} onClick={() => onNew(g)}>
-                <GameArt gameId={g.id} />
-                <strong>{g.displayName}</strong>
-                <span className="hint">{g.tagline}</span>
-              </button>
-            ))}
+            {GAMES.map((g) => {
+              const bg = gameImage(g.id, "bg");
+              const logo = gameImage(g.id, "logo");
+              return (
+                <button
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
+                >
+                  {!bg && <GameArt gameId={g.id} />}
+                  {logo ? <img className="game-logo" src={logo} alt={g.displayName} /> : <strong>{g.displayName}</strong>}
+                  <span className="hint">{g.tagline}</span>
+                </button>
+              );
+            })}
           </div>
         </Section>
         <Section title="Parties en cours">
@@ -343,8 +351,11 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         )}
       />
       <main className="content">
-        <div className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""}`}>
-          <GameArt gameId={game.id} className="board-art" />
+        <div
+          className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""} ${gameImage(game.id, "bg") ? "has-bg" : ""}`}
+          style={gameImage(game.id, "bg") ? ({ "--bg-url": `url("${gameImage(game.id, "bg")}")` } as React.CSSProperties) : undefined}
+        >
+          {!gameImage(game.id, "bg") && <GameArt gameId={game.id} className="board-art" />}
           <PlayerGrid players={match.players}>
             {(p) => (
               <span className="name">
