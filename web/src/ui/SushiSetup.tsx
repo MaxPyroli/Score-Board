@@ -31,6 +31,7 @@ export function SushiSetup({ values, setMany, players }: SetupProps) {
   const preset = values[SETTING_PRESET] ?? CUSTOM;
   // Toute modification à la main fait passer en « à la carte ».
   const edit = (patch: Record<string, string>) => setMany({ ...patch, [SETTING_PRESET]: CUSTOM });
+  if (!assistant) return null; // sans mode assistant : simple compteur par manche, rien à régler
   const on = (c: MenuCard) => values[c.key] === "true";
   const count = (kind: MenuCard["kind"]) => MENU_CARDS.filter((c) => c.kind === kind && on(c)).length;
 

@@ -19,7 +19,7 @@ import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winne
 const title = (match: StoredMatch, index: number | null) =>
   match.moduleId === "rail"
     ? (index !== null ? "Modifier le décompte final" : "Décompte final")
-    : match.moduleId === "sushi"
+    : match.moduleId === "sushi" && match.settings.assistant === "true"
     ? (() => {
         const at = index ?? match.rounds.length;
         return at >= ROUNDS_BEFORE_DESSERT ? (index !== null ? "Modifier les desserts" : "Desserts") : index !== null ? `Modifier la manche ${at + 1}` : `Manche ${at + 1}`;

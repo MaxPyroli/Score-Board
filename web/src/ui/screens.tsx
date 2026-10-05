@@ -132,7 +132,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     ...Object.fromEntries(game.choiceOptions?.map((c) => [c.key, c.default]) ?? []),
     ...Object.fromEntries(game.options.map((o) => [o.key, String(o.default)])),
     ...Object.fromEntries(game.numberOptions.map((o) => [o.key, o.default ?? ""])),
-    ...game.setup?.defaults,
+    ...game.setup?.defaults(),
   }));
   const setupProblem = game.setup?.problem(values, count) ?? null;
   const isVisible = (o: { visibleWhen?: (v: Values) => boolean }) => o.visibleWhen?.(values) ?? true;
@@ -172,7 +172,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     const settings: Record<string, string> = { ...game.fixedSettings };
     for (const c of game.choiceOptions ?? []) settings[c.key] = values[c.key];
     for (const o of game.options) if (isVisible(o)) settings[o.key] = values[o.key];
-    for (const k of Object.keys(game.setup?.defaults ?? {})) settings[k] = values[k];
+    for (const k of Object.keys(game.setup?.defaults() ?? {})) settings[k] = values[k];
     for (const o of game.numberOptions) {
       const t = (values[o.key] ?? "").trim();
       if (isVisible(o) && t !== "") settings[o.key] = t.replace(",", ".");

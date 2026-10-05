@@ -7,6 +7,7 @@ import type { GameModule, Scores } from "../core";
 
 export const SETTING_ROLL = "roll";
 export const SETTING_DESSERT = "dessert";
+export const SETTING_ASSISTANT = "assistant";
 export const SETTING_PRESET = "preset";
 
 export type Roll = "maki" | "temaki" | "california";

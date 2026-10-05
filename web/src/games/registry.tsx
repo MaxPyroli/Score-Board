@@ -7,7 +7,7 @@ import { tarotModule, summarize } from "./tarot";
 import type { Entries } from "../guestEntry";
 import { SKYJO_DEFAULT_TARGET, buildSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
 import {
-  COUNTER_MODES, FREE, SETTING_MODE, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
+  COUNTER_MODES, FREE, SETTING_MODE, counterModule, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
   negateRound, startOf, type CounterMode, type FreeRound,
 } from "./counter";
 import { SushiSetup } from "../ui/SushiSetup";
@@ -16,7 +16,7 @@ import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
 import { assistantEnabled } from "../assistant";
-import { ROUNDS_BEFORE_DESSERT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
+import { ROUNDS_BEFORE_DESSERT, SETTING_ASSISTANT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
 export type Values = Record<string, string>;
@@ -61,7 +61,7 @@ export interface SetupProps {
 }
 export interface GameSetup {
   /** Valeurs de départ ; toutes les clés sont enregistrées dans les réglages de la partie. */
-  defaults: Values;
+  defaults(): Values;
   Component: ComponentType<SetupProps>;
   /** Raison pour laquelle la partie ne peut pas commencer, ou `null`. */
   problem(values: Values, players: number): string | null;
@@ -345,8 +345,8 @@ function railGame(): GameDefinition {
   };
 }
 
-/** Sushi Go Party ! : trois manches, puis les desserts de toute la partie ; le menu choisi décide des cartes proposées. */
-function sushiGame(): GameDefinition {
+/** Sushi Go Party ! en mode assistant : trois manches, puis les desserts de toute la partie ; le menu choisi décide des cartes proposées. */
+function sushiAssistantGame(): GameDefinition {
   const t = (m: StoredMatch) => totals(sushiModule, m);
   const done = (m: StoredMatch) => m.rounds.length;
   return {
@@ -354,8 +354,6 @@ function sushiGame(): GameDefinition {
     tagline: "2 à 8 joueurs · menu de ton choix, makis, flans et comparaisons calculés",
     minPlayers: sushiModule.minPlayers, maxPlayers: sushiModule.maxPlayers,
     options: [],
-    setup: { defaults: SETUP_DEFAULTS, Component: SushiSetup, problem: (v, players) => (assistantEnabled() ? menuProblem(v, players) : null) },
-    assistant: true,
     numberOptions: [], fixedSettings: {},
     totals: t,
     roundScores: (m) => roundScores(sushiModule, m),
@@ -370,6 +368,40 @@ function sushiGame(): GameDefinition {
     quickSteps: () => null,
     leaderId: (m) => leader(m.players, t(m), false)?.id ?? null,
     Editor: SushiEditor,
+  };
+}
+
+const SUSHI_CLASSIC = counterModule("sushi", "Sushi Go Party !", 2, 8);
+const isAssistantMatch = (m: StoredMatch) => m.settings[SETTING_ASSISTANT] === "true";
+
+/**
+ * Sushi Go Party ! : par défaut un compteur classique (un score par joueur et par manche) ; avec le mode assistant
+ * (réglage de l'accueil, mémorisé dans la partie), le décompte carte par carte avec les menus.
+ */
+function sushiGame(): GameDefinition {
+  const classic = { ...counterGame(SUSHI_CLASSIC, "", false, null, true), numberOptions: [] as NumberOption[] };
+  const assistant = sushiAssistantGame();
+  const pick = (m: StoredMatch) => (isAssistantMatch(m) ? assistant : classic);
+  return {
+    ...classic,
+    tagline: "2 à 8 joueurs · points de chaque manche ; en mode assistant, menus et décompte carte par carte",
+    assistant: true,
+    setup: {
+      defaults: () => ({ ...SETUP_DEFAULTS, [SETTING_ASSISTANT]: String(assistantEnabled()) }),
+      Component: SushiSetup,
+      problem: (v, players) => (assistantEnabled() ? menuProblem(v, players) : null),
+    },
+    totals: (m) => pick(m).totals(m),
+    roundScores: (m) => pick(m).roundScores(m),
+    describeRound: (m, i) => pick(m).describeRound(m, i),
+    status: (m) => pick(m).status(m),
+    lowestWins: (m) => pick(m).lowestWins(m),
+    leaderId: (m) => pick(m).leaderId(m),
+    canFinish: (m) => pick(m).canFinish(m),
+    quickSteps: (m) => pick(m).quickSteps(m),
+    canAddRound: (m) => pick(m).canAddRound?.(m) ?? true,
+    guestEntry: (m) => pick(m).guestEntry?.(m),
+    Editor: (props) => { const E = pick(props.match).Editor; return <E {...props} />; },
   };
 }
 
