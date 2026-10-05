@@ -3,36 +3,57 @@
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#4b2a7b"/>
       <stop offset=".55" stop-color="#7a2f6e"/>
-      <stop offset="1" stop-color="#b0413e"/>
+      <stop offset="1" stop-color="#a63a45"/>
     </linearGradient>
-    <pattern id="lattice" width="56" height="56" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <path d="M0 0H56M0 0V56" stroke="#e8c76f" stroke-opacity=".28" stroke-width="1.5" fill="none"/>
-      <circle cx="28" cy="28" r="3" fill="#e8c76f" fill-opacity=".35"/>
+    <pattern id="lattice" width="48" height="48" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0H48M0 0V48" stroke="#e8c76f" stroke-opacity=".16" stroke-width="1.2" fill="none"/>
     </pattern>
-    <radialGradient id="glow" cx=".78" cy=".45" r=".5">
-      <stop offset="0" stop-color="#ffe9a8" stop-opacity=".55"/>
+    <radialGradient id="glow" cx=".72" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffe9a8" stop-opacity=".45"/>
       <stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/>
     </radialGradient>
-    <path id="star" d="M0-22 6-7 22-6 9 4 14 20 0 11-14 20-9 4-22-6-6-7Z"/>
+    <!-- Carte de tarot : format allongé, crème, filet doré -->
+    <g id="card">
+      <rect x="-40" y="-64" width="80" height="128" rx="9" fill="#fbf1d6"/>
+      <rect x="-33" y="-57" width="66" height="114" rx="5" fill="none" stroke="#c99a2e" stroke-width="2.5"/>
+    </g>
   </defs>
   <rect width="800" height="400" fill="url(#g)"/>
   <rect width="800" height="400" fill="url(#lattice)"/>
   <rect width="800" height="400" fill="url(#glow)"/>
-  <g fill="none" stroke="#e8c76f" stroke-opacity=".55" stroke-width="2.5">
-    <circle cx="640" cy="190" r="130"/>
-    <circle cx="640" cy="190" r="104" stroke-opacity=".35"/>
-    <circle cx="640" cy="190" r="70" stroke-opacity=".6"/>
-    <path d="M510 190A130 130 0 0 1 640 60M770 190A130 130 0 0 1 640 320" stroke-width="5" stroke-opacity=".7"/>
+
+  <!-- Les quatre couleurs -->
+  <g fill="#f0d27e" fill-opacity=".85" font-family="Georgia, 'DejaVu Serif', serif" font-size="46" text-anchor="middle">
+    <text x="432" y="196">♠</text>
+    <text x="432" y="262">♦</text>
+    <text x="784" y="196">♥</text>
+    <text x="784" y="262">♣</text>
   </g>
-  <g fill="#e8c76f">
-    <use href="#star" x="640" y="190" transform="translate(0 0) scale(1.9)" transform-origin="640 190" fill-opacity=".85"/>
-    <use href="#star" x="470" y="70" fill-opacity=".55"/>
-    <use href="#star" x="760" y="60" fill-opacity=".6" transform="scale(.8)" transform-origin="760 60"/>
-    <use href="#star" x="720" y="350" fill-opacity=".5"/>
-    <use href="#star" x="520" y="340" fill-opacity=".4" transform="scale(.7)" transform-origin="520 340"/>
-  </g>
-  <g fill="#e8c76f" fill-opacity=".5">
-    <path d="M420 40q40 20 0 60q-40-20 0-60Z"/>
-    <path d="M790 250q-40 20-60-20q40-20 60 20Z"/>
+
+  <!-- Les trois bouts : le Petit (1), l'Excuse, le 21 -->
+  <g font-family="Georgia, 'DejaVu Serif', serif" font-weight="700" text-anchor="middle">
+    <g transform="translate(520 212) rotate(-15)">
+      <use href="#card"/>
+      <text y="20" font-size="64" fill="#7a2f6e">1</text>
+      <text x="-25" y="-38" font-size="15" fill="#7a2f6e">1</text>
+      <text x="25" y="50" font-size="15" fill="#7a2f6e" transform="rotate(180 25 45)">1</text>
+    </g>
+    <g transform="translate(700 212) rotate(15)">
+      <use href="#card"/>
+      <text y="18" font-size="52" fill="#a63a45">21</text>
+      <text x="-25" y="-38" font-size="13" fill="#a63a45">21</text>
+      <text x="25" y="50" font-size="13" fill="#a63a45" transform="rotate(180 25 45)">21</text>
+    </g>
+    <!-- L'Excuse : bonnet de bouffon à trois pointes et grelots (dessin original) -->
+    <g transform="translate(610 196)">
+      <use href="#card"/>
+      <path d="M-26 -2C-34 -30-30 -44-18 -50-20 -36-12 -30-6 -28-8 -40 0 -52 0 -56 0 -52 8 -40 6 -28 12 -30 20 -36 18 -50 30 -44 34 -30 26 -2Z" fill="#7a2f6e"/>
+      <path d="M-26 -2Q0 8 26 -2L22 6Q0 14-22 6Z" fill="#c99a2e"/>
+      <circle cx="-19" cy="-52" r="5" fill="#e8c76f"/><circle cx="0" cy="-58" r="5" fill="#e8c76f"/><circle cx="19" cy="-52" r="5" fill="#e8c76f"/>
+      <circle cx="0" cy="22" r="17" fill="#f3d9b6"/>
+      <circle cx="-6" cy="19" r="2.2" fill="#3b2418"/><circle cx="6" cy="19" r="2.2" fill="#3b2418"/>
+      <path d="M-7 27Q0 33 7 27" fill="none" stroke="#a63a45" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M-24 40L-12 36 0 44 12 36 24 40 18 56H-18Z" fill="#a63a45"/>
+    </g>
   </g>
 </svg>

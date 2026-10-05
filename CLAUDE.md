@@ -2,6 +2,8 @@
 
 - Langue : français (interface, commits, échanges). Le propriétaire n'est pas développeur : réponses courtes, simples, avec une recommandation claire.
 - **Version du site web** (`APP_VERSION` dans `web/src/version.ts`) : à augmenter de 0.001 **uniquement quand on ajoute de nouvelles fonctionnalités**, pas pour un correctif. Le « build » (code du commit + date) change tout seul à chaque publication et sert à vérifier que le site en ligne est à jour ; les deux s'affichent en bas de l'accueil.
+- **Suivi des tickets** : dès qu'on travaille sur un ticket (avant la fusion de la PR), lui poser l'étiquette **« en cours »** et y laisser un commentaire avec la **branche** et la **PR** associées (le tableau GitHub Projects n'est pas accessible depuis la session). À la fusion : enlever « en cours » et fermer le ticket s'il est terminé, sinon le laisser ouvert avec ce qui reste à faire. Étiquettes de type : `bug`, `amélioration`, `idée`, `gros chantier`.
+- **Fusion des PR** : toujours prévenir le propriétaire et attendre son accord avant de fusionner ; attendre que les vérifications soient vertes ; annoncer le numéro de build attendu après la mise en ligne.
 - Ne pas publier l'adresse e-mail du propriétaire dans le code ou sur le site.
 - Les moteurs de règles (Kotlin et TypeScript) gardent les mêmes noms de champs JSON, pour que les parties restent compatibles.
 - Tests : `cd web && npm test` ; Kotlin : `./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test :session:test`.
