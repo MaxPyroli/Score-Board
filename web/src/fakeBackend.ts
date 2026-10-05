@@ -3,7 +3,6 @@ import type { Backend, Remote } from "./backend";
 // Faux serveur pour les tests de navigateur (VITE_FAKE_BACKEND=1) : les pages d'un même navigateur
 // se parlent via le localStorage. Jamais utilisé en production.
 const KEY = (c: string) => `fake:session:${c}`;
-const VIEW = (c: string, id: string) => `fake:viewers:${c}:${id}`;
 const me = Math.random().toString(36).slice(2);
 
 const read = (code: string): Remote => {
@@ -28,15 +27,20 @@ export const fakeBackend: Backend = {
     window.addEventListener("online", onOnline); window.addEventListener("offline", onOnline);
     return () => { off(); window.removeEventListener("online", onOnline); window.removeEventListener("offline", onOnline); };
   },
-  presence(code) {
-    localStorage.setItem(VIEW(code, me), "1");
-    const bye = () => localStorage.removeItem(VIEW(code, me));
+  async uid() { return me; },
+  announce(code) {
+    const k = `fake:claim:${code}:${me}`;
+    const bye = () => { localStorage.removeItem(k); window.dispatchEvent(new Event("storage")); };
     window.addEventListener("beforeunload", bye);
-    return () => { bye(); window.removeEventListener("beforeunload", bye); };
+    return {
+      set(claim) { localStorage.setItem(k, JSON.stringify(claim)); window.dispatchEvent(new Event("storage")); },
+      stop() { bye(); window.removeEventListener("beforeunload", bye); },
+    };
   },
-  countViewers(code, cb) {
-    const count = () => cb(Object.keys(localStorage).filter((k) => k.startsWith(`fake:viewers:${code}:`)).length);
-    count();
-    return listen(count);
+  watchClaims(code, cb) {
+    const prefix = `fake:claim:${code}:`;
+    const read = () => cb(Object.keys(localStorage).filter((k) => k.startsWith(prefix)).map((k) => ({ uid: k.slice(prefix.length), ...JSON.parse(localStorage.getItem(k) ?? "{}") })));
+    read();
+    return listen(read);
   },
 };

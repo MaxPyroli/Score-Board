@@ -1,7 +1,7 @@
 import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getDatabase, onDisconnect, onValue, ref, remove, serverTimestamp, set } from "firebase/database";
-import type { Backend } from "./backend";
+import type { Backend, Claim } from "./backend";
 
 /** Partage via Firebase Realtime Database : connexion anonyme, une entrée par code. Règles : firebase/database.rules.json. */
 export function createFirebaseBackend(config: FirebaseOptions): Backend {
@@ -51,19 +51,42 @@ export function createFirebaseBackend(config: FirebaseOptions): Backend {
       });
     },
 
-    presence(code) {
-      return later(async () => {
-        const me = ref(db, `viewers/${code}/${await uid()}`);
-        await onDisconnect(me).remove();
-        await set(me, true);
-        return () => { void remove(me); };
-      });
+    uid,
+
+    announce(code) {
+      let stopped = false;
+      let me: Promise<ReturnType<typeof ref>> | null = null;
+      const getRef = () => (me ??= (async () => {
+        const r = ref(db, `viewers/${code}/${await uid()}`);
+        await onDisconnect(r).remove();
+        return r;
+      })());
+      return {
+        set(claim) {
+          const value: { p: string; n?: string } = { p: claim.p };
+          if (claim.n) value.n = claim.n;
+          void getRef().then((r) => (stopped ? undefined : set(r, value))).catch(() => {});
+        },
+        stop() {
+          stopped = true;
+          void me?.then((r) => remove(r)).catch(() => {});
+        },
+      };
     },
 
-    countViewers(code, cb) {
+    watchClaims(code, cb) {
       return later(async () => {
         await uid();
-        return onValue(viewers(code), (s) => cb(s.size), () => {});
+        return onValue(viewers(code), (s) => {
+          const claims: Claim[] = [];
+          s.forEach((child) => {
+            const v = child.val();
+            if (v && typeof v === "object" && typeof v.p === "string") {
+              claims.push({ uid: child.key as string, p: v.p, ...(typeof v.n === "string" ? { n: v.n } : {}) });
+            }
+          });
+          cb(claims);
+        }, () => {});
       });
     },
   };

@@ -1,22 +1,24 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
-import { isFinished, matchWithoutLastRound, plain, ranking, SETTING_FINISHED, targetOf, withSetting, type Player, type StoredMatch } from "../core";
+import { isFinished, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, targetOf, validName, withSetting, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition } from "../games/registry";
-import { newId } from "../store";
+import { loadGroups, newId, rememberGroup } from "../store";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
-import { FinalScreen, WhoAreYou } from "./final";
+import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
 
 // ---------------------------------------------------------------- Accueil
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin }: {
+export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay }: {
   matches: StoredMatch[];
   onNew(game: GameDefinition): void;
   onOpen(m: StoredMatch): void;
   onDelete(m: StoredMatch): void;
   onJoin(): void;
+  /** Nouvelle partie avec le même jeu, les mêmes joueurs et les mêmes réglages. */
+  onReplay(m: StoredMatch): void;
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   return (
@@ -52,6 +54,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin }: {
                       {m.players.map((p) => `${p.name} ${plain(totals[p.id] ?? 0)}${p.id === lead ? " ★" : ""}`).join(" · ")}
                     </span>
                   </button>
+                  <button className="btn outline small" onClick={() => onReplay(m)} aria-label={`Rejouer ${game.displayName} avec les mêmes joueurs`}>Rejouer</button>
                   <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
                 </div>
               );
@@ -98,6 +101,11 @@ export function NewMatchScreen({ game, onBack, onStart }: {
   const [flags, setFlags] = useState<Record<string, boolean>>(Object.fromEntries(game.options.map((o) => [o.key, o.default])));
   const [numbers, setNumbers] = useState<Record<string, string>>(Object.fromEntries(game.numberOptions.map((o) => [o.key, o.default ?? ""])));
 
+  const groups = loadGroups();
+  const useGroup = (group: string[]) => {
+    setCount(Math.min(game.maxPlayers, Math.max(game.minPlayers, group.length)));
+    setNames(group.slice(0, game.maxPlayers));
+  };
   const nameAt = (i: number) => names[i] ?? "";
   const effective = (i: number) => nameAt(i).trim() || `Joueur ${i + 1}`;
   const duplicates = new Set(Array.from({ length: count }, (_, i) => effective(i).toLowerCase())).size !== count;
@@ -111,6 +119,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     try {
       localStorage.setItem(NAMES_KEY, JSON.stringify(players.map((p) => p.name)));
     } catch { /* sans importance */ }
+    rememberGroup(players.map((p) => p.name));
     const settings: Record<string, string> = { ...game.fixedSettings };
     for (const o of game.options) settings[o.key] = String(flags[o.key]);
     for (const o of game.numberOptions) {
@@ -127,6 +136,15 @@ export function NewMatchScreen({ game, onBack, onStart }: {
         <Section title="Nombre de joueurs">
           <Stepper value={count} min={game.minPlayers} max={game.maxPlayers} onChange={setCount} label="Nombre de joueurs" />
         </Section>
+        {groups.length > 0 && (
+          <Section title="Joueurs récents">
+            <div className="chips">
+              {groups.map((g) => (
+                <button key={g.join("|")} type="button" className="chip" onClick={() => useGroup(g)}>{g.join(", ")}</button>
+              ))}
+            </div>
+          </Section>
+        )}
         <Section title="Joueurs">
           <div className="inputs">
             {Array.from({ length: count }, (_, i) => (
@@ -175,7 +193,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -191,6 +209,10 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   onShare?: () => void;
   /** Invité : demande « Qui es-tu ? » à l'arrivée. */
   askWho?: boolean;
+  /** Joueurs actuellement connectés ; `null` hors partage (pas de pastilles). */
+  online?: string[] | null;
+  /** Signale à la session quel joueur est cet appareil et, s'il vient de changer de nom, le nouveau nom. */
+  onClaim?: (playerId: string, requestedName?: string) => void;
 }) {
   const totals = game.totals(match);
   const roundScores = game.roundScores(match);
@@ -220,6 +242,28 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const ranked = ranking(match.players, totals, game.lowestWins(match));
   const showPicker = pickerOpen || (!!askWho && me === undefined);
   const target = targetOf(match);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [pendingName, setPendingName] = useState<string | undefined>();
+  const myName = match.players.find((p) => p.id === me)?.name;
+  // Signature de cet appareil dans la session (qui je suis, nom demandé s'il y en a un).
+  useEffect(() => { if (me !== undefined) onClaim?.(me ?? "", pendingName); }, [me, pendingName]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Invité : la demande de nom est terminée quand l'hôte l'a appliquée (ou après 8 s si elle n'a pas abouti).
+  useEffect(() => {
+    if (pendingName === undefined) return;
+    if (myName === pendingName) return setPendingName(undefined);
+    const t = window.setTimeout(() => setPendingName(undefined), 8000);
+    return () => window.clearTimeout(t);
+  }, [pendingName, myName]);
+  // L'hôte qui lance le partage dit d'abord quel joueur il est (pour apparaître connecté).
+  useEffect(() => { if (sharing && !readOnly && me === undefined) setPickerOpen(true); }, [!!sharing]); // eslint-disable-line react-hooks/exhaustive-deps
+  const submitName = (raw: string) => {
+    if (me === undefined || me === null) return;
+    const name = validName(match, me, raw);
+    if (name === null) return;
+    if (readOnly) setPendingName(name);
+    else { const renamed = renamePlayer(match, me, name); if (renamed) onChange(renamed); }
+    setRenameOpen(false);
+  };
   const reached = !finished && !readOnly && target !== null && match.players.some((p) => (totals[p.id] ?? 0) >= target);
 
   return (
@@ -246,7 +290,14 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       />
       <main className="content">
         <div className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""}`}>
-          <PlayerGrid players={match.players}>{(p) => <span className="name">{p.name}</span>}</PlayerGrid>
+          <PlayerGrid players={match.players}>
+            {(p) => (
+              <span className="name">
+                {online && <span className={`dot ${online.includes(p.id) ? "on" : "off"}`} role="img" aria-label={online.includes(p.id) ? "connecté" : "hors ligne"} />}
+                {p.name}
+              </span>
+            )}
+          </PlayerGrid>
           <PlayerGrid players={match.players}>
             {(p) => <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />}
           </PlayerGrid>
@@ -254,17 +305,19 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         {note}
         {sharing && (
           <p className="hint share-note">
-            Partage actif · code {sharing.code} · {sharing.viewers} spectateur{sharing.viewers > 1 ? "s" : ""}
+            Partage actif · code {sharing.code} · {sharing.viewers} appareil{sharing.viewers > 1 ? "s" : ""} connecté{sharing.viewers > 1 ? "s" : ""}
           </p>
         )}
         {status && <p className="status">{status}</p>}
         {reached && <button className="btn small" onClick={() => onChange(withSetting(match, SETTING_FINISHED, "true"))}>Terminer la partie</button>}
         {(me !== undefined && me !== null) && (
           <p className="hint me-note">
-            Tu joues : <strong>{match.players.find((p) => p.id === me)?.name}</strong>
-            <button onClick={() => setPickerOpen(true)}>changer</button>
+            Tu joues : <strong>{pendingName ?? myName}</strong>
+            <button onClick={() => setRenameOpen(true)}>changer mon nom</button>
+            <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
+        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> hors ligne</p>}
         {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
 
         {match.rounds.length === 0 ? (
@@ -295,6 +348,9 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           Dernière manche annulée
           <button onClick={() => { onChange(undone); setUndone(null); }}>Rétablir</button>
         </div>
+      )}
+      {renameOpen && myName !== undefined && (
+        <RenameDialog current={pendingName ?? myName} validate={(raw) => (me ? validName(match, me, raw) : null)} onSubmit={submitName} onClose={() => setRenameOpen(false)} />
       )}
       {showPicker && (
         <WhoAreYou

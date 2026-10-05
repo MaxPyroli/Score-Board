@@ -47,3 +47,26 @@ export function useMatches() {
 
   return { matches, save, remove };
 }
+
+// ---------- Groupes de joueurs récents ----------
+
+const GROUPS_KEY = "scoreboard.recentGroups";
+const MAX_GROUPS = 6;
+
+export function loadGroups(): string[][] {
+  try {
+    const v = JSON.parse(localStorage.getItem(GROUPS_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((g): g is string[] => Array.isArray(g) && g.every((n) => typeof n === "string")) : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Retient un groupe de joueurs (le plus récent d'abord, sans doublon, 6 au maximum). */
+export function rememberGroup(names: string[]) {
+  const same = (a: string[], b: string[]) => a.length === b.length && a.every((n, i) => n.toLowerCase() === b[i].toLowerCase());
+  const groups = [names, ...loadGroups().filter((g) => !same(g, names))].slice(0, MAX_GROUPS);
+  try {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
+  } catch { /* sans importance */ }
+}

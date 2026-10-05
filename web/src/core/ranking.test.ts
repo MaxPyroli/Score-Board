@@ -41,3 +41,22 @@ describe("message de fin", () => {
     expect(isFinished(withSetting(m, "finished", "true"))).toBe(true);
   });
 });
+
+import { renamePlayer, validName } from "./index";
+
+describe("noms des joueurs", () => {
+  const m: StoredMatch = { id: "m", moduleId: "free", players, rounds: [], settings: {}, createdAt: 0 };
+  it("renomme un joueur et nettoie les espaces", () => {
+    expect(renamePlayer(m, "A", "  Anaïs   B ")?.players[0].name).toBe("Anaïs B");
+  });
+  it("refuse un nom vide, trop long, déjà pris (sans tenir compte des majuscules) ou inchangé", () => {
+    expect(renamePlayer(m, "A", "   ")).toBeNull();
+    expect(renamePlayer(m, "A", "x".repeat(21))).toBeNull();
+    expect(renamePlayer(m, "A", "bob")).toBeNull();
+    expect(renamePlayer(m, "A", "Ana")).toBeNull();
+    expect(validName(m, "A", "ana")).toBe("ana"); // garder son propre nom est permis
+  });
+  it("joueur inconnu", () => {
+    expect(renamePlayer(m, "Z", "Zoé")).toBeNull();
+  });
+});

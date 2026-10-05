@@ -160,3 +160,23 @@ export function finalMessage(ranked: RankedPlayer[], meId: string | null): { hea
   }
   return { headline: "Tu as perdu", detail: `${winnerText} · tu finis ${ordinal(me.rank)} sur ${ranked.length} avec ${score}.` };
 }
+
+// ---------- Noms des joueurs ----------
+
+export const MAX_NAME_LENGTH = 20;
+
+/** Nom nettoyé s'il est utilisable pour ce joueur (1 à 20 caractères, pas déjà pris par un autre), sinon `null`. */
+export function validName(m: StoredMatch, playerId: string, raw: string): string | null {
+  const name = raw.trim().replace(/\s+/g, " ");
+  if (name.length < 1 || name.length > MAX_NAME_LENGTH) return null;
+  const taken = m.players.some((p) => p.id !== playerId && p.name.toLowerCase() === name.toLowerCase());
+  return taken ? null : name;
+}
+
+/** Partie avec le joueur renommé ; `null` si le nom est invalide, déjà pris ou inchangé. */
+export function renamePlayer(m: StoredMatch, playerId: string, raw: string): StoredMatch | null {
+  const name = validName(m, playerId, raw);
+  const current = m.players.find((p) => p.id === playerId);
+  if (name === null || !current || current.name === name) return null;
+  return { ...m, players: m.players.map((p) => (p.id === playerId ? { ...p, name } : p)) };
+}
