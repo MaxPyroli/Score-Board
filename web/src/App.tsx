@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { entriesFromClaims, tryBuildRound, type Entry } from "./guestEntry";
+import { entriesFromClaims, takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
 import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
@@ -202,6 +202,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
           match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
           online={live.online} onClaim={(d) => spectatorRef.current?.claim(d)} ended={live.ended}
           entries={entriesFromClaims(live.claims, live.match, live.match.rounds.length)}
+          taken={takenPlayers(live.claims, live.myUid)}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
             ? <p className="note-lost">L'hôte a arrêté le partage : voici la dernière version.</p>
@@ -247,6 +248,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
           const mine = hostEntries && hostEntries.matchId === match.id && hostEntries.round === round ? hostEntries.entries : {};
           return { ...mine, ...entriesFromClaims(host?.matchId === match.id ? host.claims : [], match, round) };
         })()}
+        taken={host?.matchId === match.id ? takenPlayers(host.claims, host.ownUid) : []}
         onHostEntry={(playerId, entry) =>
           setHostEntries((prev) => {
             const round = match.rounds.length;
