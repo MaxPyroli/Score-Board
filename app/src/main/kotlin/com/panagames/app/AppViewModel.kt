@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.panagames.app.data.AppDatabase
 import com.panagames.app.data.MatchRepository
+import com.panagames.app.games.Games
+import com.panagames.app.session.SessionManager
 import com.panagames.core.Player
 import com.panagames.core.StoredMatch
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,7 @@ sealed interface Screen {
     data class NewMatch(val gameId: String) : Screen
     data class Match(val matchId: String) : Screen
     data class RoundEditor(val matchId: String, val roundIndex: Int?) : Screen
+    data object Join : Screen
 }
 
 /**
@@ -29,6 +32,9 @@ sealed interface Screen {
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = MatchRepository(AppDatabase.create(application).matchDao())
     private val writeLock = Mutex()
+
+    /** Partage Nearby : hôte (partie partagée) ou spectateur (partie suivie en lecture seule). */
+    val session = SessionManager(application, viewModelScope, ::validateReceived)
 
     private val _matches = MutableStateFlow<List<StoredMatch>?>(null)
     /** `null` tant que les parties n'ont pas été chargées depuis le stockage. */
@@ -46,6 +52,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun back() {
+        if (_stack.value.last() is Screen.Join) session.leave()
         if (_stack.value.size > 1) _stack.value = _stack.value.dropLast(1)
     }
 
@@ -66,6 +73,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun save(match: StoredMatch) = persist(match)
 
     fun delete(id: String) {
+        if ((session.hostState.value as? SessionManager.HostState.Sharing)?.matchId == id) session.stopHosting()
         _matches.value = _matches.value?.filterNot { it.id == id }
         viewModelScope.launch { writeLock.withLock { repository.delete(id) } }
     }
@@ -79,5 +87,23 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             listOf(match) + current
         }
         viewModelScope.launch { writeLock.withLock { repository.save(match, now) } }
+        session.hostUpdate(match)
+    }
+
+    /** Une partie reçue d'un autre téléphone est affichée telle quelle : on vérifie qu'on sait la lire. */
+    private fun validateReceived(match: StoredMatch): String? {
+        val game = Games.byId(match.moduleId)
+            ?: return "Ce jeu n'existe pas dans ta version de l'appli. Mets-la à jour."
+        val readable = runCatching {
+            game.totals(match)
+            game.roundScores(match)
+            match.rounds.indices.forEach { game.describeRound(match, it) }
+            game.status(match)
+        }.isSuccess
+        return if (readable) null else "Les données reçues sont illisibles."
+    }
+
+    override fun onCleared() {
+        session.shutdown()
     }
 }

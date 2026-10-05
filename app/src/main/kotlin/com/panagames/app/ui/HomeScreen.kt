@@ -47,6 +47,7 @@ fun HomeScreen(
     onNewMatch: (GameDefinition) -> Unit,
     onOpenMatch: (StoredMatch) -> Unit,
     onDeleteMatch: (StoredMatch) -> Unit,
+    onJoin: () -> Unit,
 ) {
     var toDelete by remember { mutableStateOf<StoredMatch?>(null) }
 
@@ -71,6 +72,23 @@ fun HomeScreen(
                             game.tagline,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Card(
+                    onClick = onJoin,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Rejoindre une partie", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Suis les scores d'un autre téléphone, avec un code ou un QR code.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }

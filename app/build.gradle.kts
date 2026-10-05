@@ -8,13 +8,14 @@ plugins {
 
 android {
     namespace = "com.panagames.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.panagames.app"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
+        targetSdk = 36
+        // Google Play exige un versionCode qui augmente à chaque envoi : la CI de publication le fournit.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = "0.1.0"
     }
 
@@ -27,12 +28,26 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+
+        // Clé d'envoi Google Play : fournie uniquement par la CI de publication (secrets GitHub).
+        create("release") {
+            val keystorePath = System.getenv("UPLOAD_KEYSTORE_PATH")
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("UPLOAD_KEY_ALIAS")
+                keyPassword = System.getenv("UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             // À activer (avec règles ProGuard pour Room et kotlinx.serialization) avant la publication.
             isMinifyEnabled = false
+            if (System.getenv("UPLOAD_KEYSTORE_PATH") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -54,6 +69,7 @@ dependencies {
     implementation(project(":tarot-engine"))
     implementation(project(":freecounter-engine"))
     implementation(project(":skyjo-engine"))
+    implementation(project(":session"))
 
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
@@ -72,4 +88,9 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+
+    // Partage entre appareils : Nearby Connections (hors-ligne), scan et affichage de QR code.
+    implementation("com.google.android.gms:play-services-nearby:19.3.0")
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+    implementation("com.google.zxing:core:3.5.3")
 }

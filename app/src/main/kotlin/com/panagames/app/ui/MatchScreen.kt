@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,6 +46,9 @@ import com.panagames.app.games.GameDefinition
 import com.panagames.core.StoredMatch
 import kotlinx.coroutines.launch
 
+/** Partage en cours de cette partie (code et nombre de spectateurs connectés). */
+data class SharingInfo(val code: String, val viewers: Int)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MatchScreen(
@@ -55,6 +59,11 @@ fun MatchScreen(
     onEditRound: (Int) -> Unit,
     onChange: (StoredMatch) -> Unit,
     onDelete: () -> Unit,
+    readOnly: Boolean = false,
+    title: String? = null,
+    sharing: SharingInfo? = null,
+    onShare: (() -> Unit)? = null,
+    note: (@Composable () -> Unit)? = null,
 ) {
     val totals = game.totals(match)
     val roundScores = game.roundScores(match)
@@ -66,14 +75,19 @@ fun MatchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(game.displayName) },
+                title = { Text(title ?: game.displayName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
                     }
                 },
                 actions = {
-                    Box {
+                    if (!readOnly && onShare != null) {
+                        IconButton(onClick = onShare) {
+                            Icon(Icons.Default.Share, contentDescription = "Partager la partie")
+                        }
+                    }
+                    if (!readOnly) Box {
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "Plus d'actions")
                         }
@@ -106,11 +120,13 @@ fun MatchScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHost) },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNewRound,
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Nouvelle manche") },
-            )
+            if (!readOnly) {
+                ExtendedFloatingActionButton(
+                    onClick = onNewRound,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Nouvelle manche") },
+                )
+            }
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
@@ -130,6 +146,17 @@ fun MatchScreen(
                         )
                     }
                 }
+            }
+
+            note?.invoke()
+            sharing?.let {
+                Text(
+                    "Partage actif · code ${it.code} · " +
+                        if (it.viewers == 1) "1 spectateur" else "${it.viewers} spectateurs",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 2.dp),
+                )
             }
 
             game.status(match)?.let { status ->
@@ -157,7 +184,7 @@ fun MatchScreen(
                     items(match.rounds.indices.reversed().toList(), key = { it }) { index ->
                         val description = game.describeRound(match, index)
                         Card(
-                            modifier = Modifier.fillMaxWidth().clickable { onEditRound(index) },
+                            modifier = Modifier.fillMaxWidth().clickable(enabled = !readOnly) { onEditRound(index) },
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         ) {
