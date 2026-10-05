@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
 import { matchWithoutLastRound, plain, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition } from "../games/registry";
@@ -8,16 +8,17 @@ import { newId } from "../store";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export function HomeScreen({ matches, onNew, onOpen, onDelete }: {
+export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin }: {
   matches: StoredMatch[];
   onNew(game: GameDefinition): void;
   onOpen(m: StoredMatch): void;
   onDelete(m: StoredMatch): void;
+  onJoin(): void;
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   return (
     <div className="screen">
-      <TopBar title="Score Board" />
+      <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
       <main className="content">
         <Section title="Nouvelle partie">
           <div className="games">
@@ -167,7 +168,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -175,6 +176,12 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   onEditRound(i: number): void;
   onChange(m: StoredMatch): void;
   onDelete(): void;
+  readOnly?: boolean;
+  title?: string;
+  note?: ReactNode;
+  /** Partage en cours de cette partie (code et nombre de spectateurs). */
+  sharing?: { code: string; viewers: number } | null;
+  onShare?: () => void;
 }) {
   const totals = game.totals(match);
   const roundScores = game.roundScores(match);
@@ -198,9 +205,11 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   return (
     <div className="screen">
       <TopBar
-        title={game.displayName}
+        title={title ?? game.displayName}
         onBack={onBack}
-        actions={
+        actions={readOnly ? undefined : (
+          <>
+            {onShare && <button className="icon" aria-label="Partager la partie" onClick={onShare}>⇪</button>}
           <div className="menu-wrap">
             <button className="icon" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}>⋮</button>
             {menu && (
@@ -210,7 +219,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
               </div>
             )}
           </div>
-        }
+          </>
+        )}
       />
       <main className="content">
         <div className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""}`}>
@@ -219,16 +229,22 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             {(p) => <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />}
           </PlayerGrid>
         </div>
+        {note}
+        {sharing && (
+          <p className="hint share-note">
+            Partage actif · code {sharing.code} · {sharing.viewers} spectateur{sharing.viewers > 1 ? "s" : ""}
+          </p>
+        )}
         {status && <p className="status">{status}</p>}
 
         {match.rounds.length === 0 ? (
-          <p className="hint empty">Aucune manche pour l'instant.<br />Appuie sur « Nouvelle manche » pour commencer.</p>
+          <p className="hint empty">Aucune manche pour l'instant.{!readOnly && <><br />Appuie sur « Nouvelle manche » pour commencer.</>}</p>
         ) : (
           <div className="list">
             {match.rounds.map((_, i) => match.rounds.length - 1 - i).map((index) => {
               const d = game.describeRound(match, index);
               return (
-                <button key={index} className="card round" onClick={() => onEditRound(index)}>
+                <button key={index} className="card round" disabled={readOnly} onClick={() => onEditRound(index)}>
                   <strong>{d.headline ? `${index + 1}. ${d.headline}` : `Manche ${index + 1}`}</strong>
                   {d.detail && <span className="hint">{d.detail}</span>}
                   <PlayerGrid players={match.players} className="divided">
@@ -242,7 +258,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         <div className="spacer big" />
       </main>
 
-      <button className="fab" onClick={onNewRound}>+ Nouvelle manche</button>
+      {!readOnly && <button className="fab" onClick={onNewRound}>+ Nouvelle manche</button>}
 
       {undone && (
         <div className="toast" role="status">
