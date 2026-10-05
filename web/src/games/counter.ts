@@ -14,7 +14,7 @@ export function counterModule(id: string, displayName: string, minPlayers: numbe
   };
 }
 
-export const FREE = counterModule("free", "Compteur libre", 2, 6);
+export const FREE = counterModule("free", "Compteur libre", 2, 20);
 export const SIX_QUI_PREND = counterModule("sixquiprend", "6 qui prend !", 2, 10);
 
 export interface FreeDraft {

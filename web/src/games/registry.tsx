@@ -210,7 +210,7 @@ function freeCounterGame(): GameDefinition {
 
   return {
     id: mod.id, displayName: mod.displayName,
-    tagline: "2 à 6 joueurs · points par manche, manches gagnées, compteur direct, vies, décompte",
+    tagline: "2 à 20 joueurs · points par manche, manches gagnées, compteur direct, vies, décompte",
     minPlayers: mod.minPlayers, maxPlayers: mod.maxPlayers,
     choiceOptions: [{
       key: SETTING_MODE, label: "Mode de comptage", default: "points",
