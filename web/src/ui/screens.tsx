@@ -3,6 +3,7 @@ import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./component
 import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, validName, withSetting, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
+import { ChangelogSheet } from "./ChangelogSheet";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
@@ -29,6 +30,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
   onReplay(m: StoredMatch): void;
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   return (
     <div className="screen">
       <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
@@ -80,9 +82,10 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
         </Section>
       </main>
       <footer className="footer">
-        <span>{versionLabel}</span>
+        <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
         <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
       </footer>
+      {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
       {toDelete && (
         <Dialog title="Supprimer la partie ?" onClose={() => setToDelete(null)}>
           <p>Les scores de cette partie seront perdus.</p>
