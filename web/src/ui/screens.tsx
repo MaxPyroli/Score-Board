@@ -35,27 +35,8 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
     <div className="screen">
       <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
       <main className="content">
-        <Section title="Nouvelle partie">
-          <div className="games">
-            {GAMES.map((g) => {
-              const bg = gameImage(g.id, "bg");
-              const logo = gameImage(g.id, "logo");
-              return (
-                <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
-                  style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
-                >
-                  {!bg && !logo && <GameArt gameId={g.id} />}
-                  {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
-                  <strong>{g.displayName}</strong>
-                  <span className="hint">{g.tagline}</span>
-                </button>
-              );
-            })}
-          </div>
-        </Section>
+        {matches.length > 0 && (
         <Section title="Parties en cours">
-          {matches.length === 0 && <p className="hint">Aucune partie pour l'instant.</p>}
           <div className="list">
             {matches.map((m) => {
               const game = GAMES.find((g) => g.id === m.moduleId);
@@ -76,6 +57,26 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                   <button className="btn outline small" onClick={() => onReplay(m)} aria-label={`Rejouer ${game.displayName} avec les mêmes joueurs`}>Rejouer</button>
                   <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
                 </div>
+              );
+            })}
+          </div>
+        </Section>
+        )}
+        <Section title="Nouvelle partie">
+          <div className="games">
+            {GAMES.map((g) => {
+              const bg = gameImage(g.id, "bg");
+              const logo = gameImage(g.id, "logo");
+              return (
+                <button
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
+                >
+                  {!bg && !logo && <GameArt gameId={g.id} />}
+                  {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
+                  <strong>{g.displayName}</strong>
+                  <span className="hint">{g.tagline}</span>
+                </button>
               );
             })}
           </div>
@@ -124,7 +125,9 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     ...Object.fromEntries(game.choiceOptions?.map((c) => [c.key, c.default]) ?? []),
     ...Object.fromEntries(game.options.map((o) => [o.key, String(o.default)])),
     ...Object.fromEntries(game.numberOptions.map((o) => [o.key, o.default ?? ""])),
+    ...game.setup?.defaults,
   }));
+  const setupProblem = game.setup?.problem(values, count) ?? null;
   const isVisible = (o: { visibleWhen?: (v: Values) => boolean }) => o.visibleWhen?.(values) ?? true;
   /** Change un réglage ; les valeurs par défaut qui en dépendent (ex. total de départ selon le mode) sont recalculées. */
   const setValue = (key: string, value: string) =>
@@ -162,6 +165,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     const settings: Record<string, string> = { ...game.fixedSettings };
     for (const c of game.choiceOptions ?? []) settings[c.key] = values[c.key];
     for (const o of game.options) if (isVisible(o)) settings[o.key] = values[o.key];
+    for (const k of Object.keys(game.setup?.defaults ?? {})) settings[k] = values[k];
     for (const o of game.numberOptions) {
       const t = (values[o.key] ?? "").trim();
       if (isVisible(o) && t !== "") settings[o.key] = t.replace(",", ".");
@@ -202,6 +206,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
           </div>
           {duplicates && <p className="error">Deux joueurs ont le même nom.</p>}
         </Section>
+        {game.setup && <game.setup.Component values={values} setMany={(patch) => setValues((prev) => ({ ...prev, ...patch }))} players={count} />}
         {(game.choiceOptions?.length ?? 0) > 0 && game.choiceOptions!.map((c) => (
           <Section key={c.key} title={c.label}>
             <div className="choices">
@@ -245,7 +250,8 @@ export function NewMatchScreen({ game, onBack, onStart }: {
         )}
       </main>
       <footer className="bottom">
-        <button className="btn" disabled={duplicates || badNumber} onClick={start}>Commencer la partie</button>
+        {setupProblem && <p className="error">{setupProblem}</p>}
+        <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
       </footer>
     </div>
   );

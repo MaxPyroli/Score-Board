@@ -308,3 +308,4 @@ button.card { text-align: left; width: 100%; }
 .rail-fields.two { grid-template-columns: repeat(2, 1fr); }
 .sushi-group { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--primary); margin: 8px 0 2px; }
 .rail-bonus { display: flex; flex-direction: column; gap: 2px; color: var(--primary); font-weight: 600; font-size: .9rem; }
+.switch-row.disabled { opacity: .45; }

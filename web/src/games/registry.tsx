@@ -10,11 +10,12 @@ import {
   COUNTER_MODES, FREE, SETTING_MODE, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
   negateRound, startOf, type CounterMode, type FreeRound,
 } from "./counter";
+import { SushiSetup } from "../ui/SushiSetup";
 import { CounterEditor, RailEditor, SkyjoEditor, SushiEditor, TarotEditor, WinnerEditor } from "../ui/editors";
 import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
-import { MENU_CARDS, ROUNDS_BEFORE_DESSERT, SETTING_DESSERT, SETTING_ROLL, sushiModule } from "./sushi";
+import { ROUNDS_BEFORE_DESSERT, SETTING_ASSISTANT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
 export type Values = Record<string, string>;
@@ -50,6 +51,21 @@ export interface ChoiceOption {
   choices: { value: string; label: string; description: string }[];
 }
 
+/** Préparation de partie propre à un jeu (remplace les réglages génériques) : menu de Sushi Go Party !. */
+export interface SetupProps {
+  values: Values;
+  /** Change plusieurs réglages à la fois. */
+  setMany(patch: Values): void;
+  players: number;
+}
+export interface GameSetup {
+  /** Valeurs de départ ; toutes les clés sont enregistrées dans les réglages de la partie. */
+  defaults: Values;
+  Component: ComponentType<SetupProps>;
+  /** Raison pour laquelle la partie ne peut pas commencer, ou `null`. */
+  problem(values: Values, players: number): string | null;
+}
+
 export interface EditorProps {
   match: StoredMatch;
   /** Index de la manche modifiée, `null` pour une nouvelle manche. */
@@ -78,6 +94,7 @@ export interface GameDefinition {
   options: GameOption[];
   numberOptions: NumberOption[];
   choiceOptions?: ChoiceOption[];
+  setup?: GameSetup;
   /** Réglages imposés par le jeu à toute partie. */
   fixedSettings: Record<string, string>;
   totals(m: StoredMatch): Scores;
@@ -333,25 +350,8 @@ function sushiGame(): GameDefinition {
     id: sushiModule.id, displayName: sushiModule.displayName,
     tagline: "2 à 8 joueurs · menu de ton choix, makis, flans et comparaisons calculés",
     minPlayers: sushiModule.minPlayers, maxPlayers: sushiModule.maxPlayers,
-    choiceOptions: [
-      {
-        key: SETTING_ROLL, label: "Makis du menu", default: "maki",
-        choices: [
-          { value: "maki", label: "Makis saumon", description: "Le plus de symboles : 6 points, puis 3." },
-          { value: "temaki", label: "Temaki", description: "Le plus : +4 points, le moins : −4." },
-          { value: "california", label: "California", description: "Course à 10 symboles : 8 puis 6 points ; le plus de symboles en fin de manche : 2." },
-        ],
-      },
-      {
-        key: SETTING_DESSERT, label: "Dessert du menu", default: "flan",
-        choices: [
-          { value: "flan", label: "Flan", description: "Le plus : +6 points, le moins : −6." },
-          { value: "icecream", label: "Glace matcha", description: "12 points par ensemble de 4." },
-          { value: "fruit", label: "Fruits", description: "Points selon le nombre de chaque fruit." },
-        ],
-      },
-    ],
-    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: `${c.kind === "apero" ? "Hors-d'œuvre" : "Supplément"} · ${c.description}`, default: c.default })),
+    options: [],
+    setup: { defaults: SETUP_DEFAULTS, Component: SushiSetup, problem: (v, players) => (v[SETTING_ASSISTANT] === "true" ? menuProblem(v, players) : null) },
     numberOptions: [], fixedSettings: {},
     totals: t,
     roundScores: (m) => roundScores(sushiModule, m),

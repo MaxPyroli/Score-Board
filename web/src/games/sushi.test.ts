@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSushi, fieldsFor, scoreSushi, sushiConfig, sushiModule, type SushiRound, type SushiSheet } from "./sushi";
+import { PRESET_MENUS, SETUP_DEFAULTS, allowedFor, buildSushi, fieldsFor, menuProblem, presetSettings, scoreSushi, sushiConfig, sushiModule, type SushiRound, type SushiSheet } from "./sushi";
 import { totals, type StoredMatch } from "../core";
 
 const round = (sheets: Record<string, SushiSheet>, dessert = false): SushiRound => ({ dessert, sheets });
@@ -98,7 +98,7 @@ describe("Sushi Go Party ! : menu, saisie, partie", () => {
     const cfg = sushiConfig({});
     expect(cfg.roll).toBe("maki");
     expect(cfg.dessert).toBe("flan");
-    expect([...cfg.cards].sort()).toEqual(["dumpling", "sashimi", "tempura", "wasabi"]);
+    expect([...cfg.cards].sort()).toEqual(["chopsticks", "dumpling", "sashimi", "tempura", "wasabi"]);
   });
   it("saisie : champ vide = 0, refus d'un nombre invalide ou d'un wasabi en trop", () => {
     const fields = fieldsFor(sushiConfig({}), false);
@@ -121,5 +121,32 @@ describe("Sushi Go Party ! : menu, saisie, partie", () => {
   it("une saisie absurde est refusée au décodage", () => {
     expect(() => sushiModule.decodeRound('{"sheets":{"A":{"egg":-1}}}')).toThrow();
     expect(() => sushiModule.decodeRound('{"sheets":{"A":{"egg":1,"eggW":2}}}')).toThrow();
+  });
+});
+
+describe("Sushi Go Party ! : mode assistant, menus du règlement", () => {
+  it("les huit menus ont 1 makis, 3 hors-d'œuvre, 2 suppléments, 1 dessert", () => {
+    expect(PRESET_MENUS).toHaveLength(8);
+    for (const p of PRESET_MENUS) {
+      const settings = presetSettings(p);
+      expect(menuProblem(settings, 4), p.name).toBeNull();
+      expect(sushiConfig(settings).roll).toBe(p.roll);
+      expect(sushiConfig(settings).dessert).toBe(p.dessert);
+    }
+  });
+  it("le menu classique est le menu par défaut", () => {
+    expect(menuProblem(SETUP_DEFAULTS, 4)).toBeNull();
+    expect(SETUP_DEFAULTS.preset).toBe("classique");
+  });
+  it("un menu incomplet est refusé, en disant ce qui manque", () => {
+    expect(menuProblem({ ...SETUP_DEFAULTS, tofu: "true" }, 4)).toMatch(/3 hors-d'œuvre \(4 choisis\)/);
+    expect(menuProblem({ ...SETUP_DEFAULTS, wasabi: "false" }, 4)).toMatch(/2 suppléments \(1 choisi\)/);
+  });
+  it("limites selon le nombre de joueurs : menu et commande spéciale pas à 7-8, cuillère et edamame pas à 2", () => {
+    expect([allowedFor("menu", 6), allowedFor("menu", 7), allowedFor("specialorder", 8)]).toEqual([true, false, false]);
+    expect([allowedFor("spoon", 2), allowedFor("spoon", 3), allowedFor("edamame", 2)]).toEqual([false, true, false]);
+    const gourmet = presetSettings(PRESET_MENUS.find((p) => p.id === "gourmet")!);
+    expect(menuProblem(gourmet, 2)).toMatch(/Cuillère/);
+    expect(menuProblem(gourmet, 5)).toBeNull();
   });
 });

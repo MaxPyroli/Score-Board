@@ -7,6 +7,8 @@ import type { GameModule, Scores } from "../core";
 
 export const SETTING_ROLL = "roll";
 export const SETTING_DESSERT = "dessert";
+export const SETTING_ASSISTANT = "assistant";
+export const SETTING_PRESET = "preset";
 
 export type Roll = "maki" | "temaki" | "california";
 export type Dessert = "flan" | "icecream" | "fruit";
@@ -25,12 +27,73 @@ export const MENU_CARDS: MenuCard[] = [
   { key: "wasabi", label: "Wasabi", description: "Triple la valeur du prochain sushi posé dessus.", default: true, kind: "special" },
   { key: "soy", label: "Sauce soja", description: "4 points par carte pour celui qui a le plus de couleurs différentes.", default: false, kind: "special" },
   { key: "tea", label: "Thé", description: "Chaque thé vaut 1 point par carte de la couleur choisie.", default: false, kind: "special" },
-  { key: "chopsticks", label: "Baguettes", description: "Prendre 2 cartes au tour suivant ; ne rapporte rien (rien à saisir).", default: false, kind: "special" },
+  { key: "chopsticks", label: "Baguettes", description: "Prendre 2 cartes au tour suivant ; ne rapporte rien (rien à saisir).", default: true, kind: "special" },
   { key: "menu", label: "Menu", description: "Piocher 4 cartes du paquet et en jouer une ; rien à saisir. 2 à 6 joueurs.", default: false, kind: "special" },
   { key: "spoon", label: "Cuillère", description: "Réclamer une carte à un adversaire ; rien à saisir. 3 à 8 joueurs.", default: false, kind: "special" },
   { key: "specialorder", label: "Commande spéciale", description: "Copie une carte déjà jouée : compte-la comme la carte copiée. 2 à 6 joueurs.", default: false, kind: "special" },
   { key: "takeout", label: "Boîte à emporter", description: "2 points par carte retournée.", default: false, kind: "special" },
 ];
+
+/** Nombre de cartes à choisir par catégorie dans un menu complet (règlement : « À la carte »). */
+export const MENU_COUNTS = { roll: 1, apero: 3, special: 2, dessert: 1 };
+
+export const ROLL_CHOICES: { value: Roll; label: string; description: string }[] = [
+  { value: "maki", label: "Makis saumon", description: "Le plus de symboles : 6 points, puis 3." },
+  { value: "temaki", label: "Temaki", description: "Le plus : +4 points, le moins : −4." },
+  { value: "california", label: "California", description: "Course à 10 symboles : 8 puis 6 points ; le plus de symboles en fin de manche : 2." },
+];
+export const DESSERT_CHOICES: { value: Dessert; label: string; description: string }[] = [
+  { value: "flan", label: "Flan", description: "Le plus : +6 points, le moins : −6." },
+  { value: "icecream", label: "Glace matcha", description: "12 points par série de 4." },
+  { value: "fruit", label: "Fruits", description: "Points selon le nombre de chaque fruit." },
+];
+
+/** Cartes qui ne peuvent pas être utilisées selon le nombre de joueurs (règlement). */
+const PLAYER_LIMITS: Record<string, { min?: number; max?: number }> = {
+  menu: { max: 6 }, specialorder: { max: 6 }, spoon: { min: 3 }, edamame: { min: 3 },
+};
+export const allowedFor = (card: string, players: number): boolean => {
+  const l = PLAYER_LIMITS[card];
+  return !l || ((l.min === undefined || players >= l.min) && (l.max === undefined || players <= l.max));
+};
+
+/** Les huit menus du règlement. */
+export interface PresetMenu { id: string; name: string; blurb: string; roll: Roll; dessert: Dessert; cards: string[] }
+export const PRESET_MENUS: PresetMenu[] = [
+  { id: "enfant", name: "Menu enfant", blurb: "Un menu doux pour les joueurs débutants.", roll: "maki", dessert: "icecream", cards: ["tempura", "sashimi", "miso", "wasabi", "tea"] },
+  { id: "classique", name: "Menu classique", blurb: "Le menu du jeu original Sushi Go.", roll: "maki", dessert: "flan", cards: ["tempura", "sashimi", "dumpling", "chopsticks", "wasabi"] },
+  { id: "decouverte", name: "Menu découverte", blurb: "Goûtez aux nouveautés de Sushi Go Party !", roll: "temaki", dessert: "icecream", cards: ["tempura", "dumpling", "tofu", "wasabi", "menu"] },
+  { id: "gourmet", name: "Menu gourmet", blurb: "Pour les joueurs chevronnés qui veulent réfléchir.", roll: "temaki", dessert: "fruit", cards: ["onigiri", "tofu", "sashimi", "spoon", "takeout"] },
+  { id: "volonte", name: "Menu à volonté", blurb: "Marquez beaucoup de points !", roll: "california", dessert: "icecream", cards: ["onigiri", "dumpling", "edamame", "specialorder", "tea"] },
+  { id: "surprise", name: "Surprise du chef", blurb: "Avec beaucoup d'interactions !", roll: "temaki", dessert: "flan", cards: ["eel", "tofu", "miso", "spoon", "soy"] },
+  { id: "groupe", name: "Menu de groupe", blurb: "Idéal à 6-8 joueurs.", roll: "maki", dessert: "icecream", cards: ["tempura", "dumpling", "eel", "spoon", "chopsticks"] },
+  { id: "amour", name: "Menu d'amour", blurb: "Idéal à 2 joueurs.", roll: "california", dessert: "fruit", cards: ["onigiri", "tofu", "miso", "menu", "specialorder"] },
+];
+
+/** Réglages (texte) correspondant à un menu : makis, dessert, et chaque carte cochée ou non. */
+export function presetSettings(p: PresetMenu): Record<string, string> {
+  return {
+    [SETTING_ROLL]: p.roll, [SETTING_DESSERT]: p.dessert,
+    ...Object.fromEntries(MENU_CARDS.map((c) => [c.key, String(p.cards.includes(c.key))])),
+  };
+}
+
+/** Valeurs de départ de la préparation d'une partie : menu classique, mode assistant désactivé. */
+export const SETUP_DEFAULTS: Record<string, string> = {
+  [SETTING_ASSISTANT]: "false", [SETTING_PRESET]: "classique", ...presetSettings(PRESET_MENUS[1]),
+};
+
+/** Le menu choisi est-il complet (1 makis, 3 hors-d'œuvre, 2 suppléments, 1 dessert) et jouable à ce nombre de joueurs ? */
+export function menuProblem(settings: Record<string, string>, players: number): string | null {
+  const chosen = (kind: MenuCard["kind"]) => MENU_CARDS.filter((c) => c.kind === kind && settings[c.key] === "true");
+  const apero = chosen("apero");
+  const special = chosen("special");
+  if (apero.length !== MENU_COUNTS.apero) return `Choisis ${MENU_COUNTS.apero} hors-d'œuvre (${apero.length} choisi${apero.length > 1 ? "s" : ""}).`;
+  if (special.length !== MENU_COUNTS.special) return `Choisis ${MENU_COUNTS.special} suppléments (${special.length} choisi${special.length > 1 ? "s" : ""}).`;
+  const bad = [...apero, ...special].find((c) => !allowedFor(c.key, players));
+  if (bad) return `${bad.label} ne peut pas être utilisé à ${players} joueurs.`;
+  return null;
+}
 
 export interface SushiConfig {
   roll: Roll;
