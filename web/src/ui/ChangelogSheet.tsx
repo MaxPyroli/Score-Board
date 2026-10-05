@@ -35,6 +35,11 @@ export function ChangelogSheet({ onClose }: { onClose(): void }) {
             <div className="rules-body"><ul>{e.items.map((t, j) => <li key={j}>{t}</li>)}</ul></div>
           </details>
         ))}
+        <p className="hint credits">
+          Crédits : icône « Meeple » de Delapouite sur{" "}
+          <a href="https://game-icons.net/1x1/delapouite/meeple.html" target="_blank" rel="noreferrer">game-icons.net</a>
+          , licence <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>.
+        </p>
         <button className="btn" onClick={onClose}>Fermer</button>
       </div>
     </div>
