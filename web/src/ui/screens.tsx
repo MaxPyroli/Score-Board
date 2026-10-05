@@ -7,6 +7,7 @@ import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
 import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
+import { GameArt } from "./GameArt";
 import { GuestEntryCard, HostEntryPanel } from "./entry";
 import type { ClaimData } from "../backend";
 import type { Entries, Entry } from "../guestEntry";
@@ -32,7 +33,8 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
         <Section title="Nouvelle partie">
           <div className="games">
             {GAMES.map((g) => (
-              <button key={g.id} className="card game" onClick={() => onNew(g)}>
+              <button key={g.id} className="card game" data-game={g.id} onClick={() => onNew(g)}>
+                <GameArt gameId={g.id} />
                 <strong>{g.displayName}</strong>
                 <span className="hint">{g.tagline}</span>
               </button>
@@ -148,7 +150,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
   };
 
   return (
-    <div className="screen">
+    <div className="screen" data-game={game.id}>
       <TopBar title={game.displayName} onBack={onBack} />
       <main className="content">
         <Section title="Nombre de joueurs">
@@ -319,7 +321,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const quickSteps = game.quickSteps(match);
 
   return (
-    <div className="screen">
+    <div className="screen" data-game={game.id}>
       <TopBar
         title={title ?? game.displayName}
         onBack={onBack}
@@ -342,6 +344,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       />
       <main className="content">
         <div className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""}`}>
+          <GameArt gameId={game.id} className="board-art" />
           <PlayerGrid players={match.players}>
             {(p) => (
               <span className="name">
