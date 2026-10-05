@@ -247,11 +247,13 @@ button.card { text-align: left; width: 100%; }
 [data-game="tarot"] { --g1: #4b2a7b; --g2: #8e3b7a; --primary: #6d3fb5; --primary-soft: #e9defa; }
 [data-game="skyjo"] { --g1: #0b5d8a; --g2: #1d3f9b; --primary: #1d6fb8; --primary-soft: #dbeafe; }
 [data-game="sixquiprend"] { --g1: #b4430c; --g2: #7c2d12; --primary: #c2570c; --primary-soft: #fde8d6; }
+[data-game="rail"] { --g1: #8f1d2c; --g2: #4a1020; --primary: #b32a3d; --primary-soft: #fadde1; }
 [data-game="free"] { --g1: #1f6f5c; --g2: #0f4c3f; }
 @media (prefers-color-scheme: dark) {
   [data-game="tarot"] { --primary: #b99af0; --primary-soft: #2e2147; }
   [data-game="skyjo"] { --primary: #7db7ff; --primary-soft: #18304f; }
   [data-game="sixquiprend"] { --primary: #ffa66b; --primary-soft: #4a2512; }
+  [data-game="rail"] { --primary: #ff8a98; --primary-soft: #4a1b24; }
 }
 
 /* ---- Visuels facultatifs (voir src/games/themes.ts) : image à droite, fondu vers la couleur du jeu côté titre ---- */
@@ -287,3 +289,18 @@ button.card { text-align: left; width: 100%; }
 .rules-table th, .rules-table td { padding: 8px 10px; border-bottom: 1px solid var(--outline); text-align: center; white-space: nowrap; }
 .rules-table thead th { color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
 .rules-table tbody th { text-align: left; font-weight: 600; }
+
+/* ---- Les Aventuriers du Rail : fiches de décompte ---- */
+.rail-card { padding: 14px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.rail-head { display: flex; justify-content: space-between; align-items: baseline; }
+.rail-total { font-size: 1.6rem; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+.rail-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rail-fields label { display: flex; flex-direction: column; gap: 4px; font-size: .78rem; color: var(--muted); }
+.rail-fields .field { width: 100%; }
+.route-counter { border-top: 1px solid var(--outline); padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.route-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.route-row .stepper { gap: 12px; }
+.route-row .stepper .value { font-size: 1.2rem; min-width: 1.6ch; }
+.route-row .icon.round { min-width: 36px; height: 36px; font-size: 1.2rem; }
+.rail-fields.two { grid-template-columns: repeat(2, 1fr); }
+.rail-bonus { display: flex; flex-direction: column; gap: 2px; color: var(--primary); font-weight: 600; font-size: .9rem; }

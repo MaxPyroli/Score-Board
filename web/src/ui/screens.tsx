@@ -127,7 +127,12 @@ export function NewMatchScreen({ game, onBack, onStart }: {
   const setValue = (key: string, value: string) =>
     setValues((prev) => {
       const next = { ...prev, [key]: value };
-      for (const o of game.numberOptions) if (o.defaultFor) next[o.key] = o.defaultFor(next) ?? "";
+      // Seul un changement de choix (ex. mode, édition) réapplique les valeurs par défaut qui en dépendent :
+      // taper soi-même une valeur ne doit jamais être écrasé.
+      if (game.choiceOptions?.some((c) => c.key === key)) {
+        for (const o of game.numberOptions) if (o.defaultFor) next[o.key] = o.defaultFor(next) ?? "";
+        for (const o of game.options) if (o.defaultFor) next[o.key] = String(o.defaultFor(next) ?? o.default);
+      }
       return next;
     });
 
@@ -433,7 +438,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
 
         {match.rounds.length === 0 ? (
-          <p className="hint empty">Aucune manche pour l'instant.{!readOnly && <><br />Appuie sur « Nouvelle manche » pour commencer.</>}</p>
+          <p className="hint empty">{game.id === "rail" ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && <><br />Appuie sur « {game.id === "rail" ? "Nouveau décompte" : "Nouvelle manche"} » pour commencer.</>}</p>
         ) : (
           <div className="list">
             {match.rounds.map((_, i) => match.rounds.length - 1 - i).map((index) => {
@@ -458,7 +463,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         <div className="spacer big" />
       </main>
 
-      {!readOnly && !quickSteps && <button className="fab" onClick={onNewRound}>+ Nouvelle manche</button>}
+      {!readOnly && !quickSteps && (game.canAddRound?.(match) ?? true) && <button className="fab" onClick={onNewRound}>{game.id === "rail" ? "+ Décompte final" : "+ Nouvelle manche"}</button>}
 
       {undone && (
         <div className="toast" role="status">
