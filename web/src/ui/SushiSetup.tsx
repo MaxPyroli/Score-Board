@@ -1,8 +1,9 @@
 import type { SetupProps } from "../games/registry";
 import {
-  DESSERT_CHOICES, MENU_CARDS, MENU_COUNTS, PRESET_MENUS, ROLL_CHOICES, SETTING_ASSISTANT, SETTING_DESSERT, SETTING_PRESET, SETTING_ROLL,
+  DESSERT_CHOICES, MENU_CARDS, MENU_COUNTS, PRESET_MENUS, ROLL_CHOICES, SETTING_DESSERT, SETTING_PRESET, SETTING_ROLL,
   allowedFor, presetSettings, type MenuCard,
 } from "../games/sushi";
+import { useAssistant } from "../assistant";
 import { Section } from "./components";
 
 const CUSTOM = "custom";
@@ -21,12 +22,12 @@ function Choices({ items, value, onPick }: { items: { value: string; label: stri
 }
 
 /**
- * Menu de Sushi Go Party !. Mode simple : makis, dessert et cartes au choix, sans contrainte.
- * Mode assistant : les huit menus du règlement, ou un menu « à la carte » par catégories (1 makis, 3 hors-d'œuvre,
+ * Menu de Sushi Go Party !. Sans le mode assistant (réglage de l'accueil) : makis, dessert et cartes au choix, sans contrainte.
+ * Avec le mode assistant : les huit menus du règlement, ou un menu « à la carte » par catégories (1 makis, 3 hors-d'œuvre,
  * 2 suppléments, 1 dessert), avec les limites selon le nombre de joueurs.
  */
 export function SushiSetup({ values, setMany, players }: SetupProps) {
-  const assistant = values[SETTING_ASSISTANT] === "true";
+  const assistant = useAssistant();
   const preset = values[SETTING_PRESET] ?? CUSTOM;
   // Toute modification à la main fait passer en « à la carte ».
   const edit = (patch: Record<string, string>) => setMany({ ...patch, [SETTING_PRESET]: CUSTOM });
@@ -50,15 +51,6 @@ export function SushiSetup({ values, setMany, players }: SetupProps) {
 
   return (
     <>
-      <Section title="Menu">
-        <label className="switch-row">
-          <span>
-            <strong>Mode assistant</strong>
-            <span className="hint block">Menus du règlement et choix du menu par catégories, avec les limites selon le nombre de joueurs.</span>
-          </span>
-          <input type="checkbox" checked={assistant} onChange={(e) => setMany({ [SETTING_ASSISTANT]: String(e.target.checked) })} />
-        </label>
-      </Section>
       {assistant && (
         <Section title="Menus du règlement">
           <Choices

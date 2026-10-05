@@ -329,7 +329,7 @@ const sushi = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "À la création, choisis le menu : les makis, le dessert et les hors-d'œuvre et suppléments de ta partie. L'appli ne propose que ces cartes à la saisie.",
-        "Mode assistant (à activer à la création) : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
+        "Mode assistant (à activer en bas de l'accueil, jeux marqués ✨) : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
         "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte.",
         "Les points s'affichent en direct et les comparaisons se font entre tous les joueurs : pense à saisir tout le monde avant de valider.",
         "Menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",

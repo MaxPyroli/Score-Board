@@ -7,7 +7,6 @@ import type { GameModule, Scores } from "../core";
 
 export const SETTING_ROLL = "roll";
 export const SETTING_DESSERT = "dessert";
-export const SETTING_ASSISTANT = "assistant";
 export const SETTING_PRESET = "preset";
 
 export type Roll = "maki" | "temaki" | "california";
@@ -78,9 +77,9 @@ export function presetSettings(p: PresetMenu): Record<string, string> {
   };
 }
 
-/** Valeurs de départ de la préparation d'une partie : menu classique, mode assistant désactivé. */
+/** Valeurs de départ de la préparation d'une partie : menu classique. */
 export const SETUP_DEFAULTS: Record<string, string> = {
-  [SETTING_ASSISTANT]: "false", [SETTING_PRESET]: "classique", ...presetSettings(PRESET_MENUS[1]),
+  [SETTING_PRESET]: "classique", ...presetSettings(PRESET_MENUS[1]),
 };
 
 /** Le menu choisi est-il complet (1 makis, 3 hors-d'œuvre, 2 suppléments, 1 dessert) et jouable à ce nombre de joueurs ? */

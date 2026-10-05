@@ -4,7 +4,7 @@ Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnal
 
 ## v0.013 · 5 oct. 2026
 - L'accueil affiche d'abord les parties en cours.
-- Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs). Tu choisis le menu à la création (makis, hors-d'œuvre, suppléments dont le wasabi, dessert) ; saisie des 3 manches puis des desserts ; points calculés tout seuls, comparaisons entre joueurs comprises (makis, temaki, California, flans, edamame, sauce soja). Mode assistant (à activer) : les huit menus du règlement et le choix par catégories.
+- Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs). Tu choisis le menu à la création (makis, hors-d'œuvre, suppléments dont le wasabi, dessert) ; saisie des 3 manches puis des desserts ; points calculés tout seuls, comparaisons entre joueurs comprises (makis, temaki, California, flans, edamame, sauce soja). Mode assistant (à activer en bas de l'accueil, jeux marqués ✨) : les huit menus du règlement et le choix par catégories.
 
 ## v0.012 · 5 oct. 2026
 - Notes de version : lien en bas de l'accueil.

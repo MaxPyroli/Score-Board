@@ -15,7 +15,8 @@ import { CounterEditor, RailEditor, SkyjoEditor, SushiEditor, TarotEditor, Winne
 import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
-import { ROUNDS_BEFORE_DESSERT, SETTING_ASSISTANT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
+import { assistantEnabled } from "../assistant";
+import { ROUNDS_BEFORE_DESSERT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
 export type Values = Record<string, string>;
@@ -95,6 +96,8 @@ export interface GameDefinition {
   numberOptions: NumberOption[];
   choiceOptions?: ChoiceOption[];
   setup?: GameSetup;
+  /** Le jeu a des aides supplémentaires en mode assistant (repéré par ✨ sur l'accueil). */
+  assistant?: boolean;
   /** Réglages imposés par le jeu à toute partie. */
   fixedSettings: Record<string, string>;
   totals(m: StoredMatch): Scores;
@@ -351,7 +354,8 @@ function sushiGame(): GameDefinition {
     tagline: "2 à 8 joueurs · menu de ton choix, makis, flans et comparaisons calculés",
     minPlayers: sushiModule.minPlayers, maxPlayers: sushiModule.maxPlayers,
     options: [],
-    setup: { defaults: SETUP_DEFAULTS, Component: SushiSetup, problem: (v, players) => (v[SETTING_ASSISTANT] === "true" ? menuProblem(v, players) : null) },
+    setup: { defaults: SETUP_DEFAULTS, Component: SushiSetup, problem: (v, players) => (assistantEnabled() ? menuProblem(v, players) : null) },
+    assistant: true,
     numberOptions: [], fixedSettings: {},
     totals: t,
     roundScores: (m) => roundScores(sushiModule, m),

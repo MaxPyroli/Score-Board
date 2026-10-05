@@ -4,6 +4,7 @@ import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, rena
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { ChangelogSheet } from "./ChangelogSheet";
+import { setAssistantEnabled, useAssistant } from "../assistant";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
@@ -31,6 +32,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const assistant = useAssistant();
   return (
     <div className="screen">
       <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
@@ -76,6 +78,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
                   <strong>{g.displayName}</strong>
                   <span className="hint">{g.tagline}</span>
+                  {assistant && g.assistant && <span className="sparkle" role="img" aria-label="Mode assistant disponible" title="Mode assistant disponible">✨</span>}
                 </button>
               );
             })}
@@ -84,6 +87,10 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
       </main>
       <footer className="footer">
         <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
+        <label className="assistant-toggle" title="Ajoute des aides aux jeux marqués ✨ (menus, choix par catégories…)">
+          <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
+          <span>Mode assistant</span>
+        </label>
         <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
       </footer>
       {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
