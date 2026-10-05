@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMaxYMid slice">
+  <defs>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b5d8a"/>
+      <stop offset=".25" stop-color="#2a8f9e"/>
+      <stop offset=".5" stop-color="#4fb46a"/>
+      <stop offset=".72" stop-color="#e8c23a"/>
+      <stop offset=".88" stop-color="#ee7a2e"/>
+      <stop offset="1" stop-color="#d63c3c"/>
+    </linearGradient>
+    <g id="card">
+      <rect x="-34" y="-48" width="68" height="96" rx="9" fill="#fff" fill-opacity=".94"/>
+      <rect x="-28" y="-42" width="56" height="84" rx="6" fill="none" stroke="currentColor" stroke-width="3" stroke-opacity=".5"/>
+    </g>
+  </defs>
+  <rect width="800" height="400" fill="url(#rainbow)"/>
+  <g font-family="system-ui, Arial, sans-serif" font-weight="800" text-anchor="middle" font-size="40">
+    <g transform="translate(470 120) rotate(-14)" color="#7b3fa8"><use href="#card"/><text y="14" fill="currentColor">−2</text></g>
+    <g transform="translate(560 270) rotate(9)" color="#1d6fb8"><use href="#card"/><text y="14" fill="currentColor">0</text></g>
+    <g transform="translate(640 110) rotate(8)" color="#2f9a58"><use href="#card"/><text y="14" fill="currentColor">3</text></g>
+    <g transform="translate(720 250) rotate(-10)" color="#d9a31c"><use href="#card"/><text y="14" fill="currentColor">7</text></g>
+    <g transform="translate(790 90) rotate(14)" color="#d23b3b"><use href="#card"/><text y="14" fill="currentColor">12</text></g>
+  </g>
+</svg>
