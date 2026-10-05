@@ -41,8 +41,9 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                   key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
-                  {!bg && <GameArt gameId={g.id} />}
-                  {logo ? <img className="game-logo" src={logo} alt={g.displayName} /> : <strong>{g.displayName}</strong>}
+                  {!bg && !logo && <GameArt gameId={g.id} />}
+                  {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
+                  <strong>{g.displayName}</strong>
                   <span className="hint">{g.tagline}</span>
                 </button>
               );
