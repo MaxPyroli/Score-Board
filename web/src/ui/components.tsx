@@ -40,7 +40,7 @@ export const Section = ({ title, children }: { title: string; children: ReactNod
   </section>
 );
 
-export function TopBar({ title, onBack, actions }: { title: string; onBack?: () => void; actions?: ReactNode }) {
+export function TopBar({ title, onBack, actions }: { title: ReactNode; onBack?: () => void; actions?: ReactNode }) {
   return (
     <header className="topbar">
       {onBack ? <button className="icon" aria-label="Retour" onClick={onBack}>←</button> : <span className="icon-gap" />}

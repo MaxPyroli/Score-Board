@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// « Mode assistant » : réglage de l'appareil, activé en bas de l'accueil. Il ajoute aux jeux compatibles (marqués ✨)
+// « Mode assistant » : réglage de l'appareil, activé en bas de l'accueil. Il ajoute aux jeux compatibles (repérés par un tampon)
 // des aides plus poussées (par exemple les menus et le choix par catégories de Sushi Go Party !).
 
 const KEY = "scoreboard.assistant";

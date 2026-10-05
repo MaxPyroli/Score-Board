@@ -96,7 +96,7 @@ export interface GameDefinition {
   numberOptions: NumberOption[];
   choiceOptions?: ChoiceOption[];
   setup?: GameSetup;
-  /** Le jeu a des aides supplémentaires en mode assistant (repéré par ✨ sur l'accueil). */
+  /** Le jeu a des aides supplémentaires en mode assistant (repéré par un tampon sur l'accueil). */
   assistant?: boolean;
   /** Réglages imposés par le jeu à toute partie. */
   fixedSettings: Record<string, string>;

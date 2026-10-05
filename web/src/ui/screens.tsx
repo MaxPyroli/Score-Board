@@ -3,6 +3,7 @@ import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./component
 import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, validName, withSetting, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
+import { Meeple } from "./Meeple";
 import { ChangelogSheet } from "./ChangelogSheet";
 import { setAssistantEnabled, useAssistant } from "../assistant";
 import { CONTACT_URL, versionLabel } from "../version";
@@ -35,7 +36,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
   const assistant = useAssistant();
   return (
     <div className="screen">
-      <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
+      <TopBar title={<><Meeple />Score Board</>} actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
       <main className="content">
         {matches.length > 0 && (
         <Section title="Parties en cours">
@@ -71,14 +72,20 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
               const logo = gameImage(g.id, "logo");
               return (
                 <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
+                  <span className="box-frame" aria-hidden="true" />
+                  {g.assistant && assistant && <span className="shine" aria-hidden="true" />}
                   {!bg && !logo && <GameArt gameId={g.id} />}
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
                   <strong>{g.displayName}</strong>
                   <span className="hint">{g.tagline}</span>
-                  {assistant && g.assistant && <span className="sparkle" role="img" aria-label="Mode assistant disponible" title="Mode assistant disponible">✨</span>}
+                  {g.assistant && assistant && (
+                    <span className="assistant-stamp on" title="Mode assistant activé">
+                      <span>Compatible</span><span>mode assistant</span>
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -87,7 +94,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
       </main>
       <footer className="footer">
         <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
-        <label className="assistant-toggle" title="Ajoute des aides aux jeux marqués ✨ (menus, choix par catégories…)">
+        <label className="assistant-toggle" title="Ajoute des aides aux jeux compatibles, marqués d'un tampon (menus, choix par catégories…)">
           <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
           <span>Mode assistant</span>
         </label>
