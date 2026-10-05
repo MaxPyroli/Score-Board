@@ -5,7 +5,7 @@ Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnal
 ## v0.013 · 5 oct. 2026
 - L'accueil affiche d'abord les parties en cours.
 - Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs), avec un compteur classique par manche (les invités peuvent saisir leur score).
-- Mode assistant (à activer en bas de l'accueil, jeux marqués ✨) : pour Sushi Go Party !, choix du menu (les 8 du règlement ou par catégories) et décompte carte par carte, comparaisons entre joueurs comprises (makis, temaki, California, flans, edamame, sauce soja).
+- Mode assistant (à activer en bas de l'accueil, jeux avec le tampon « compatible mode assistant ») : pour Sushi Go Party !, choix du menu (les 8 du règlement ou par catégories) et décompte carte par carte, comparaisons entre joueurs comprises (makis, temaki, California, flans, edamame, sauce soja).
 
 ## v0.012 · 5 oct. 2026
 - Notes de version : lien en bas de l'accueil.

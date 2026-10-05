@@ -72,7 +72,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
               const logo = gameImage(g.id, "logo");
               return (
                 <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant ? (assistant ? "assist assist-on" : "assist") : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
                   <span className="box-frame" aria-hidden="true" />
@@ -81,8 +81,8 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
                   <strong>{g.displayName}</strong>
                   <span className="hint">{g.tagline}</span>
-                  {g.assistant && (
-                    <span className={`assistant-stamp ${assistant ? "on" : ""}`} title={assistant ? "Mode assistant activé" : "Active le mode assistant en bas de l'accueil"}>
+                  {g.assistant && assistant && (
+                    <span className="assistant-stamp on" title="Mode assistant activé">
                       <span>Compatible</span><span>mode assistant</span>
                     </span>
                   )}
@@ -94,7 +94,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
       </main>
       <footer className="footer">
         <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
-        <label className="assistant-toggle" title="Ajoute des aides aux jeux marqués ✨ (menus, choix par catégories…)">
+        <label className="assistant-toggle" title="Ajoute des aides aux jeux compatibles, marqués d'un tampon (menus, choix par catégories…)">
           <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
           <span>Mode assistant</span>
         </label>
