@@ -78,6 +78,8 @@ export type HostStatus = "starting" | "sharing" | "error";
 export interface HostInfo {
   status: HostStatus;
   code: string;
+  /** Identifiant anonyme de l'appareil de l'hôte. */
+  ownUid: string;
   /** Appareils connectés autres que celui de l'hôte. */
   viewers: number;
   /** Joueurs actuellement connectés. */
@@ -117,6 +119,7 @@ export class HostSession {
     this.onChange({
       status,
       code: this.code,
+      ownUid: this.ownUid,
       viewers: this.claims.filter((c) => c.uid !== this.ownUid).length,
       online: this.claims.filter((c) => c.p).map((c) => c.p),
       claims: this.claims,
@@ -182,7 +185,7 @@ export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
   | { kind: "failed"; reason: FailReason }
-  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean; online: string[]; claims: Claim[] };
+  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean; online: string[]; claims: Claim[]; myUid: string };
 
 const FIRST_ANSWER_MS = 20000;
 
@@ -198,6 +201,7 @@ export class SpectatorSession {
   private identity: ClaimData | null = null;
   private online: string[] = [];
   private claims: Claim[] = [];
+  private myUid = "";
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
@@ -211,7 +215,7 @@ export class SpectatorSession {
   }
 
   private emitLive() {
-    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended, online: this.online, claims: this.claims });
+    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended, online: this.online, claims: this.claims, myUid: this.myUid });
   }
 
   private async start() {
@@ -235,6 +239,7 @@ export class SpectatorSession {
           this.match = match;
           this.ended = false;
           if (!this.announcer) {
+            void backend.uid().then((u) => { this.myUid = u; this.emitLive(); });
             this.announcer = backend.announce(this.code);
             this.stopFns.push(() => this.announcer?.stop());
             if (this.identity) this.announcer.set(this.identity);

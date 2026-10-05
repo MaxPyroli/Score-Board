@@ -5,6 +5,7 @@ import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
+import { useRecentlyGone } from "../presence";
 import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
 import { GuestEntryCard, HostEntryPanel } from "./entry";
 import type { ClaimData } from "../backend";
@@ -225,7 +226,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, ended }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, taken, ended }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -249,6 +250,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   entries?: Entries;
   /** Hôte : saisie faite par l'hôte pour un joueur sans l'appli. */
   onHostEntry?: (playerId: string, entry: Entry) => void;
+  /** Joueurs déjà pris par un autre appareil connecté. */
+  taken?: string[];
   /** Invité : l'hôte a arrêté le partage (plus de saisie possible). */
   ended?: boolean;
 }) {
@@ -273,6 +276,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
 
   // « Qui suis-je ? » et fin de partie
   const [me, setMe] = useMe(match);
+  const recent = useRecentlyGone(taken ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const finished = isFinished(match);
   const [hideFinal, setHideFinal] = useState(false);
@@ -341,7 +345,10 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <PlayerGrid players={match.players}>
             {(p) => (
               <span className="name">
-                {online && <span className={`dot ${online.includes(p.id) ? "on" : "off"}`} role="img" aria-label={online.includes(p.id) ? "connecté" : "hors ligne"} />}
+                {online && (() => {
+                  const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : "off";
+                  return <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : state === "recent" ? "déconnecté depuis peu" : "hors ligne"} />;
+                })()}
                 {p.name}
               </span>
             )}
@@ -365,7 +372,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
-        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> hors ligne</p>}
+        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot recent" /> déconnecté depuis peu · <span className="dot off" /> hors ligne</p>}
         {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}
@@ -430,7 +437,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       )}
       {showPicker && (
         <WhoAreYou
-          match={match} current={me}
+          match={match} current={me} taken={taken} recent={recent}
           onPick={(id) => { setMe(id); setPickerOpen(false); }}
           onClose={askWho && me === undefined ? undefined : () => setPickerOpen(false)}
         />

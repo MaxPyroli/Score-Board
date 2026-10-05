@@ -34,3 +34,11 @@ export function tryBuildRound(game: GameDefinition, match: StoredMatch, entries:
   if (waiting.length > 0) return { waiting };
   return config.build(match, entries);
 }
+
+/**
+ * Joueurs « pris » : représentés par un autre appareil actuellement connecté. Un appareil déconnecté n'a plus
+ * de signature, donc sa place redevient libre ; cet appareil-ci (`myUid`) ne bloque jamais son propre choix.
+ */
+export function takenPlayers(claims: Claim[], myUid: string): string[] {
+  return [...new Set(claims.filter((c) => c.p && c.uid !== myUid).map((c) => c.p))];
+}

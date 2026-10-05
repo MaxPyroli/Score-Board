@@ -3,19 +3,32 @@ import { Dialog } from "./components";
 import { MAX_NAME_LENGTH, finalMessage, ordinal, plain, type RankedPlayer, type StoredMatch } from "../core";
 
 /** « Qui es-tu ? » : choisir son joueur dans la partie (ou regarder seulement). */
-export function WhoAreYou({ match, current, onPick, onClose }: {
+export function WhoAreYou({ match, current, taken = [], recent = [], onPick, onClose }: {
   match: StoredMatch;
   current: string | null | undefined;
+  /** Joueurs déjà pris par un autre appareil connecté (la place se libère à sa déconnexion). */
+  taken?: string[];
+  /** Joueurs dont l'appareil s'est déconnecté depuis peu : place encore réservée. */
+  recent?: string[];
   onPick(id: string | null): void;
   onClose?: () => void;
 }) {
   return (
     <Dialog title="Qui es-tu ?" onClose={onClose ?? (() => onPick(null))}>
-      <p className="hint">Choisis ton nom : à la fin de la partie, tu verras si tu as gagné.</p>
+      <p className="hint">Choisis ton nom : à la fin de la partie, tu verras si tu as gagné.{(taken.length > 0 || recent.length > 0) && " La place d'un joueur déconnecté reste réservée quelques minutes, puis se libère."}</p>
       <div className="pick">
-        {match.players.map((p) => (
-          <button key={p.id} className={`btn ${current === p.id ? "" : "outline"}`} onClick={() => onPick(p.id)}>{p.name}</button>
-        ))}
+        {match.players.map((p) => {
+          const busy = taken.includes(p.id) && current !== p.id;
+          const held = !busy && recent.includes(p.id) && current !== p.id;
+          return busy || held ? (
+            <div key={p.id} className="pick-taken">
+              <button className="btn outline" disabled>{p.name} · {busy ? "déjà pris" : "déconnecté depuis peu"}</button>
+              <button className="link" onClick={() => onPick(p.id)}>{busy ? "Reprendre quand même" : "Reprendre sa place"}</button>
+            </div>
+          ) : (
+            <button key={p.id} className={`btn ${current === p.id ? "" : "outline"}`} onClick={() => onPick(p.id)}>{p.name}</button>
+          );
+        })}
         <button className="link" onClick={() => onPick(null)}>Je regarde seulement</button>
       </div>
     </Dialog>

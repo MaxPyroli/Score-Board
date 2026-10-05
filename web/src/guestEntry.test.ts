@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entriesFromClaims, tryBuildRound } from "./guestEntry";
+import { entriesFromClaims, takenPlayers, tryBuildRound } from "./guestEntry";
 import { gameById } from "./games/registry";
 import type { StoredMatch } from "./core";
 
@@ -44,5 +44,13 @@ describe("manche prête ?", () => {
   });
   it("Tarot : pas de saisie par les joueurs", () => {
     expect(tryBuildRound(gameById("tarot")!, match("tarot"), {})).toHaveProperty("error");
+  });
+});
+
+describe("places prises", () => {
+  it("un joueur est pris par un autre appareil connecté, jamais par soi-même ni par un simple spectateur", () => {
+    const claims = [{ uid: "me", p: "A" }, { uid: "u2", p: "B" }, { uid: "u3", p: "" }, { uid: "u4", p: "B" }, { uid: "u5", p: "C", r: 1, s: "4" }];
+    expect(takenPlayers(claims, "me")).toEqual(["B", "C"]);
+    expect(takenPlayers([], "me")).toEqual([]);
   });
 });
