@@ -80,18 +80,21 @@ export default function App() {
   }, []);
   useEffect(() => { if (screen.kind !== "join") leaveJoin(); }, [screen.kind, leaveJoin]);
 
-  // Lien du QR code (#join=CODE) : ouvre directement l'écran « rejoindre ».
-  const hashHandled = useRef(false);
-  useEffect(() => {
-    if (hashHandled.current) return;
-    hashHandled.current = true;
+  // Lien du QR code (#join=CODE) : ouvre directement l'écran « rejoindre », au chargement comme si le site est déjà ouvert.
+  const openFromHash = useCallback(() => {
     const code = codeFromHash(location.hash);
     if (!code) return;
-    history.replaceState({ depth: 0 }, "", location.pathname + location.search);
+    history.replaceState(history.state, "", location.pathname + location.search);
     setInitialCode(code);
     nav.push({ kind: "join" });
     startJoin(code);
-  }); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const hashHandled = useRef(false);
+  useEffect(() => {
+    if (!hashHandled.current) { hashHandled.current = true; openFromHash(); }
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [openFromHash]);
 
   if (screen.kind === "home")
     return (
@@ -110,7 +113,7 @@ export default function App() {
     if (live && liveGame)
       return (
         <MatchScreen
-          match={live.match} game={liveGame} readOnly title={`${liveGame.displayName} · lecture seule`}
+          match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
             ? <p className="note-lost">L'hôte a arrêté le partage : voici la dernière version.</p>

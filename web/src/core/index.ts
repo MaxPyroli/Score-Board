@@ -114,3 +114,49 @@ export function describeTarget(players: Player[], t: Scores, target: number | nu
   const leadText = lead ? ` En tête : ${lead.name} (${plain(t[lead.id])}).` : "";
   return `Objectif de ${goal} atteint par ${reached.map((p) => p.name).join(", ")}.${leadText}`;
 }
+
+// ---------- Fin de partie et classement ----------
+
+/** Réglage de partie (texte, comme les autres) : « true » une fois la partie terminée par l'hôte. */
+export const SETTING_FINISHED = "finished";
+export const isFinished = (m: StoredMatch): boolean => flag(m, SETTING_FINISHED);
+export const withSetting = (m: StoredMatch, key: string, value: string): StoredMatch => ({ ...m, settings: { ...m.settings, [key]: value } });
+
+export interface RankedPlayer {
+  player: Player;
+  total: number;
+  /** 1 = vainqueur ; les ex æquo partagent le même rang. */
+  rank: number;
+}
+
+/** Classement du meilleur au moins bon, selon le sens du jeu ; égalité = même rang, ordre de la table conservé. */
+export function ranking(players: Player[], t: Scores, lowestWins: boolean): RankedPlayer[] {
+  const value = (p: Player) => t[p.id] ?? 0;
+  const sorted = [...players].sort((a, b) => (lowestWins ? value(a) - value(b) : value(b) - value(a)));
+  let rank = 0;
+  let previous: number | null = null;
+  return sorted.map((player, i) => {
+    const total = value(player);
+    if (previous === null || total !== previous) { rank = i + 1; previous = total; }
+    return { player, total, rank };
+  });
+}
+
+export const ordinal = (rank: number): string => (rank === 1 ? "1er" : `${rank}e`);
+
+/** Texte de l'écran de fin : personnel si `meId` est un joueur de la partie, sinon général. */
+export function finalMessage(ranked: RankedPlayer[], meId: string | null): { headline: string; detail: string } {
+  const winners = ranked.filter((r) => r.rank === 1);
+  const winnerNames = winners.map((w) => w.player.name).join(" et ");
+  const winnerText = winners.length === 1 ? `${winnerNames} gagne` : `${winnerNames} gagnent à égalité`;
+  const me = meId === null ? undefined : ranked.find((r) => r.player.id === meId);
+  if (!me) return { headline: winners.length === 1 ? `${winnerNames} gagne la partie !` : `${winnerNames} gagnent à égalité !`, detail: "" };
+  const score = `${plain(me.total)} point${Math.abs(me.total) > 1 ? "s" : ""}`;
+  if (me.rank === 1) {
+    return {
+      headline: winners.length === 1 ? "Tu as gagné !" : "Victoire à égalité !",
+      detail: `Tu finis ${ordinal(1)} avec ${score}.`,
+    };
+  }
+  return { headline: "Tu as perdu", detail: `${winnerText} · tu finis ${ordinal(me.rank)} sur ${ranked.length} avec ${score}.` };
+}

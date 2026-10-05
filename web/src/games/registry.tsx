@@ -46,6 +46,8 @@ export interface GameDefinition {
   roundScores(m: StoredMatch): Scores[];
   describeRound(m: StoredMatch, index: number): { headline: string; detail: string };
   status(m: StoredMatch): string | null;
+  /** Le plus petit score gagne-t-il ? */
+  lowestWins(m: StoredMatch): boolean;
   /** Joueur en tête (sens du jeu respecté), ou `null`. */
   leaderId(m: StoredMatch): string | null;
   Editor: ComponentType<EditorProps>;
@@ -76,6 +78,7 @@ function counterGame(
     roundScores: (m) => roundScores(module, m),
     describeRound: () => ({ headline: "", detail: "" }),
     status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m)),
+    lowestWins: lowest,
     leaderId: (m) => leader(m.players, totals(module, m), lowest(m))?.id ?? null,
     Editor: (props) => <CounterEditor {...props} module={module} allowNegative={allowNegative} />,
   };
@@ -91,6 +94,7 @@ function buildGames(): GameDefinition[] {
     roundScores: (m) => roundScores(tarotModule, m),
     describeRound: (m, i) => summarize(tarotModule.decodeRound(m.rounds[i]), nameMap(m)),
     status: () => null,
+    lowestWins: () => false,
     leaderId: (m) => leader(m.players, totals(tarotModule, m), false)?.id ?? null,
     Editor: TarotEditor,
   };
@@ -103,6 +107,7 @@ function buildGames(): GameDefinition[] {
     roundScores: (m) => roundScores(skyjoModule, m),
     describeRound: (m, i) => summarizeSkyjo(skyjoModule.decodeRound(m.rounds[i]), nameMap(m)),
     status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true),
+    lowestWins: () => true,
     leaderId: (m) => leader(m.players, totals(skyjoModule, m), true)?.id ?? null,
     Editor: SkyjoEditor,
   };

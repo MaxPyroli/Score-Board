@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
-import { matchWithoutLastRound, plain, type Player, type StoredMatch } from "../core";
+import { isFinished, matchWithoutLastRound, plain, ranking, SETTING_FINISHED, targetOf, withSetting, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition } from "../games/registry";
 import { newId } from "../store";
 import { CONTACT_URL, versionLabel } from "../version";
+import { useMe } from "../me";
+import { FinalScreen, WhoAreYou } from "./final";
 
 // ---------------------------------------------------------------- Accueil
 
@@ -173,7 +175,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -187,6 +189,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   /** Partage en cours de cette partie (code et nombre de spectateurs). */
   sharing?: { code: string; viewers: number } | null;
   onShare?: () => void;
+  /** Invité : demande « Qui es-tu ? » à l'arrivée. */
+  askWho?: boolean;
 }) {
   const totals = game.totals(match);
   const roundScores = game.roundScores(match);
@@ -207,6 +211,17 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   };
   const compact = match.players.length > 6;
 
+  // « Qui suis-je ? » et fin de partie
+  const [me, setMe] = useMe(match);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const finished = isFinished(match);
+  const [hideFinal, setHideFinal] = useState(false);
+  useEffect(() => setHideFinal(false), [finished]);
+  const ranked = ranking(match.players, totals, game.lowestWins(match));
+  const showPicker = pickerOpen || (!!askWho && me === undefined);
+  const target = targetOf(match);
+  const reached = !finished && !readOnly && target !== null && match.players.some((p) => (totals[p.id] ?? 0) >= target);
+
   return (
     <div className="screen">
       <TopBar
@@ -220,6 +235,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             {menu && (
               <div className="menu" onClick={() => setMenu(false)}>
                 <button disabled={match.rounds.length === 0} onClick={undo}>Annuler la dernière manche</button>
+                <button disabled={match.rounds.length === 0 || finished} onClick={() => onChange(withSetting(match, SETTING_FINISHED, "true"))}>Terminer la partie</button>
+                <button onClick={() => setPickerOpen(true)}>Qui suis-je ?</button>
                 <button onClick={() => setConfirmDelete(true)}>Supprimer la partie</button>
               </div>
             )}
@@ -241,6 +258,14 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </p>
         )}
         {status && <p className="status">{status}</p>}
+        {reached && <button className="btn small" onClick={() => onChange(withSetting(match, SETTING_FINISHED, "true"))}>Terminer la partie</button>}
+        {(me !== undefined && me !== null) && (
+          <p className="hint me-note">
+            Tu joues : <strong>{match.players.find((p) => p.id === me)?.name}</strong>
+            <button onClick={() => setPickerOpen(true)}>changer</button>
+          </p>
+        )}
+        {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
 
         {match.rounds.length === 0 ? (
           <p className="hint empty">Aucune manche pour l'instant.{!readOnly && <><br />Appuie sur « Nouvelle manche » pour commencer.</>}</p>
@@ -270,6 +295,21 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           Dernière manche annulée
           <button onClick={() => { onChange(undone); setUndone(null); }}>Rétablir</button>
         </div>
+      )}
+      {showPicker && (
+        <WhoAreYou
+          match={match} current={me}
+          onPick={(id) => { setMe(id); setPickerOpen(false); }}
+          onClose={askWho && me === undefined ? undefined : () => setPickerOpen(false)}
+        />
+      )}
+      {finished && !hideFinal && (
+        <FinalScreen
+          ranked={ranked} meId={me ?? null}
+          onClose={() => setHideFinal(true)}
+          onChangeMe={() => setPickerOpen(true)}
+          onResume={readOnly ? undefined : () => onChange(withSetting(match, SETTING_FINISHED, "false"))}
+        />
       )}
       {confirmDelete && (
         <Dialog title="Supprimer la partie ?" onClose={() => setConfirmDelete(false)}>
