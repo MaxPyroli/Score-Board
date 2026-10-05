@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMaxYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b4430c"/>
+      <stop offset=".55" stop-color="#e9873a"/>
+      <stop offset="1" stop-color="#f3c36a"/>
+    </linearGradient>
+    <!-- Tête de bovin stylisée (dessin original) : cornes, oreilles, front et museau -->
+    <g id="head">
+      <path d="M-30-38C-62-44-70-72-52-86-54-62-40-52-26-50Z" fill="#fff4d6"/>
+      <path d="M30-38C62-44 70-72 52-86 54-62 40-52 26-50Z" fill="#fff4d6"/>
+      <ellipse cx="-40" cy="-22" rx="16" ry="9" transform="rotate(-20 -40 -22)" fill="#f0c9a0"/>
+      <ellipse cx="40" cy="-22" rx="16" ry="9" transform="rotate(20 40 -22)" fill="#f0c9a0"/>
+      <path d="M-34-40Q0-56 34-40L28 8Q0 22-28 8Z" fill="#fff"/>
+      <ellipse cx="0" cy="26" rx="26" ry="20" fill="#f5b8a0"/>
+      <circle cx="-9" cy="26" r="3.5" fill="#8a4a3a"/>
+      <circle cx="9" cy="26" r="3.5" fill="#8a4a3a"/>
+      <circle cx="-17" cy="-12" r="4.5" fill="#3b2418"/>
+      <circle cx="17" cy="-12" r="4.5" fill="#3b2418"/>
+    </g>
+  </defs>
+  <rect width="800" height="400" fill="url(#sky)"/>
+  <circle cx="610" cy="120" r="64" fill="#fff0b8" fill-opacity=".7"/>
+  <path d="M300 400V300Q420 230 540 290T800 260V400Z" fill="#4c8a3c"/>
+  <path d="M380 400V335Q520 280 650 330T800 310V400Z" fill="#336b2c"/>
+  <g opacity=".95">
+    <use href="#head" transform="translate(470 215) scale(.8)"/>
+    <use href="#head" transform="translate(640 190) scale(1.15)"/>
+    <use href="#head" transform="translate(760 300) scale(.7)"/>
+    <use href="#head" transform="translate(560 330) scale(.55)" opacity=".8"/>
+  </g>
+</svg>
