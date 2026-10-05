@@ -1,7 +1,7 @@
 import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, signInAnonymously } from "firebase/auth";
 import { getDatabase, onDisconnect, onValue, ref, remove, serverTimestamp, set } from "firebase/database";
-import type { Backend, Claim } from "./backend";
+import type { Backend, Claim, ClaimData } from "./backend";
 
 /** Partage via Firebase Realtime Database : connexion anonyme, une entrée par code. Règles : firebase/database.rules.json. */
 export function createFirebaseBackend(config: FirebaseOptions): Backend {
@@ -63,8 +63,11 @@ export function createFirebaseBackend(config: FirebaseOptions): Backend {
       })());
       return {
         set(claim) {
-          const value: { p: string; n?: string } = { p: claim.p };
+          const value: ClaimData = { p: claim.p };
           if (claim.n) value.n = claim.n;
+          if (claim.r !== undefined) value.r = claim.r;
+          if (claim.s !== undefined) value.s = claim.s;
+          if (claim.f) value.f = true;
           void getRef().then((r) => (stopped ? undefined : set(r, value))).catch(() => {});
         },
         stop() {
@@ -82,7 +85,14 @@ export function createFirebaseBackend(config: FirebaseOptions): Backend {
           s.forEach((child) => {
             const v = child.val();
             if (v && typeof v === "object" && typeof v.p === "string") {
-              claims.push({ uid: child.key as string, p: v.p, ...(typeof v.n === "string" ? { n: v.n } : {}) });
+              claims.push({
+                uid: child.key as string,
+                p: v.p,
+                ...(typeof v.n === "string" ? { n: v.n } : {}),
+                ...(typeof v.r === "number" ? { r: v.r } : {}),
+                ...(typeof v.s === "string" ? { s: v.s } : {}),
+                ...(v.f === true ? { f: true } : {}),
+              });
             }
           });
           cb(claims);

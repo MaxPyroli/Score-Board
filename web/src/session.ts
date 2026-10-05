@@ -2,7 +2,7 @@
 // en lecture seule (Firebase Realtime Database, voir backend.ts et docs/firebase.md).
 import type { StoredMatch } from "./core";
 import { gameById } from "./games/registry";
-import { getBackend, type Backend, type Claim } from "./backend";
+import { getBackend, type Backend, type Claim, type ClaimData } from "./backend";
 
 export const CODE_LENGTH = 4;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O ni 1/I, comme sur Android
@@ -96,7 +96,7 @@ export class HostSession {
   private ownUid = "";
   private offClaims: (() => void) | null = null;
   private announcer: ReturnType<Backend["announce"]> | null = null;
-  private identity: { p: string; n?: string } | null = null;
+  private identity: ClaimData | null = null;
   private wakeLock: { release(): Promise<void> } | null = null;
   private onVisible = () => { if (document.visibilityState === "visible" && !this.stopped) void this.keepAwake(); };
 
@@ -155,9 +155,9 @@ export class HostSession {
   }
 
   /** L'hôte dit quel joueur il est (`""` = aucun) : il apparaît alors comme connecté. */
-  claim(p: string, n?: string) {
-    this.identity = { p, ...(n ? { n } : {}) };
-    this.announcer?.set(this.identity);
+  claim(data: ClaimData) {
+    this.identity = data;
+    this.announcer?.set(data);
   }
 
   update(match: StoredMatch) {
@@ -182,7 +182,7 @@ export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
   | { kind: "failed"; reason: FailReason }
-  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean; online: string[] };
+  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean; online: string[]; claims: Claim[] };
 
 const FIRST_ANSWER_MS = 20000;
 
@@ -195,8 +195,9 @@ export class SpectatorSession {
   private ended = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private announcer: ReturnType<Backend["announce"]> | null = null;
-  private identity: { p: string; n?: string } | null = null;
+  private identity: ClaimData | null = null;
   private online: string[] = [];
+  private claims: Claim[] = [];
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
@@ -210,7 +211,7 @@ export class SpectatorSession {
   }
 
   private emitLive() {
-    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended, online: this.online });
+    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended, online: this.online, claims: this.claims });
   }
 
   private async start() {
@@ -238,6 +239,7 @@ export class SpectatorSession {
             this.stopFns.push(() => this.announcer?.stop());
             if (this.identity) this.announcer.set(this.identity);
             this.stopFns.push(backend.watchClaims(this.code, (claims) => {
+              this.claims = claims;
               this.online = claims.filter((c) => c.p).map((c) => c.p);
               this.emitLive();
             }));
@@ -251,9 +253,9 @@ export class SpectatorSession {
   }
 
   /** Cet appareil dit quel joueur il est (`""` = regarde seulement) et, éventuellement, son nouveau nom. */
-  claim(p: string, n?: string) {
-    this.identity = { p, ...(n ? { n } : {}) };
-    this.announcer?.set(this.identity);
+  claim(data: ClaimData) {
+    this.identity = data;
+    this.announcer?.set(data);
   }
 
   stop() {

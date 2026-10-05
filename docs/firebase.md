@@ -18,7 +18,7 @@
 
 ## Mettre à jour les règles
 
-Quand `firebase/database.rules.json` change (par exemple pour les pastilles « connecté » et le changement de nom),
+Quand `firebase/database.rules.json` change (par exemple pour les pastilles « connecté », le changement de nom et la saisie des scores par les invités),
 recolle son contenu dans l'onglet **Rules** de la base, puis **Publish**.
 
 ## Comment c'est protégé

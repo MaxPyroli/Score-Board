@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { entriesFromClaims, tryBuildRound, type Entry } from "./guestEntry";
 import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
@@ -6,6 +7,7 @@ import { loadResume, patchResume } from "./resume";
 import { UpdateBanner, useAppUpdate } from "./pwa";
 import { HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
+import type { ClaimData } from "./backend";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
 
 type Screen =
@@ -69,7 +71,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const [host, setHost] = useState<(HostInfo & { matchId: string }) | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   // Joueur que l'hôte dit être : gardé ici car il peut être annoncé avant que le partage (re)démarre.
-  const hostClaim = useRef<{ matchId: string; p: string; n?: string } | null>(null);
+  const hostClaim = useRef<{ matchId: string; data: ClaimData } | null>(null);
   const startSharing = (matchId: string, resumeCode?: string) => {
     const m = matches.find((x) => x.id === matchId);
     if (!m) return;
@@ -79,7 +81,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
       if (st.status === "sharing") patchResume({ hosting: { matchId, code: st.code } });
     }, resumeCode);
     const c = hostClaim.current;
-    if (c && c.matchId === matchId) hostRef.current.claim(c.p, c.n);
+    if (c && c.matchId === matchId) hostRef.current.claim(c.data);
   };
   const stopSharing = () => { hostRef.current?.stop(); hostRef.current = null; setHost(null); patchResume({ hosting: undefined }); };
   // Chaque modification de la partie partagée est renvoyée aux spectateurs ; partie supprimée = partage arrêté.
@@ -90,6 +92,28 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     else stopSharing();
   }, [matches]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => hostRef.current?.stop(), []);
+  // Saisies tapées par l'hôte pour des joueurs sans l'appli (valables pour une seule manche).
+  const [hostEntries, setHostEntries] = useState<{ matchId: string; round: number; entries: Record<string, Entry> } | null>(null);
+  const addedRound = useRef<string>("");
+  // Le garde-fou « une seule fois par manche » retombe dès que le nombre de manches change (ajout, annulation).
+  const hostRounds = host ? matches.find((x) => x.id === host.matchId)?.rounds.length : undefined;
+  useEffect(() => { addedRound.current = ""; }, [hostRounds]);
+  // Dès que tous les joueurs ont saisi leur score, l'hôte (version de référence) ajoute la manche.
+  useEffect(() => {
+    if (!host || host.status !== "sharing") return;
+    const m = matches.find((x) => x.id === host.matchId);
+    const g = m && gameById(m.moduleId);
+    if (!m || !g?.guestEntry || m.settings[SETTING_FINISHED] === "true") return;
+    const round = m.rounds.length;
+    const mine = hostEntries && hostEntries.matchId === m.id && hostEntries.round === round ? hostEntries.entries : {};
+    const attempt = tryBuildRound(g, m, { ...mine, ...entriesFromClaims(host.claims, m, round) });
+    const key = `${m.id}:${round}`;
+    if ("raw" in attempt && addedRound.current !== key) {
+      addedRound.current = key; // une seule fois par manche, même si l'effet se redéclenche
+      save(matchWithRound(m, attempt.raw));
+      setHostEntries(null);
+    }
+  }, [host?.claims, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
   // Un invité a changé de nom : l'hôte (version de référence) l'applique si le nom est valide.
   useEffect(() => {
     if (!host) return;
@@ -176,7 +200,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
       return (
         <MatchScreen
           match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
-          online={live.online} onClaim={(p, n) => spectatorRef.current?.claim(p, n)}
+          online={live.online} onClaim={(d) => spectatorRef.current?.claim(d)} ended={live.ended}
+          entries={entriesFromClaims(live.claims, live.match, live.match.rounds.length)}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
             ? <p className="note-lost">L'hôte a arrêté le partage : voici la dernière version.</p>
@@ -216,7 +241,18 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         sharing={host?.matchId === match.id && host.status === "sharing" ? { code: host.code, viewers: host.viewers } : null}
         onShare={() => setShareOpen(true)}
         online={host?.matchId === match.id && host.status === "sharing" ? host.online : null}
-        onClaim={(p, n) => { hostClaim.current = { matchId: match.id, p, n }; hostRef.current?.claim(p, n); }}
+        onClaim={(d) => { hostClaim.current = { matchId: match.id, data: d }; hostRef.current?.claim(d); }}
+        entries={(() => {
+          const round = match.rounds.length;
+          const mine = hostEntries && hostEntries.matchId === match.id && hostEntries.round === round ? hostEntries.entries : {};
+          return { ...mine, ...entriesFromClaims(host?.matchId === match.id ? host.claims : [], match, round) };
+        })()}
+        onHostEntry={(playerId, entry) =>
+          setHostEntries((prev) => {
+            const round = match.rounds.length;
+            const base = prev && prev.matchId === match.id && prev.round === round ? prev.entries : {};
+            return { matchId: match.id, round, entries: { ...base, [playerId]: entry } };
+          })}
       />
       {shareOpen && (
         <ShareDialog

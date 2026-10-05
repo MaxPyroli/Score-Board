@@ -4,8 +4,9 @@ import {
   type GameModule, type Scores, type StoredMatch,
 } from "../core";
 import { tarotModule, summarize } from "./tarot";
-import { SKYJO_DEFAULT_TARGET, skyjoModule, summarizeSkyjo } from "./skyjo";
-import { FREE, SIX_QUI_PREND } from "./counter";
+import type { Entries } from "../guestEntry";
+import { SKYJO_DEFAULT_TARGET, buildSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
+import { FREE, SIX_QUI_PREND, buildFree } from "./counter";
 import { CounterEditor, SkyjoEditor, TarotEditor } from "../ui/editors";
 
 export interface GameOption {
@@ -31,6 +32,15 @@ export interface EditorProps {
   onCancel(): void;
 }
 
+/** Saisie de la manche par les joueurs eux-mêmes (chacun son score), pour les jeux qui s'y prêtent. */
+export interface GuestEntryConfig {
+  /** Le joueur qui a terminé la manche doit être désigné (Skyjo). */
+  finisher: boolean;
+  allowNegative: boolean;
+  /** Manche (texte JSON) construite à partir des saisies de tous les joueurs, ou erreur lisible. */
+  build(match: StoredMatch, entries: Entries): { raw: string } | { error: string };
+}
+
 /** Tout ce que l'interface a besoin de savoir d'un jeu (écrans communs génériques). */
 export interface GameDefinition {
   id: string;
@@ -50,6 +60,8 @@ export interface GameDefinition {
   lowestWins(m: StoredMatch): boolean;
   /** Joueur en tête (sens du jeu respecté), ou `null`. */
   leaderId(m: StoredMatch): string | null;
+  /** Présent si les joueurs peuvent saisir leur propre score (Tarot : hôte seulement pour l'instant). */
+  guestEntry?: GuestEntryConfig;
   Editor: ComponentType<EditorProps>;
 }
 
@@ -80,6 +92,15 @@ function counterGame(
     status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m)),
     lowestWins: lowest,
     leaderId: (m) => leader(m.players, totals(module, m), lowest(m))?.id ?? null,
+    guestEntry: {
+      finisher: false,
+      allowNegative,
+      build(m, entries) {
+        const ids = m.players.map((p) => p.id);
+        const r = buildFree({ players: ids, texts: Object.fromEntries(ids.map((id) => [id, entries[id].score])), negatives: [] }, nameMap(m), allowNegative);
+        return r.round ? { raw: module.encodeRound(r.round) } : { error: r.error ?? "Saisie invalide." };
+      },
+    },
     Editor: (props) => <CounterEditor {...props} module={module} allowNegative={allowNegative} />,
   };
 }
@@ -109,6 +130,22 @@ function buildGames(): GameDefinition[] {
     status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true),
     lowestWins: () => true,
     leaderId: (m) => leader(m.players, totals(skyjoModule, m), true)?.id ?? null,
+    guestEntry: {
+      finisher: true,
+      allowNegative: true,
+      build(m, entries) {
+        const ids = m.players.map((p) => p.id);
+        const finishers = ids.filter((id) => entries[id].finisher);
+        if (finishers.length !== 1) {
+          return { error: finishers.length === 0 ? "Personne n'a indiqué avoir terminé la manche." : "Plusieurs joueurs disent avoir terminé la manche." };
+        }
+        const r = buildSkyjo(
+          { players: ids, texts: Object.fromEntries(ids.map((id) => [id, entries[id].score])), negatives: [], finisherId: finishers[0] },
+          nameMap(m),
+        );
+        return r.round ? { raw: skyjoModule.encodeRound(r.round) } : { error: r.error ?? "Saisie invalide." };
+      },
+    },
     Editor: SkyjoEditor,
   };
   return [
