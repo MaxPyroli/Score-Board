@@ -80,7 +80,17 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
           maxLength={CODE_LENGTH + 1} placeholder="K7F2" aria-label="Code de la partie"
           value={text} onChange={(e) => setText(e.target.value.toUpperCase())}
         />
-        {state.kind === "failed" && <p className="error">{FAIL_TEXT[state.reason]}</p>}
+        {state.kind === "failed" && (
+          <>
+            <p className="error">{FAIL_TEXT[state.reason]}</p>
+            {state.diag && (
+              <p className="hint">
+                Détails techniques : état {state.diag.ice} · chemins trouvés : {state.diag.host} locaux, {state.diag.srflx} internet,{" "}
+                {state.diag.relay} relais
+              </p>
+            )}
+          </>
+        )}
         <button className="btn full" disabled={!code || busy} onClick={() => code && onJoin(code)}>
           {busy ? "Connexion…" : "Rejoindre"}
         </button>

@@ -60,12 +60,33 @@ export function validateReceived(data: unknown): StoredMatch | null {
   }
 }
 
+/** Serveurs d'aide à la connexion : plusieurs STUN, et le relais gratuit de PeerJS en dernier recours. */
+const ICE_SERVERS = [
+  { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
+  { urls: ["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"], username: "peerjs", credential: "peerjsp" },
+];
+
 /** Annuaire par défaut : celui de PeerJS. `VITE_PEER_SERVER=hote:port` (tests, annuaire maison) le remplace. */
 function peerOptions() {
   const custom = import.meta.env.VITE_PEER_SERVER as string | undefined;
-  if (!custom) return undefined;
+  const base = { config: { iceServers: ICE_SERVERS, sdpSemantics: "unified-plan" } };
+  if (!custom) return base;
   const [host, port] = custom.split(":");
-  return { host, port: Number(port), path: "/", secure: false };
+  return { ...base, host, port: Number(port), path: "/", secure: false };
+}
+
+/** Compteurs de diagnostic d'une connexion directe : types de chemins trouvés et état final. */
+export interface Diag { ice: string; host: number; srflx: number; relay: number }
+
+function watchDiag(conn: DataConnection, diag: Diag) {
+  const pc = (conn as unknown as { peerConnection?: RTCPeerConnection }).peerConnection;
+  if (!pc) return;
+  diag.ice = pc.iceConnectionState;
+  pc.addEventListener("iceconnectionstatechange", () => { diag.ice = pc.iceConnectionState; });
+  pc.addEventListener("icecandidate", (e) => {
+    const t = /typ (host|srflx|relay)/.exec(e.candidate?.candidate ?? "")?.[1] as "host" | "srflx" | "relay" | undefined;
+    if (t) diag[t]++;
+  });
 }
 
 const snapshot = (match: StoredMatch) => ({ v: 1, type: "snapshot", match });
@@ -151,7 +172,7 @@ export type FailReason = "unknown" | "unreachable" | "blocked";
 export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
-  | { kind: "failed"; reason: FailReason }
+  | { kind: "failed"; reason: FailReason; diag?: Diag }
   | { kind: "live"; match: StoredMatch; connected: boolean };
 
 const ATTEMPT_MS = 5000;
@@ -174,11 +195,11 @@ export class SpectatorSession {
   private startedAt = Date.now();
   private brokerOpened = false;
   private lastPeerUnavailable = 0;
+  private diag: Diag = { ice: "—", host: 0, srflx: 0, relay: 0 };
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
-    const opts = peerOptions();
-    this.peer = opts ? new Peer(opts) : new Peer();
+    this.peer = new Peer(peerOptions());
     this.peer.on("open", () => { this.brokerOpened = true; this.attempt(); });
     this.peer.on("error", (err) => {
       if (this.stopped) return;
@@ -202,6 +223,8 @@ export class SpectatorSession {
     const conn = this.peer.connect(PEER_PREFIX + this.code, { reliable: true });
     this.conn = conn;
     this.connStartedAt = Date.now();
+    this.diag = { ice: "—", host: 0, srflx: 0, relay: 0 };
+    watchDiag(conn, this.diag);
     conn.on("data", (data) => {
       const match = validateReceived(data);
       if (!match) return;
@@ -252,7 +275,7 @@ export class SpectatorSession {
     const reason = this.failReason(Date.now()) ?? "blocked";
     const match = this.match;
     this.stop();
-    this.onChange(match ? { kind: "live", match, connected: false } : { kind: "failed", reason });
+    this.onChange(match ? { kind: "live", match, connected: false } : { kind: "failed", reason, diag: this.diag });
   }
 
   stop() {
