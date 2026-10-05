@@ -36,8 +36,8 @@ sur cette branche dans les réglages du dépôt).
   points (attaque / défense en miroir), poignée, petit au bout, chelem, aperçu
   des points en direct.
 
-Jeux disponibles : Tarot, Skyjo, 6 qui prend !, Compteur libre (objectif de points
-facultatif, sens du jeu réglable). Pour un jeu simple, il suffit d'un réglage du compteur ;
+Jeux disponibles : Tarot, Skyjo, 6 qui prend !, Compteur libre (version web : cinq modes — points par manche,
+manches gagnées, compteur direct +/−, vies/élimination, décompte vers zéro). Pour un jeu simple, il suffit d'un réglage du compteur ;
 un jeu avec règles propres (Tarot, Skyjo) a son propre module de règles et son écran de saisie.
 
 Partage de session (hors-ligne, Nearby Connections) : l'hôte partage une partie depuis l'écran de la

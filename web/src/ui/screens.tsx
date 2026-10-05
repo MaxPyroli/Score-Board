@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
-import { isFinished, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, targetOf, validName, withSetting, type Player, type StoredMatch } from "../core";
-import { GAMES, type GameDefinition } from "../games/registry";
+import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, validName, withSetting, type Player, type StoredMatch } from "../core";
+import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
@@ -101,8 +101,20 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 }) {
   const [count, setCount] = useState(Math.max(game.minPlayers, Math.min(4, game.maxPlayers)));
   const [names, setNames] = useState<string[]>(loadNames);
-  const [flags, setFlags] = useState<Record<string, boolean>>(Object.fromEntries(game.options.map((o) => [o.key, o.default])));
-  const [numbers, setNumbers] = useState<Record<string, string>>(Object.fromEntries(game.numberOptions.map((o) => [o.key, o.default ?? ""])));
+  // Tous les réglages sont gardés en texte (« true »/« false », nombres, choix), comme dans la partie.
+  const [values, setValues] = useState<Values>(() => ({
+    ...Object.fromEntries(game.choiceOptions?.map((c) => [c.key, c.default]) ?? []),
+    ...Object.fromEntries(game.options.map((o) => [o.key, String(o.default)])),
+    ...Object.fromEntries(game.numberOptions.map((o) => [o.key, o.default ?? ""])),
+  }));
+  const isVisible = (o: { visibleWhen?: (v: Values) => boolean }) => o.visibleWhen?.(values) ?? true;
+  /** Change un réglage ; les valeurs par défaut qui en dépendent (ex. total de départ selon le mode) sont recalculées. */
+  const setValue = (key: string, value: string) =>
+    setValues((prev) => {
+      const next = { ...prev, [key]: value };
+      for (const o of game.numberOptions) if (o.defaultFor) next[o.key] = o.defaultFor(next) ?? "";
+      return next;
+    });
 
   const groups = loadGroups();
   const useGroup = (group: string[]) => {
@@ -113,7 +125,8 @@ export function NewMatchScreen({ game, onBack, onStart }: {
   const effective = (i: number) => nameAt(i).trim() || `Joueur ${i + 1}`;
   const duplicates = new Set(Array.from({ length: count }, (_, i) => effective(i).toLowerCase())).size !== count;
   const badNumber = game.numberOptions.some((o) => {
-    const t = (numbers[o.key] ?? "").trim();
+    if (!isVisible(o)) return false;
+    const t = (values[o.key] ?? "").trim();
     return t !== "" && !(Number(t.replace(",", ".")) > 0);
   });
 
@@ -124,10 +137,11 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     } catch { /* sans importance */ }
     rememberGroup(players.map((p) => p.name));
     const settings: Record<string, string> = { ...game.fixedSettings };
-    for (const o of game.options) settings[o.key] = String(flags[o.key]);
+    for (const c of game.choiceOptions ?? []) settings[c.key] = values[c.key];
+    for (const o of game.options) if (isVisible(o)) settings[o.key] = values[o.key];
     for (const o of game.numberOptions) {
-      const t = (numbers[o.key] ?? "").trim();
-      if (t !== "") settings[o.key] = t.replace(",", ".");
+      const t = (values[o.key] ?? "").trim();
+      if (isVisible(o) && t !== "") settings[o.key] = t.replace(",", ".");
     }
     onStart({ id: newId(), moduleId: game.id, players, rounds: [], settings, createdAt: Date.now() });
   };
@@ -160,30 +174,45 @@ export function NewMatchScreen({ game, onBack, onStart }: {
           </div>
           {duplicates && <p className="error">Deux joueurs ont le même nom.</p>}
         </Section>
-        {(game.options.length > 0 || game.numberOptions.length > 0) && (
+        {(game.choiceOptions?.length ?? 0) > 0 && game.choiceOptions!.map((c) => (
+          <Section key={c.key} title={c.label}>
+            <div className="choices">
+              {c.choices.map((ch) => (
+                <button
+                  key={ch.value} type="button" className={`card choice ${values[c.key] === ch.value ? "on" : ""}`}
+                  aria-pressed={values[c.key] === ch.value} onClick={() => setValue(c.key, ch.value)}
+                >
+                  <strong>{ch.label}</strong>
+                  <span className="hint">{ch.description}</span>
+                </button>
+              ))}
+            </div>
+          </Section>
+        ))}
+        {(game.options.some(isVisible) || game.numberOptions.some(isVisible)) && (
           <Section title="Réglages">
-            {game.options.map((o) => (
+            {game.options.filter(isVisible).map((o) => (
               <label key={o.key} className="switch-row">
                 <span>
                   <strong>{o.label}</strong>
                   <span className="hint block">{o.description}</span>
                 </span>
-                <input type="checkbox" checked={flags[o.key]} onChange={(e) => setFlags((f) => ({ ...f, [o.key]: e.target.checked }))} />
+                <input type="checkbox" checked={values[o.key] === "true"} onChange={(e) => setValue(o.key, String(e.target.checked))} />
               </label>
             ))}
-            {game.numberOptions.map((o) => (
+            {game.numberOptions.filter(isVisible).map((o) => (
               <label key={o.key} className="switch-row">
                 <span>
-                  <strong>{o.label}</strong>
+                  <strong>{o.labelFor?.(values) ?? o.label}</strong>
                   <span className="hint block">{o.description}</span>
                 </span>
                 <input
-                  className="field" inputMode="decimal" value={numbers[o.key] ?? ""} placeholder="—"
-                  onChange={(e) => setNumbers((n) => ({ ...n, [o.key]: e.target.value }))}
+                  className="field" inputMode="decimal" value={values[o.key] ?? ""} placeholder="—"
+                  onChange={(e) => setValue(o.key, e.target.value)}
                 />
               </label>
             ))}
-            {badNumber && <p className="error">L'objectif doit être un nombre positif.</p>}
+            {badNumber && <p className="error">Les valeurs doivent être des nombres positifs.</p>}
           </Section>
         )}
       </main>
@@ -250,7 +279,6 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   useEffect(() => setHideFinal(false), [finished]);
   const ranked = ranking(match.players, totals, game.lowestWins(match));
   const showPicker = pickerOpen || (!!askWho && me === undefined);
-  const target = targetOf(match);
   const [renameOpen, setRenameOpen] = useState(false);
   const [pendingName, setPendingName] = useState<string | undefined>();
   const myName = match.players.find((p) => p.id === me)?.name;
@@ -283,7 +311,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
     else { const renamed = renamePlayer(match, me, name); if (renamed) onChange(renamed); }
     setRenameOpen(false);
   };
-  const reached = !finished && !readOnly && target !== null && match.players.some((p) => (totals[p.id] ?? 0) >= target);
+  const reached = !finished && !readOnly && match.rounds.length > 0 && game.canFinish(match);
+  const quickSteps = game.quickSteps(match);
 
   return (
     <div className="screen">
@@ -337,14 +366,33 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </p>
         )}
         {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> hors ligne</p>}
-        {readOnly && game.guestEntry && me && !finished && !ended && (
+        {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}
             onSubmit={(entry) => setMyEntry({ r: match.rounds.length, entry })} onWithdraw={() => setMyEntry(null)}
           />
         )}
-        {!readOnly && game.guestEntry && sharing && !finished && onHostEntry && (
+        {!readOnly && game.guestEntry?.(match) && sharing && !finished && onHostEntry && (
           <HostEntryPanel match={match} game={game} entries={entries ?? {}} onEntry={onHostEntry} />
+        )}
+        {quickSteps && !readOnly && !finished && (
+          <div className="card entry-card">
+            <strong>{game.displayName}</strong>
+            {match.players.map((p) => (
+              <div key={p.id} className="entry-row quick">
+                <span className="name">{p.name}</span>
+                <span className="quick-total">{plain(totals[p.id] ?? 0)}</span>
+                <div className="quick-btns">
+                  {quickSteps.map((d) => (
+                    <button
+                      key={d} type="button" className="btn outline small" aria-label={`${p.name} ${d > 0 ? "+" : "−"}${Math.abs(d)}`}
+                      onClick={() => onChange(matchWithRound(match, game.encodeAdjust?.(match, p.id, d) ?? ""))}
+                    >{d > 0 ? "+" : "−"}{Math.abs(d)}</button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
         {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
 
@@ -369,7 +417,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         <div className="spacer big" />
       </main>
 
-      {!readOnly && <button className="fab" onClick={onNewRound}>+ Nouvelle manche</button>}
+      {!readOnly && !quickSteps && <button className="fab" onClick={onNewRound}>+ Nouvelle manche</button>}
 
       {undone && (
         <div className="toast" role="status">

@@ -214,3 +214,11 @@ button.card { text-align: left; width: 100%; }
 .entry-value { color: var(--primary); font-weight: 600; }
 .entry-row.edit { flex-direction: column; align-items: stretch; gap: 4px; }
 .entry-row.edit .entry-field.compact { justify-content: flex-start; }
+
+.choices { display: flex; flex-direction: column; gap: 8px; }
+.choice { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; }
+.choice.on { border-color: var(--primary); background: var(--primary-soft); }
+.entry-row.quick { gap: 8px; }
+.quick-total { min-width: 2.5em; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.quick-btns { display: flex; gap: 6px; }
+.quick-btns .btn { padding: 8px 12px; min-width: 44px; }

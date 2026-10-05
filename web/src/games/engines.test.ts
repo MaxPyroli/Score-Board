@@ -211,3 +211,36 @@ describe("Compteur libre et cœur", () => {
     expect(describeTarget(players, { A: 50, B: 101 }, 100, true)).toBe("Objectif de 100 atteint par Bob. En tête : Ana (50).");
   });
 });
+
+import { adjustRound, changesOf, lowestWinsFor, modeOf, negateRound, startOf, winnerRound } from "./counter";
+
+describe("Compteur libre : modes", () => {
+  it("mode par défaut : points par manche ; modes inconnus ignorés", () => {
+    expect(modeOf({})).toBe("points");
+    expect(modeOf({ mode: "wins" })).toBe("wins");
+    expect(modeOf({ mode: "n'importe quoi" })).toBe("points");
+  });
+  it("points de départ : vies 3, décompte 301, sinon 0 ; réglable", () => {
+    expect(startOf({})).toBe(0);
+    expect(startOf({ mode: "lives" })).toBe(3);
+    expect(startOf({ mode: "countdown" })).toBe(301);
+    expect(startOf({ mode: "countdown", start: "501" })).toBe(501);
+    expect(startOf({ mode: "points", start: "50" })).toBe(0);
+    expect(startOf({ mode: "lives", start: "-2" })).toBe(3);
+  });
+  it("sens du jeu selon le mode", () => {
+    expect(lowestWinsFor({ mode: "countdown" })).toBe(true);
+    expect(lowestWinsFor({ mode: "wins", lowestWins: "true" })).toBe(false);
+    expect(lowestWinsFor({ mode: "lives" })).toBe(false);
+    expect(lowestWinsFor({ mode: "points", lowestWins: "true" })).toBe(true);
+    expect(lowestWinsFor({})).toBe(false);
+  });
+  it("manches de chaque mode", () => {
+    const ids = ["A", "B", "C"];
+    expect(winnerRound(ids, ["B"]).points).toEqual({ A: 0, B: 1, C: 0 });
+    expect(winnerRound(ids, ["A", "C"]).points).toEqual({ A: 1, B: 0, C: 1 });
+    expect(adjustRound(ids, "C", -1).points).toEqual({ A: 0, B: 0, C: -1 });
+    expect(negateRound({ points: { A: 60, B: 0, C: -5 } }).points).toEqual({ A: -60, B: 0, C: 5 });
+    expect(changesOf(adjustRound(ids, "B", 5), ids)).toEqual([{ id: "B", delta: 5 }]);
+  });
+});
