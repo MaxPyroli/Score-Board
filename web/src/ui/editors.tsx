@@ -16,7 +16,7 @@ const title = (match: StoredMatch, index: number | null) =>
 function Frame(props: EditorProps & { children: React.ReactNode; footer: React.ReactNode; canSave: boolean; onValidate(): void }) {
   const { match, roundIndex, onCancel, onDelete, children, footer, canSave, onValidate } = props;
   return (
-    <div className="screen">
+    <div className="screen" data-game={match.moduleId}>
       <TopBar title={title(match, roundIndex)} onBack={onCancel} />
       <main className="content">
         {children}
