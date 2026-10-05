@@ -3,7 +3,21 @@
 Application Android de comptage de points pour jeux de société, en commençant
 par le Tarot. Kotlin + Jetpack Compose, 100 % hors-ligne, stockage local (Room).
 
-## État actuel
+## Version web (`web/`)
+
+Même appli en TypeScript (Vite + React), pour itérer vite et l'utiliser aussi sur iPhone via le navigateur
+(« Ajouter à l'écran d'accueil »). Mêmes règles et mêmes formats de manche que le Kotlin, tests portés.
+Données enregistrées sur l'appareil (localStorage). Pas encore de partage entre appareils.
+
+```bash
+cd web && npm install && npm run dev   # développement avec rechargement instantané
+npm test && npm run build              # tests et construction
+```
+
+Chaque push sur `main` ou `claude/**` publie le site sur la branche `gh-pages` (activer GitHub Pages
+sur cette branche dans les réglages du dépôt).
+
+## État actuel (application Android)
 
 Étape 2 de l'ordre de travail : écrans de base, avec le Tarot comme premier jeu.
 
