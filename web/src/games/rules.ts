@@ -2,6 +2,7 @@ import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
 import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
 import { SKYJO_DEFAULT_TARGET } from "./skyjo";
+import { DUMPLING_POINTS, FRUIT_POINTS, ONIGIRI_POINTS } from "./sushi";
 
 /** Règles d'un jeu : un résumé, puis des sections dépliables (texte, listes, tableaux). Rédigées pour l'appli. */
 export interface RulesSection {
@@ -264,7 +265,80 @@ const rail = (): RulesDoc => ({
   ],
 });
 
-const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sixquiprend: sixQuiPrend, free };
+const sushi = (): RulesDoc => ({
+  title: "Sushi Go Party !",
+  summary:
+    "Jeu de 2 à 8 joueurs : on choisit une carte dans sa main, on passe le reste à son voisin, et on compose devant soi la meilleure assiette. " +
+    "Trois manches comptées une à une, puis les desserts comptés à la fin. Le plus gros total gagne. Règles tirées du règlement officiel (Cocktail Games).",
+  sections: [
+    {
+      id: "menu",
+      title: "Le menu",
+      paragraphs: ["À chaque partie, on choisit ce qui est au menu : les sushis (toujours), puis :"],
+      bullets: [
+        "1 sorte de makis (makis saumon, California ou temaki) ;",
+        "3 sortes de hors-d'œuvre (tempura, sashimis, gyoza, anguille, tofu, onigiri, edamame, soupe miso) ;",
+        "2 sortes de suppléments (baguettes, sauce soja, thé, menu, cuillère, commande spéciale, boîte à emporter, wasabi) ;",
+        "1 sorte de dessert (flan, glace matcha, fruits).",
+        "Menu et commande spéciale : pas à 7 ou 8 joueurs. Cuillère et edamame : pas à 2 joueurs.",
+      ],
+    },
+    {
+      id: "points",
+      title: "Les points d'une manche",
+      bullets: [
+        "Sushis (toujours dans le jeu) : omelette 1, saumon 2, calamar 3. Posé sur un wasabi, un sushi vaut le triple (3, 6, 9).",
+        "Tempura : 5 points par paire. Sashimis : 10 points par trio.",
+        `Gyoza : ${DUMPLING_POINTS.slice(1, 5).join(", ")} puis ${DUMPLING_POINTS[5]} points pour 1, 2, 3, 4 puis 5 cartes ou plus.`,
+        "Anguille : 1 carte −3 points ; 2 cartes ou plus 7 points. Tofu : 1 carte 2 points, 2 cartes 6 points, 3 ou plus 0.",
+        `Onigiri : ${ONIGIRI_POINTS.slice(1).join(", ")} points pour 1, 2, 3 ou 4 formes différentes (on peut faire plusieurs séries).`,
+        "Soupe miso : 3 points ; si plusieurs sont jouées au même tour, toutes sont défaussées et ne rapportent rien (ne les compte pas).",
+        "Boîte à emporter : 2 points par carte retournée. Thé : chaque thé vaut 1 point par carte de la couleur de fond choisie (la plus représentée devant toi).",
+        "Wasabi, baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes ; la commande spéciale se compte comme la carte copiée.",
+      ],
+    },
+    {
+      id: "comparaisons",
+      title: "Les points par comparaison",
+      paragraphs: ["L'appli compare les joueurs et attribue ces points toute seule. En cas d'égalité, tous les ex æquo reçoivent les points complets."],
+      bullets: [
+        "Makis saumon : le plus de symboles 6 points, le deuxième (au moins 1) 3 points. À 6 joueurs ou plus : 6, 4 et 2 points pour les trois premiers.",
+        "Temaki : le plus +4 points, le moins (ou aucun) −4 points ; pas de malus à 2 joueurs.",
+        "California : le premier à atteindre 10 symboles gagne 8 points, le deuxième 6 points (tu indiques qui a pris chaque place) ; en fin de manche, le plus de symboles devant soi gagne 2 points.",
+        "Edamame : 1 point par adversaire qui en a aussi, 4 points par carte au maximum ; seul à en avoir : rien.",
+        "Sauce soja : chaque sauce vaut 4 points pour celui qui a le plus de couleurs de fond différentes devant lui (tous les joueurs sont comparés, même sans sauce soja).",
+      ],
+    },
+    {
+      id: "desserts",
+      title: "Les desserts (fin de partie)",
+      bullets: [
+        "Flan : le plus +6 points, le moins (ou aucun) −6 points ; pas de malus à 2 joueurs.",
+        "Glace matcha : 12 points par série de 4.",
+        `Fruits : pour chaque sorte (pastèque, orange, ananas), selon le nombre de symboles : ${FRUIT_POINTS.join(", ")} points pour 0, 1, 2, 3, 4 puis 5 ou plus.`,
+        "Les desserts pris pendant les manches sont mis de côté et ne comptent qu'à la fin : indique le total de la partie.",
+      ],
+    },
+    {
+      id: "egalite",
+      title: "En cas d'égalité",
+      paragraphs: ["Celui qui a le plus de cartes dessert l'emporte."],
+    },
+    {
+      id: "appli",
+      title: "Dans l'appli",
+      bullets: [
+        "Par défaut, un compteur classique : à chaque manche, tu saisis les points de chaque joueur (tu peux ajouter les desserts à la dernière manche).",
+        "Mode assistant (à activer en bas de l'accueil, jeux marqués ✨) : l'appli fait le décompte carte par carte, en suivant les règles ci-dessus.",
+        "Avec l'assistant, tu choisis le menu à la création : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
+        "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte : les points s'affichent en direct et les comparaisons se font entre tous les joueurs, pense donc à saisir tout le monde avant de valider.",
+        "Menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
+      ],
+    },
+  ],
+});
+
+const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sushi, sixquiprend: sixQuiPrend, free };
 
 /** Règles d'un jeu (par identifiant), ou `undefined` si le jeu n'en a pas. */
 export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.();

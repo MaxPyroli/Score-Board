@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMaxYMid slice">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0533d"/>
+      <stop offset=".6" stop-color="#c2415a"/>
+      <stop offset="1" stop-color="#8c2a4a"/>
+    </linearGradient>
+    <pattern id="wave" width="60" height="30" patternUnits="userSpaceOnUse">
+      <path d="M0 18 q15 -14 30 0 t30 0" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3"/>
+    </pattern>
+    <!-- Maki : rondelle de riz, algue et garniture (dessin original) -->
+    <g id="maki">
+      <circle r="34" fill="#23302b"/>
+      <circle r="28" fill="#fbf7ee"/>
+      <circle r="14" fill="currentColor"/>
+      <circle r="5" fill="#fbf7ee" fill-opacity=".6"/>
+    </g>
+    <!-- Nigiri : boule de riz et tranche de poisson -->
+    <g id="nigiri">
+      <rect x="-40" y="2" width="80" height="24" rx="12" fill="#fbf7ee"/>
+      <path d="M-46 -2 q46 -30 92 0 q-8 16 -46 16 q-38 0 -46 -16z" fill="currentColor"/>
+      <path d="M-30 -2 q30 -12 60 0" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/>
+    </g>
+  </defs>
+  <rect width="800" height="400" fill="url(#g)"/>
+  <rect width="800" height="400" fill="url(#wave)"/>
+  <!-- Tapis roulant -->
+  <rect y="250" width="800" height="14" fill="#2a1420" fill-opacity=".45"/>
+  <g color="#ff9a6b">
+    <use href="#maki" x="470" y="130" color="#ff7a59"/>
+    <use href="#maki" x="640" y="300" color="#7bc77a"/>
+    <use href="#maki" x="760" y="110" color="#f5c542"/>
+    <use href="#nigiri" x="560" y="238" color="#ff8a6b"/>
+    <use href="#nigiri" x="710" y="214" color="#f7b267"/>
+  </g>
+  <!-- Baguettes -->
+  <g stroke="#f3dfb8" stroke-width="6" stroke-linecap="round" opacity=".85">
+    <line x1="420" y1="350" x2="520" y2="300"/>
+    <line x1="430" y1="372" x2="540" y2="322"/>
+  </g>
+</svg>

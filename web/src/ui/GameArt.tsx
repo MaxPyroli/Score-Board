@@ -5,6 +5,7 @@ const CARDS: Record<string, [string, string, string]> = {
   skyjo: ["−2", "12", "0"],
   sixquiprend: ["104", "55", "6"],
   rail: ["4", "+10", "21"],
+  sushi: ["3", "+6", "−6"],
   free: ["+5", "−1", "0"],
 };
 

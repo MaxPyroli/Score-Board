@@ -13,11 +13,17 @@ import {
   MAX_STATIONS, ROUTE_POINTS, buildRail, draftFromSheet, emptyDraftSheet, railConfig, railModule, routesPoints, sheetTotal,
   type RailDraftSheet,
 } from "../games/rail";
+import { buildSushi, draftFromSheet as sushiDraftFrom, fieldsFor, ROUNDS_BEFORE_DESSERT, scoreSushi, sushiConfig, sushiModule, type SushiDraftSheet } from "../games/sushi";
 import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winnerRound, type FreeDraft, type FreeRound } from "../games/counter";
 
 const title = (match: StoredMatch, index: number | null) =>
   match.moduleId === "rail"
     ? (index !== null ? "Modifier le décompte final" : "Décompte final")
+    : match.moduleId === "sushi" && match.settings.assistant === "true"
+    ? (() => {
+        const at = index ?? match.rounds.length;
+        return at >= ROUNDS_BEFORE_DESSERT ? (index !== null ? "Modifier les desserts" : "Desserts") : index !== null ? `Modifier la manche ${at + 1}` : `Manche ${at + 1}`;
+      })()
     : index !== null ? `Modifier la manche ${index + 1}` : `Manche ${match.rounds.length + 1}`;
 
 function Frame(props: EditorProps & { children: React.ReactNode; footer: React.ReactNode; canSave: boolean; onValidate(): void; rulesFocus?: string }) {
@@ -465,6 +471,73 @@ export function RailEditor(props: EditorProps) {
           </div>
         );
       })}
+    </Frame>
+  );
+}
+
+// ---------------------------------------------------------------- Sushi Go Party !
+export function SushiEditor(props: EditorProps) {
+  const { match, roundIndex, onSave } = props;
+  const config = sushiConfig(match.settings);
+  const ids = match.players.map((p) => p.id);
+  const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
+  const existing = roundIndex !== null ? sushiModule.decodeRound(match.rounds[roundIndex]) : null;
+  const dessert = existing ? existing.dessert : match.rounds.length >= ROUNDS_BEFORE_DESSERT;
+  const fields = useMemo(() => fieldsFor(config, dessert), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [drafts, setDrafts] = useState<Record<string, SushiDraftSheet>>(() =>
+    Object.fromEntries(ids.map((id) => [id, sushiDraftFrom(existing?.sheets[id])])));
+  const set = (id: string, key: string, value: number) =>
+    setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value ? String(value) : "" } }));
+  const built = useMemo(() => buildSushi(drafts, ids, nameOf, fields, dessert), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Les comparaisons (makis, flans…) se font entre tous les joueurs : les points se mettent à jour à chaque changement.
+  const scores = useMemo(() => (built.round ? scoreSushi(built.round) : {}), [built]);
+
+  return (
+    <Frame
+      {...props}
+      canSave={!!built.round}
+      rulesFocus={dessert ? "desserts" : "points"}
+      onValidate={() => built.round && onSave(sushiModule.encodeRound(built.round))}
+      footer={
+        built.round ? (
+          <PlayerGrid players={match.players}>
+            {(p) => (
+              <>
+                <span className="name">{p.name}</span>
+                <Score value={scores[p.id] ?? 0} />
+              </>
+            )}
+          </PlayerGrid>
+        ) : (
+          <div className="error">{built.error}</div>
+        )
+      }
+    >
+      <p className="hint">
+        {dessert
+          ? "Indique les desserts pris pendant toute la partie : l'appli compare les joueurs et attribue les points."
+          : "Indique ce que chacun a devant lui à la fin de la manche. Rien à saisir pour une carte absente : elle compte 0. Les comparaisons entre joueurs sont faites toutes seules."}
+      </p>
+      {match.players.map((p) => (
+        <div key={p.id} className="card rail-card">
+          <div className="rail-head">
+            <strong>{p.name}</strong>
+            <span className="rail-total">{scores[p.id] ?? 0}</span>
+          </div>
+          {fields.map((f, i) => (
+            <div key={f.key}>
+              {(i === 0 || fields[i - 1].group !== f.group) && <div className="sushi-group">{f.group}</div>}
+              <div className="route-row">
+                <span>
+                  {f.label}
+                  {f.hint && <span className="hint block">{f.hint}</span>}
+                </span>
+                <Stepper value={Number(drafts[p.id]?.[f.key] || 0)} min={0} max={f.max} label={`${f.label} de ${p.name}`} onChange={(v) => set(p.id, f.key, v)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
     </Frame>
   );
 }
