@@ -3,6 +3,7 @@ import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./component
 import { matchWithoutLastRound, plain, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition } from "../games/registry";
 import { newId } from "../store";
+import { CONTACT_URL, versionLabel } from "../version";
 
 // ---------------------------------------------------------------- Accueil
 
@@ -56,6 +57,10 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin }: {
           </div>
         </Section>
       </main>
+      <footer className="footer">
+        <span>{versionLabel}</span>
+        <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
+      </footer>
       {toDelete && (
         <Dialog title="Supprimer la partie ?" onClose={() => setToDelete(null)}>
           <p>Les scores de cette partie seront perdus.</p>
