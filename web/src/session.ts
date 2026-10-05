@@ -64,6 +64,17 @@ export function validateReceived(data: unknown): StoredMatch | null {
 const ICE_SERVERS = [
   { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
   { urls: ["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"], username: "peerjs", credential: "peerjsp" },
+  // Second relais public gratuit (Open Relay), au cas où celui de PeerJS ne répond pas.
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+      "turns:openrelay.metered.ca:443?transport=tcp",
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject",
+  },
 ];
 
 /** Annuaire par défaut : celui de PeerJS. `VITE_PEER_SERVER=hote:port` (tests, annuaire maison) le remplace. */
