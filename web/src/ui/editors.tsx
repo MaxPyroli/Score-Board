@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Chip, Chips, PlayerGrid, Score, Section, TopBar } from "./components";
+import { RulesSheet } from "./RulesSheet";
 import { plain, type GameModule, type StoredMatch } from "../core";
 import type { EditorProps } from "../games/registry";
 import {
@@ -13,11 +14,17 @@ import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winne
 const title = (match: StoredMatch, index: number | null) =>
   index !== null ? `Modifier la manche ${index + 1}` : `Manche ${match.rounds.length + 1}`;
 
-function Frame(props: EditorProps & { children: React.ReactNode; footer: React.ReactNode; canSave: boolean; onValidate(): void }) {
-  const { match, roundIndex, onCancel, onDelete, children, footer, canSave, onValidate } = props;
+function Frame(props: EditorProps & { children: React.ReactNode; footer: React.ReactNode; canSave: boolean; onValidate(): void; rulesFocus?: string }) {
+  const { match, roundIndex, onCancel, onDelete, children, footer, canSave, onValidate, rulesFocus } = props;
+  const [rulesOpen, setRulesOpen] = useState(false);
   return (
     <div className="screen" data-game={match.moduleId}>
-      <TopBar title={title(match, roundIndex)} onBack={onCancel} />
+      <TopBar
+        title={title(match, roundIndex)}
+        onBack={onCancel}
+        actions={<button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>}
+      />
+      {rulesOpen && <RulesSheet gameId={match.moduleId} focus={rulesFocus} onClose={() => setRulesOpen(false)} />}
       <main className="content">
         {children}
         {onDelete && <button className="link danger" onClick={onDelete}>Supprimer cette manche</button>}
@@ -56,6 +63,7 @@ export function TarotEditor(props: EditorProps) {
     <Frame
       {...props}
       canSave={!!built.round}
+      rulesFocus="calcul"
       onValidate={() => built.round && onSave(tarotModule.encodeRound(built.round))}
       footer={
         result ? (
@@ -226,6 +234,7 @@ export function SkyjoEditor(props: EditorProps) {
     <Frame
       {...props}
       canSave={!!built.round}
+      rulesFocus="doublement"
       onValidate={() => built.round && onSave(skyjoModule.encodeRound(built.round))}
       footer={
         result ? (
@@ -258,6 +267,7 @@ export function SkyjoEditor(props: EditorProps) {
             <Chip key={p.id} label={p.name} selected={draft.finisherId === p.id} onClick={() => setDraft((d) => ({ ...d, finisherId: p.id }))} />
           ))}
         </Chips>
+        <p className="hint">Rappel : si celui qui termine n'a pas le score strictement le plus bas, ses points sont doublés (s'ils sont positifs).</p>
       </Section>
     </Frame>
   );
@@ -280,6 +290,7 @@ export function CounterEditor(props: EditorProps & { module: GameModule<FreeRoun
     <Frame
       {...props}
       canSave={!!built.round}
+      rulesFocus={match.moduleId === "free" ? `mode-${negate ? "countdown" : match.settings.mode ?? "points"}` : "manche"}
       onValidate={() => built.round && onSave(module.encodeRound(negate ? negateRound(built.round) : built.round))}
       footer={built.error ? <div className="error">{built.error}</div> : <div className="hint">Un champ vide compte 0.</div>}
     >
@@ -307,6 +318,7 @@ export function WinnerEditor(props: EditorProps & { module: GameModule<FreeRound
     <Frame
       {...props}
       canSave={winners.length > 0}
+      rulesFocus="mode-wins"
       onValidate={() => onSave(module.encodeRound(winnerRound(ids, winners)))}
       footer={<div className={winners.length ? "hint" : "error"}>{winners.length ? "Chaque gagnant marque une manche." : "Choisis au moins un gagnant."}</div>}
     >
