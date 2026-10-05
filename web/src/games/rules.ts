@@ -1,5 +1,6 @@
 import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
+import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
 import { SKYJO_DEFAULT_TARGET } from "./skyjo";
 
 /** Règles d'un jeu : un résumé, puis des sections dépliables (texte, listes, tableaux). Rédigées pour l'appli. */
@@ -215,7 +216,55 @@ const modeDetails: Record<string, string[]> = {
   ],
 };
 
-const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, sixquiprend: sixQuiPrend, free };
+const rail = (): RulesDoc => ({
+  title: "Les Aventuriers du Rail",
+  summary:
+    "Jeu de 2 à 5 joueurs : on collectionne des cartes wagon pour prendre possession de routes entre des villes, et on réalise des billets destination secrets. " +
+    "Les points se gagnent avec les routes, les billets réussis et quelques bonus ; un billet raté fait perdre ses points. Le plus gros total gagne.",
+  sections: [
+    {
+      id: "routes",
+      title: "Les routes",
+      paragraphs: ["Chaque route prise rapporte des points selon sa longueur en wagons, quelle que soit la carte (la longueur 8 existe sur la carte Europe)."],
+      table: {
+        head: ["Longueur", "Points"],
+        rows: ROUTE_POINTS.map((r) => [`${r.length} wagon${r.length > 1 ? "s" : ""}`, String(r.points)]),
+      },
+    },
+    {
+      id: "billets",
+      title: "Les billets destination",
+      paragraphs: [
+        "À la fin de la partie, chaque billet dont les deux villes sont reliées par les routes du joueur lui rapporte la valeur indiquée dessus ; chaque billet non relié lui en fait perdre autant.",
+      ],
+    },
+    {
+      id: "bonus",
+      title: "Les bonus (selon l'édition)",
+      bullets: [
+        `Plus long chemin : ${LONGEST_BONUS} points pour celui dont le chemin continu est le plus long. En cas d'égalité, tous les ex æquo reçoivent le bonus.`,
+        `Gares non utilisées (édition Europe) : ${STATION_VALUE} points pour chaque gare restée dans la boîte (3 gares par joueur au départ).`,
+        `Globe-trotter (selon l'édition ou l'extension) : ${GLOBETROTTER_BONUS} points pour celui qui a réussi le plus de billets destination. Je ne l'ai pas confirmé pour toutes les éditions : coche-le seulement si ton jeu l'utilise.`,
+      ],
+    },
+    {
+      id: "egalite",
+      title: "En cas d'égalité",
+      paragraphs: ["Celui qui a réussi le plus de billets destination l'emporte ; s'il y a encore égalité, celui qui a le plus long chemin continu."],
+    },
+    {
+      id: "appli",
+      title: "Dans l'appli",
+      bullets: [
+        "Choisis l'édition à la création, puis coche les bonus de ton jeu : ils sont proposés selon l'édition (tu peux les changer).",
+        "Une fiche par joueur : points des routes (saisis directement, ou calculés avec « Compter les routes »), billets réussis et ratés, gares non utilisées.",
+        "Pour les bonus, indique la longueur du plus long chemin de chacun (et son nombre de billets réussis pour le globe-trotter) : l'appli compare et attribue le bonus toute seule, égalités comprises.",
+      ],
+    },
+  ],
+});
+
+const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sixquiprend: sixQuiPrend, free };
 
 /** Règles d'un jeu (par identifiant), ou `undefined` si le jeu n'en a pas. */
 export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.();

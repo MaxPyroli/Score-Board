@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" preserveAspectRatio="xMaxYMid slice">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8f1d2c"/>
+      <stop offset=".6" stop-color="#b8453a"/>
+      <stop offset="1" stop-color="#e4a04a"/>
+    </linearGradient>
+    <pattern id="ties" width="26" height="40" patternUnits="userSpaceOnUse">
+      <rect x="2" y="6" width="22" height="7" rx="1.5" fill="#3a1a10" fill-opacity=".55"/>
+    </pattern>
+    <!-- Wagon stylisé (dessin original) -->
+    <g id="wagon">
+      <rect x="0" y="0" width="64" height="34" rx="6" fill="#fbf1d6"/>
+      <rect x="6" y="6" width="52" height="22" rx="3" fill="currentColor"/>
+      <circle cx="14" cy="38" r="6" fill="#2b1a14"/><circle cx="50" cy="38" r="6" fill="#2b1a14"/>
+    </g>
+  </defs>
+  <rect width="800" height="400" fill="url(#g)"/>
+  <!-- Carte : villes reliées par des routes -->
+  <g stroke="#fbf1d6" stroke-opacity=".5" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12" fill="none">
+    <path d="M430 110L560 170L690 120L770 200"/>
+    <path d="M560 170L520 300L660 330L770 200"/>
+  </g>
+  <g fill="#fbf1d6">
+    <circle cx="430" cy="110" r="11"/><circle cx="560" cy="170" r="13"/><circle cx="690" cy="120" r="11"/>
+    <circle cx="770" cy="200" r="13"/><circle cx="520" cy="300" r="11"/><circle cx="660" cy="330" r="12"/>
+  </g>
+  <!-- Voie ferrée en bas, avec un petit train -->
+  <rect x="380" y="340" width="420" height="40" fill="url(#ties)"/>
+  <rect x="380" y="352" width="420" height="5" fill="#2b1a14" fill-opacity=".7"/>
+  <rect x="380" y="368" width="420" height="5" fill="#2b1a14" fill-opacity=".7"/>
+  <g transform="translate(470 292)">
+    <use href="#wagon" color="#2f7ac0"/>
+    <use href="#wagon" x="70" color="#e8c23a"/>
+    <use href="#wagon" x="140" color="#3f9a58"/>
+    <path d="M214 4h28q14 0 14 14v16h-42z" fill="#2b1a14"/>
+    <circle cx="224" cy="38" r="6" fill="#2b1a14"/><circle cx="246" cy="38" r="6" fill="#2b1a14"/>
+  </g>
+</svg>

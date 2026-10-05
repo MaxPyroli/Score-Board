@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Chip, Chips, PlayerGrid, Score, Section, TopBar } from "./components";
+import { Chip, Chips, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
 import { RulesSheet } from "./RulesSheet";
 import { plain, type GameModule, type StoredMatch } from "../core";
 import type { EditorProps } from "../games/registry";
@@ -9,10 +9,16 @@ import {
   type TarotDraft,
 } from "../games/tarot";
 import { buildSkyjo, calculerSkyjo, emptySkyjoDraft, skyjoDraftFrom, skyjoModule, type SkyjoDraft } from "../games/skyjo";
+import {
+  MAX_STATIONS, ROUTE_POINTS, buildRail, draftFromSheet, emptyDraftSheet, railConfig, railModule, routesPoints, sheetTotal,
+  type RailDraftSheet,
+} from "../games/rail";
 import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winnerRound, type FreeDraft, type FreeRound } from "../games/counter";
 
 const title = (match: StoredMatch, index: number | null) =>
-  index !== null ? `Modifier la manche ${index + 1}` : `Manche ${match.rounds.length + 1}`;
+  match.moduleId === "rail"
+    ? (index !== null ? "Modifier le décompte final" : "Décompte final")
+    : index !== null ? `Modifier la manche ${index + 1}` : `Manche ${match.rounds.length + 1}`;
 
 function Frame(props: EditorProps & { children: React.ReactNode; footer: React.ReactNode; canSave: boolean; onValidate(): void; rulesFocus?: string }) {
   const { match, roundIndex, onCancel, onDelete, children, footer, canSave, onValidate, rulesFocus } = props;
@@ -330,6 +336,135 @@ export function WinnerEditor(props: EditorProps & { module: GameModule<FreeRound
         </Chips>
         <p className="hint">En cas d'égalité, coche plusieurs joueurs.</p>
       </Section>
+    </Frame>
+  );
+}
+
+// ---------------------------------------------------------------- Les Aventuriers du Rail
+
+/** Aide pour compter les routes : nombre de routes de chaque longueur → points. */
+function RouteCounter({ withLength8, onUse, onClose }: { withLength8: boolean; onUse(points: number): void; onClose(): void }) {
+  const [counts, setCounts] = useState<Record<number, number>>({});
+  const lengths = ROUTE_POINTS.filter((r) => withLength8 || r.length !== 8);
+  const total = routesPoints(Object.fromEntries(lengths.map((r) => [r.length, counts[r.length] ?? 0])));
+  return (
+    <div className="route-counter">
+      {lengths.map((r) => (
+        <div key={r.length} className="route-row">
+          <span>Routes de {r.length} wagon{r.length > 1 ? "s" : ""} <span className="hint">({r.points} pt{r.points > 1 ? "s" : ""})</span></span>
+          <Stepper value={counts[r.length] ?? 0} min={0} max={30} label={`Routes de ${r.length} wagons`} onChange={(v) => setCounts((c) => ({ ...c, [r.length]: v }))} />
+        </div>
+      ))}
+      <div className="buttons">
+        <button className="btn outline small" onClick={onClose}>Annuler</button>
+        <button className="btn small" onClick={() => onUse(total)}>Utiliser : {total} points</button>
+      </div>
+    </div>
+  );
+}
+
+export function RailEditor(props: EditorProps) {
+  const { match, roundIndex, onSave } = props;
+  const config = railConfig(match.settings);
+  const ids = match.players.map((p) => p.id);
+  const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
+  const [drafts, setDrafts] = useState<Record<string, RailDraftSheet>>(() => {
+    const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
+    const round = existing !== undefined ? railModule.decodeRound(existing) : null;
+    return Object.fromEntries(ids.map((id) => [id, round?.sheets[id] ? draftFromSheet(round.sheets[id]) : emptyDraftSheet()]));
+  });
+  const [counting, setCounting] = useState<string | null>(null);
+  const set = (id: string, patch: Partial<RailDraftSheet>) => setDrafts((d) => ({ ...d, [id]: { ...d[id], ...patch } }));
+  const built = useMemo(() => buildRail(drafts, ids, nameOf, config), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Total et bonus de chacun : les bonus sont attribués par comparaison entre les joueurs (plus long chemin, globe-trotter).
+  const sheetOf = (id: string) => built.round?.sheets[id];
+  const totalOf = (id: string) => { const sh = sheetOf(id); return sh ? sheetTotal(sh) : 0; };
+
+  return (
+    <Frame
+      {...props}
+      canSave={!!built.round}
+      rulesFocus="routes"
+      onValidate={() => built.round && onSave(railModule.encodeRound(built.round))}
+      footer={
+        built.round ? (
+          <PlayerGrid players={match.players}>
+            {(p) => (
+              <>
+                <span className="name">{p.name}</span>
+                <Score value={totalOf(p.id)} />
+              </>
+            )}
+          </PlayerGrid>
+        ) : (
+          <div className="error">{built.error}</div>
+        )
+      }
+    >
+      <p className="hint">Un champ vide compte 0. Les routes peuvent être saisies directement (points déjà comptés sur le plateau) ou calculées avec « Compter ».</p>
+      {match.players.map((p) => {
+        const d = drafts[p.id];
+        return (
+          <div key={p.id} className="card rail-card">
+            <div className="rail-head">
+              <strong>{p.name}</strong>
+              <span className="rail-total">{totalOf(p.id)}</span>
+            </div>
+            <div className="rail-fields">
+              <label>
+                <span>Routes</span>
+                <input className="field" inputMode="numeric" placeholder="0" aria-label={`Points de routes de ${p.name}`} value={d.routes} onChange={(e) => set(p.id, { routes: e.target.value })} />
+              </label>
+              <label>
+                <span>Billets réussis</span>
+                <input className="field" inputMode="numeric" placeholder="0" aria-label={`Billets réussis de ${p.name}`} value={d.ticketsDone} onChange={(e) => set(p.id, { ticketsDone: e.target.value })} />
+              </label>
+              <label>
+                <span>Billets ratés</span>
+                <input className="field" inputMode="numeric" placeholder="0" aria-label={`Billets ratés de ${p.name}`} value={d.ticketsFailed} onChange={(e) => set(p.id, { ticketsFailed: e.target.value })} />
+              </label>
+            </div>
+            <button type="button" className="link" onClick={() => setCounting(counting === p.id ? null : p.id)}>
+              {counting === p.id ? "Fermer l'aide" : "Compter les routes"}
+            </button>
+            {counting === p.id && (
+              <RouteCounter
+                withLength8={config.length8}
+                onClose={() => setCounting(null)}
+                onUse={(points) => { set(p.id, { routes: points ? String(points) : "" }); setCounting(null); }}
+              />
+            )}
+            {(config.longest || config.globetrotter) && (
+              <div className="rail-fields two">
+                {config.longest && (
+                  <label>
+                    <span>Plus long chemin (wagons)</span>
+                    <input className="field" inputMode="numeric" placeholder="0" aria-label={`Plus long chemin de ${p.name}`} value={d.longestLength} onChange={(e) => set(p.id, { longestLength: e.target.value })} />
+                  </label>
+                )}
+                {config.globetrotter && (
+                  <label>
+                    <span>Billets réussis (nombre)</span>
+                    <input className="field" inputMode="numeric" placeholder="0" aria-label={`Nombre de billets réussis de ${p.name}`} value={d.ticketsCount} onChange={(e) => set(p.id, { ticketsCount: e.target.value })} />
+                  </label>
+                )}
+              </div>
+            )}
+            {(sheetOf(p.id)?.longest || sheetOf(p.id)?.globetrotter) && (
+              <div className="rail-bonus">
+                {sheetOf(p.id)?.longest && <span>🏆 Bonus du plus long chemin +10</span>}
+                {sheetOf(p.id)?.globetrotter && <span>🏆 Bonus globe-trotter +15</span>}
+              </div>
+            )}
+            {config.stations && (
+              <div className="route-row">
+                <span>Gares non utilisées <span className="hint">(+4 chacune)</span></span>
+                <Stepper value={d.stations} min={0} max={MAX_STATIONS} label={`Gares non utilisées de ${p.name}`} onChange={(v) => set(p.id, { stations: v })} />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </Frame>
   );
 }

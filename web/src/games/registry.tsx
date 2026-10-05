@@ -10,7 +10,10 @@ import {
   COUNTER_MODES, FREE, SETTING_MODE, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
   negateRound, startOf, type CounterMode, type FreeRound,
 } from "./counter";
-import { CounterEditor, SkyjoEditor, TarotEditor, WinnerEditor } from "../ui/editors";
+import { CounterEditor, RailEditor, SkyjoEditor, TarotEditor, WinnerEditor } from "../ui/editors";
+import {
+  SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
+} from "./rail";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
 export type Values = Record<string, string>;
@@ -22,6 +25,8 @@ export interface GameOption {
   default: boolean;
   /** Affiché seulement si… (selon les autres réglages). */
   visibleWhen?: (v: Values) => boolean;
+  /** Valeur par défaut qui dépend d'un choix (ex. l'édition) ; réappliquée quand ce choix change. */
+  defaultFor?: (v: Values) => boolean | null;
 }
 
 export interface NumberOption {
@@ -86,6 +91,8 @@ export interface GameDefinition {
   canFinish(m: StoredMatch): boolean;
   /** Boutons de variation directe (+1, −1…) sur chaque joueur, à la place de « Nouvelle manche » ; `null` sinon. */
   quickSteps(m: StoredMatch): number[] | null;
+  /** Peut-on ajouter une manche ? (jeux à décompte unique : non, une fois le décompte fait). Par défaut oui. */
+  canAddRound?(m: StoredMatch): boolean;
   /** Manche (texte) correspondant à une variation directe d'un joueur (boutons +1, −1…). */
   encodeAdjust?(m: StoredMatch, playerId: string, delta: number): string;
   /** Présent si les joueurs peuvent saisir leur propre score dans cette partie (Tarot : hôte seulement). */
@@ -276,6 +283,47 @@ function freeCounterGame(): GameDefinition {
   };
 }
 
+/** Les Aventuriers du Rail : un décompte final (une fiche par joueur) ; les bonus en jeu dépendent de l'édition. */
+function railGame(): GameDefinition {
+  const t = (m: StoredMatch) => totals(railModule, m);
+  const bonusOption = (key: string, label: string, description: string, pick: (d: ReturnType<typeof editionDefaults>) => boolean): GameOption => ({
+    key, label, description, default: pick(editionDefaults("base")),
+    defaultFor: (v) => pick(editionDefaults(editionOf(v))),
+  });
+  return {
+    id: railModule.id, displayName: railModule.displayName,
+    tagline: "2 à 5 joueurs · routes, billets destination, plus long chemin, gares",
+    minPlayers: railModule.minPlayers, maxPlayers: railModule.maxPlayers,
+    choiceOptions: [{
+      key: SETTING_EDITION, label: "Édition", default: "base",
+      choices: [
+        { value: "base", label: "USA, France et autres cartes", description: "Routes de 1 à 6 wagons, bonus du plus long chemin." },
+        { value: "europe", label: "Europe", description: "Routes jusqu'à 8 wagons, gares non utilisées (+4 chacune) en plus." },
+      ],
+    }],
+    options: [
+      bonusOption(SETTING_LONGEST, "Bonus du plus long chemin (+10)", "À cocher si ton édition l'utilise ; en cas d'égalité, tous les ex æquo le reçoivent.", (d) => d.longest),
+      bonusOption(SETTING_STATIONS, "Gares non utilisées (+4 chacune)", "Édition Europe : chaque gare restée dans la boîte rapporte 4 points.", (d) => d.stations),
+      bonusOption(SETTING_GLOBETROTTER, "Bonus globe-trotter (+15)", "Selon l'édition ou l'extension : bonus pour le plus de billets destination réussis.", (d) => d.globetrotter),
+    ],
+    numberOptions: [], fixedSettings: {},
+    totals: t,
+    roundScores: (m) => roundScores(railModule, m),
+    describeRound(m, i) {
+      const round = railModule.decodeRound(m.rounds[i]);
+      const names = m.players.filter((p) => round.sheets[p.id]?.longest).map((p) => p.name);
+      return { headline: "Décompte final", detail: names.length ? `Plus long chemin : ${names.join(", ")}` : "" };
+    },
+    status: (m) => (m.rounds.length === 0 ? "Fais le décompte final : routes, billets, bonus." : null),
+    lowestWins: () => false,
+    canFinish: (m) => m.rounds.length > 0,
+    canAddRound: (m) => m.rounds.length === 0,
+    quickSteps: () => null,
+    leaderId: (m) => leader(m.players, t(m), false)?.id ?? null,
+    Editor: RailEditor,
+  };
+}
+
 function buildGames(): GameDefinition[] {
   const tarot: GameDefinition = {
     id: tarotModule.id, displayName: "Tarot", tagline: "3, 4 ou 5 joueurs · contrats, bouts, poignées, chelem",
@@ -324,7 +372,7 @@ function buildGames(): GameDefinition[] {
     Editor: SkyjoEditor,
   };
   return [
-    tarot, skyjo,
+    tarot, skyjo, railGame(),
     counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false),
     freeCounterGame(),
   ];
