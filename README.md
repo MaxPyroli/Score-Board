@@ -9,10 +9,10 @@ Même appli en TypeScript (Vite + React), pour itérer vite et l'utiliser aussi 
 (« Ajouter à l'écran d'accueil »). Mêmes règles et mêmes formats de manche que le Kotlin, tests portés.
 Données enregistrées sur l'appareil (localStorage).
 
-Partage en direct de pair à pair (WebRTC via PeerJS) : l'hôte clique sur Partager (code à 4 caractères + QR
-code qui ouvre `#join=CODE`), les autres suivent en lecture seule et se reconnectent tout seuls. L'annuaire
-public de PeerJS ne sert qu'à la mise en relation ; les scores passent directement d'un téléphone à l'autre.
-Les données reçues sont validées avant affichage. Annuaire de test : `VITE_PEER_SERVER=localhost:9000`.
+Partage en direct via Firebase Realtime Database : l'hôte clique sur Partager (code à 4 caractères + QR
+code qui ouvre `#join=CODE`), les autres suivent en lecture seule ; la reconnexion est automatique. Marche sur tous
+les réseaux. Mise en route unique : `docs/firebase.md` (règles de sécurité dans `firebase/database.rules.json`).
+Les données reçues sont validées avant affichage.
 
 ```bash
 cd web && npm install && npm run dev   # développement avec rechargement instantané

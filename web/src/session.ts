@@ -1,12 +1,11 @@
-// Partage de partie en direct, de pair à pair (WebRTC via PeerJS). L'annuaire public de PeerJS ne sert
-// qu'à mettre deux appareils en relation ; les scores passent ensuite directement d'un appareil à l'autre.
-import Peer, { type DataConnection } from "peerjs";
+// Partage de partie en direct : l'hôte publie la partie sous un code à 4 caractères, les invités la suivent
+// en lecture seule (Firebase Realtime Database, voir backend.ts et docs/firebase.md).
 import type { StoredMatch } from "./core";
 import { gameById } from "./games/registry";
+import { getBackend, type Backend } from "./backend";
 
 export const CODE_LENGTH = 4;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O ni 1/I, comme sur Android
-const PEER_PREFIX = "scoreboard-";
 
 export const generateCode = (): string =>
   Array.from({ length: CODE_LENGTH }, () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)]).join("");
@@ -60,59 +59,46 @@ export function validateReceived(data: unknown): StoredMatch | null {
   }
 }
 
-/** Serveurs d'aide à la connexion : plusieurs STUN, et le relais gratuit de PeerJS en dernier recours. */
-const ICE_SERVERS = [
-  { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
-  { urls: ["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"], username: "peerjs", credential: "peerjsp" },
-  // Second relais public gratuit (Open Relay), au cas où celui de PeerJS ne répond pas.
-  {
-    urls: [
-      "turn:openrelay.metered.ca:80",
-      "turn:openrelay.metered.ca:443",
-      "turn:openrelay.metered.ca:443?transport=tcp",
-      "turns:openrelay.metered.ca:443?transport=tcp",
-    ],
-    username: "openrelayproject",
-    credential: "openrelayproject",
-  },
-];
+const wrap = (match: StoredMatch) => JSON.stringify(match);
 
-/** Annuaire par défaut : celui de PeerJS. `VITE_PEER_SERVER=hote:port` (tests, annuaire maison) le remplace. */
-function peerOptions() {
-  const custom = import.meta.env.VITE_PEER_SERVER as string | undefined;
-  const base = { config: { iceServers: ICE_SERVERS, sdpSemantics: "unified-plan" } };
-  if (!custom) return base;
-  const [host, port] = custom.split(":");
-  return { ...base, host, port: Number(port), path: "/", secure: false };
+/** Contenu reçu → partie valide, ou `null`. */
+function parsePayload(payload: string): StoredMatch | null {
+  try {
+    return validateReceived({ v: 1, type: "snapshot", match: JSON.parse(payload) });
+  } catch {
+    return null;
+  }
 }
 
-/** Compteurs de diagnostic d'une connexion directe : types de chemins trouvés et état final. */
-export interface Diag { ice: string; host: number; srflx: number; relay: number }
-
-function watchDiag(conn: DataConnection, diag: Diag) {
-  const pc = (conn as unknown as { peerConnection?: RTCPeerConnection }).peerConnection;
-  if (!pc) return;
-  diag.ice = pc.iceConnectionState;
-  pc.addEventListener("iceconnectionstatechange", () => { diag.ice = pc.iceConnectionState; });
-  pc.addEventListener("icecandidate", (e) => {
-    const t = /typ (host|srflx|relay)/.exec(e.candidate?.candidate ?? "")?.[1] as "host" | "srflx" | "relay" | undefined;
-    if (t) diag[t]++;
-  });
-}
-
-const snapshot = (match: StoredMatch) => ({ v: 1, type: "snapshot", match });
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
 export type HostStatus = "starting" | "sharing" | "error";
 
-/** Côté hôte : garde la partie de référence et la renvoie en entier à chaque changement. */
+/** Côté hôte : publie la partie à chaque changement et compte les spectateurs. */
 export class HostSession {
-  private peer: Peer | null = null;
-  private conns = new Set<DataConnection>();
+  code = generateCode();
+  private backend: Backend | null = null;
   private latest: StoredMatch;
   private stopped = false;
-  code = generateCode();
+  private viewers = 0;
+  private offViewers: (() => void) | null = null;
   private wakeLock: { release(): Promise<void> } | null = null;
   private onVisible = () => { if (document.visibilityState === "visible" && !this.stopped) void this.keepAwake(); };
+
+  constructor(
+    match: StoredMatch,
+    private onChange: (s: { status: HostStatus; code: string; viewers: number }) => void,
+  ) {
+    this.latest = match;
+    void this.keepAwake();
+    document.addEventListener("visibilitychange", this.onVisible);
+    void this.start();
+  }
+
+  private emit(status: HostStatus) {
+    this.onChange({ status, code: this.code, viewers: this.viewers });
+  }
 
   /** Garde l'écran allumé pendant le partage : un téléphone en veille coupe la connexion. */
   private async keepAwake() {
@@ -121,178 +107,110 @@ export class HostSession {
     } catch { /* non supporté ou refusé : sans importance */ }
   }
 
-  constructor(
-    match: StoredMatch,
-    private onChange: (s: { status: HostStatus; code: string; viewers: number }) => void,
-  ) {
-    this.latest = match;
-    this.open(0);
-    void this.keepAwake();
-    document.addEventListener("visibilitychange", this.onVisible);
-  }
-
-  private emit(status: HostStatus) {
-    this.onChange({ status, code: this.code, viewers: this.conns.size });
-  }
-
-  private open(attempt: number) {
+  private async start() {
     this.emit("starting");
-    const peer = new Peer(PEER_PREFIX + this.code, peerOptions());
-    this.peer = peer;
-    peer.on("open", () => this.emit("sharing"));
-    peer.on("connection", (conn) => {
-      conn.on("open", () => {
-        this.conns.add(conn);
-        conn.send(snapshot(this.latest));
-        this.emit("sharing");
-      });
-      const drop = () => { this.conns.delete(conn); if (!this.stopped) this.emit("sharing"); };
-      conn.on("close", drop);
-      conn.on("error", drop);
-    });
-    // L'annuaire a coupé la liaison : on la rétablit, les connexions directes restent actives.
-    peer.on("disconnected", () => { if (!this.stopped && !peer.destroyed) setTimeout(() => peer.reconnect(), 3000); });
-    peer.on("error", (err) => {
-      if (this.stopped) return;
-      if ((err as { type?: string }).type === "unavailable-id" && attempt < 5) {
-        peer.destroy();
-        this.code = generateCode();
-        this.open(attempt + 1);
-      } else if ((err as { type?: string }).type !== "peer-unavailable") {
-        this.emit("error");
+    try {
+      const backend = await getBackend();
+      if (!backend) return this.emit("error");
+      this.backend = backend;
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const result = await withTimeout(backend.publish(this.code, wrap(this.latest)), 15000);
+        if (this.stopped) return void backend.remove(this.code).catch(() => {});
+        if (result === "ok") {
+          this.offViewers = backend.countViewers(this.code, (n) => { this.viewers = n; this.emit("sharing"); });
+          return this.emit("sharing");
+        }
+        this.code = generateCode(); // code déjà pris : on en tire un autre
       }
-    });
+      this.emit("error");
+    } catch {
+      if (!this.stopped) this.emit("error");
+    }
   }
 
   update(match: StoredMatch) {
     this.latest = match;
-    for (const c of this.conns) if (c.open) c.send(snapshot(match));
+    // Hors connexion, l'envoi est mis en attente et part au retour du réseau.
+    void this.backend?.publish(this.code, wrap(match)).catch(() => {});
   }
 
   stop() {
     this.stopped = true;
     document.removeEventListener("visibilitychange", this.onVisible);
     void this.wakeLock?.release().catch(() => {});
-    this.peer?.destroy();
-    this.conns.clear();
+    this.offViewers?.();
+    void this.backend?.remove(this.code).catch(() => {});
   }
 }
 
-export type FailReason = "unknown" | "unreachable" | "blocked";
+export type FailReason = "unknown" | "unreachable" | "invalid";
 
 export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
-  | { kind: "failed"; reason: FailReason; diag?: Diag }
-  | { kind: "live"; match: StoredMatch; connected: boolean };
+  | { kind: "failed"; reason: FailReason }
+  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean };
 
-const ATTEMPT_MS = 5000;
-/** Une connexion en cours d'établissement n'est pas relancée avant ce délai (le relais peut être lent). */
-const NEGOTIATION_MS = 25000;
-const FIRST_GIVE_UP_MS = 30000;
-/** Si l'annuaire répond « code inconnu » à chaque essai, inutile d'attendre plus longtemps. */
-const UNKNOWN_GIVE_UP_MS = 12000;
-const RECONNECT_GIVE_UP_MS = 10 * 60 * 1000;
+const FIRST_ANSWER_MS = 20000;
 
-/** Côté invité : suit la partie en lecture seule et se reconnecte tout seul si le lien se coupe. */
+/** Côté invité : suit la partie en lecture seule ; Firebase se reconnecte tout seul si le lien se coupe. */
 export class SpectatorSession {
-  private peer: Peer | null = null;
-  private conn: DataConnection | null = null;
-  private connStartedAt = 0;
-  private timer: ReturnType<typeof setTimeout> | undefined;
+  private stopFns: (() => void)[] = [];
   private stopped = false;
   private match: StoredMatch | null = null;
-  private lostAt = 0;
-  private startedAt = Date.now();
-  private brokerOpened = false;
-  private lastPeerUnavailable = 0;
-  private diag: Diag = { ice: "—", host: 0, srflx: 0, relay: 0 };
+  private connected = true;
+  private ended = false;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private presenceOn = false;
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
-    this.peer = new Peer(peerOptions());
-    this.peer.on("open", () => { this.brokerOpened = true; this.attempt(); });
-    this.peer.on("error", (err) => {
-      if (this.stopped) return;
-      if ((err as { type?: string }).type === "peer-unavailable") {
-        this.lastPeerUnavailable = Date.now();
-        // La tentative est terminée (hôte introuvable) : on libère pour pouvoir la relancer.
-        this.conn?.close();
-        this.conn = null;
-      }
-      this.scheduleRetry();
-    });
-    this.peer.on("disconnected", () => { if (!this.stopped && !this.peer?.destroyed) this.peer?.reconnect(); });
-    this.scheduleRetry();
+    void this.start();
   }
 
-  private attempt() {
-    if (this.stopped || !this.peer || this.peer.disconnected) return this.scheduleRetry();
-    // Ne pas casser une connexion en cours d'établissement.
-    if (this.conn && !this.conn.open && Date.now() - this.connStartedAt < NEGOTIATION_MS) return this.scheduleRetry();
-    this.conn?.close();
-    const conn = this.peer.connect(PEER_PREFIX + this.code, { reliable: true });
-    this.conn = conn;
-    this.connStartedAt = Date.now();
-    this.diag = { ice: "—", host: 0, srflx: 0, relay: 0 };
-    watchDiag(conn, this.diag);
-    conn.on("data", (data) => {
-      const match = validateReceived(data);
-      if (!match) return;
-      this.match = match;
-      this.lostAt = 0;
-      this.onChange({ kind: "live", match, connected: true });
-    });
-    conn.on("close", () => this.lost(conn));
-    conn.on("error", () => this.lost(conn));
-    this.scheduleRetry(); // vérifie plus tard que la connexion a bien abouti
-  }
-
-  private lost(conn: DataConnection) {
-    if (this.stopped || conn !== this.conn) return;
-    if (this.match) {
-      if (!this.lostAt) this.lostAt = Date.now();
-      this.onChange({ kind: "live", match: this.match, connected: false });
-    }
-    this.scheduleRetry();
-  }
-
-  private scheduleRetry() {
-    clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      if (this.stopped) return;
-      if (this.conn?.open && this.match) { this.lostAt = 0; return; }
-      const now = Date.now();
-      if (!this.match) {
-        if (this.failReason(now)) return this.giveUp();
-      } else {
-        if (!this.lostAt) this.lostAt = now;
-        if (now - this.lostAt > RECONNECT_GIVE_UP_MS) return this.giveUp();
-      }
-      this.attempt();
-    }, ATTEMPT_MS);
-  }
-
-  /** Pourquoi la première connexion échoue, une fois le délai écoulé ; `null` = patienter encore. */
-  private failReason(now: number): FailReason | null {
-    const elapsed = now - this.startedAt;
-    if (this.lastPeerUnavailable && now - this.lastPeerUnavailable < ATTEMPT_MS * 2 && elapsed > UNKNOWN_GIVE_UP_MS) return "unknown";
-    if (elapsed <= FIRST_GIVE_UP_MS) return null;
-    if (!this.brokerOpened) return "unreachable";
-    return this.lastPeerUnavailable ? "unknown" : "blocked";
-  }
-
-  private giveUp() {
-    const reason = this.failReason(Date.now()) ?? "blocked";
-    const match = this.match;
+  private fail(reason: FailReason) {
+    if (this.stopped) return;
     this.stop();
-    this.onChange(match ? { kind: "live", match, connected: false } : { kind: "failed", reason, diag: this.diag });
+    this.onChange({ kind: "failed", reason });
+  }
+
+  private emitLive() {
+    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended });
+  }
+
+  private async start() {
+    const backend = await getBackend().catch(() => null);
+    if (this.stopped) return;
+    if (!backend) return this.fail("unreachable");
+    this.timer = setTimeout(() => { if (!this.match) this.fail("unreachable"); }, FIRST_ANSWER_MS);
+    this.stopFns.push(
+      backend.watch(
+        this.code,
+        (r) => {
+          if (this.stopped) return;
+          clearTimeout(this.timer);
+          if (!r.exists) {
+            if (!this.match) return this.fail("unknown");
+            this.ended = true; // l'hôte a arrêté le partage ; on garde la dernière version
+            return this.emitLive();
+          }
+          const match = parsePayload(r.payload);
+          if (!match) return this.match ? undefined : this.fail("invalid");
+          this.match = match;
+          this.ended = false;
+          if (!this.presenceOn) { this.presenceOn = true; this.stopFns.push(backend.presence(this.code)); }
+          this.emitLive();
+        },
+        (up) => { this.connected = up; this.emitLive(); },
+        () => this.fail("unreachable"),
+      ),
+    );
   }
 
   stop() {
     this.stopped = true;
     clearTimeout(this.timer);
-    this.conn?.close();
-    this.peer?.destroy();
+    for (const f of this.stopFns) f();
+    this.stopFns = [];
   }
 }

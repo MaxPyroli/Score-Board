@@ -112,9 +112,9 @@ export default function App() {
         <MatchScreen
           match={live.match} game={liveGame} readOnly title={`${liveGame.displayName} · lecture seule`}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
-          note={!live.connected && (
-            <p className="note-lost">Connexion perdue : reconnexion automatique dès que la connexion revient.</p>
-          )}
+          note={live.ended
+            ? <p className="note-lost">L'hôte a arrêté le partage : voici la dernière version.</p>
+            : !live.connected && <p className="note-lost">Connexion perdue : reconnexion automatique dès que la connexion revient.</p>}
         />
       );
     return <JoinScreen state={join} onJoin={startJoin} onBack={nav.back} initialCode={initialCode} />;

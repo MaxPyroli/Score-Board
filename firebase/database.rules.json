@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sessions": {
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
+        ".write": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/) && (!data.exists() || data.child('owner').val() === auth.uid || data.child('updatedAt').val() < now - 86400000) && (!newData.exists() || newData.child('owner').val() === auth.uid)",
+        ".validate": "!newData.exists() || (newData.hasChildren(['owner', 'updatedAt', 'payload']) && newData.child('payload').isString() && newData.child('payload').val().length < 200000)",
+        "owner": { ".validate": "newData.isString()" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "payload": { ".validate": "newData.isString()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "viewers": {
+      "$code": {
+        ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
+          ".validate": "newData.val() === true"
+        }
+      }
+    }
+  }
+}
