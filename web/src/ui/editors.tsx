@@ -489,7 +489,7 @@ export function SushiEditor(props: EditorProps) {
   const set = (id: string, key: string, value: number) =>
     setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value ? String(value) : "" } }));
   const built = useMemo(() => buildSushi(drafts, ids, nameOf, fields, dessert), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Les comparaisons (makis, puddings…) se font entre tous les joueurs : les points se mettent à jour à chaque changement.
+  // Les comparaisons (makis, flans…) se font entre tous les joueurs : les points se mettent à jour à chaque changement.
   const scores = useMemo(() => (built.round ? scoreSushi(built.round) : {}), [built]);
 
   return (

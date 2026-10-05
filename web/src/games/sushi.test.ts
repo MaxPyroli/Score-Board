@@ -30,8 +30,12 @@ describe("Sushi Go Party ! : cartes individuelles", () => {
     expect(solo({ onigiri1: 2, onigiri2: 1 })).toBe(4 + 1);
     expect(solo({ onigiri1: 2, onigiri2: 2, onigiri3: 1 })).toBe(9 + 4);
   });
-  it("uramaki : la place réclamée", () => {
-    expect([0, 1, 2, 3].map((r) => solo({ uramakiRank: r }))).toEqual([0, 8, 5, 2]);
+  it("California : 8 puis 6 points à 10 symboles, 2 points au plus de symboles en fin de manche", () => {
+    expect(solo({ californiaFirst: 1 })).toBe(8);
+    expect(solo({ californiaSecond: 1 })).toBe(6);
+    expect(solo({ californiaFirst: 1, californiaSecond: 1 })).toBe(14);
+    const r = scoreSushi(round({ A: { california: 4 }, B: { california: 4, californiaFirst: 1 }, C: { california: 1 } }));
+    expect(r).toEqual({ A: 2, B: 10, C: 0 });
   });
   it("desserts : glace au thé vert, fruits", () => {
     expect([3, 4, 9].map((n) => solo({ icecream: n }))).toEqual([0, 12, 24]);
@@ -62,10 +66,10 @@ describe("Sushi Go Party ! : comparaisons entre joueurs", () => {
     expect(three("temaki", 2, 2, 2)).toEqual({ A: 0, B: 0, C: 0 });
     expect(scoreSushi(round({ A: { temaki: 2 }, B: { temaki: 2 } }))).toEqual({ A: 4, B: 4 });
   });
-  it("pudding : +6 / −6, sans malus à deux joueurs", () => {
-    expect(three("pudding", 4, 2, 0)).toEqual({ A: 6, B: 0, C: -6 });
-    expect(scoreSushi(round({ A: { pudding: 3 }, B: { pudding: 1 } }))).toEqual({ A: 6, B: 0 });
-    expect(scoreSushi(round({ A: { pudding: 2 }, B: { pudding: 2 } }, true))).toEqual({ A: 6, B: 6 });
+  it("flan : +6 / −6, sans malus à deux joueurs", () => {
+    expect(three("flan", 4, 2, 0)).toEqual({ A: 6, B: 0, C: -6 });
+    expect(scoreSushi(round({ A: { flan: 3 }, B: { flan: 1 } }))).toEqual({ A: 6, B: 0 });
+    expect(scoreSushi(round({ A: { flan: 2 }, B: { flan: 2 } }, true))).toEqual({ A: 6, B: 6 });
   });
   it("edamame : 1 point par adversaire qui en a, 4 par carte au maximum", () => {
     expect(three("edamame", 2, 1, 0)).toEqual({ A: 2, B: 1, C: 0 });
@@ -80,19 +84,21 @@ describe("Sushi Go Party ! : comparaisons entre joueurs", () => {
 
 describe("Sushi Go Party ! : menu, saisie, partie", () => {
   it("le menu décide des champs proposés ; les manches et les desserts sont séparés", () => {
-    const cfg = sushiConfig({ roll: "temaki", dessert: "fruit", tempura: "false", soy: "true" });
+    const cfg = sushiConfig({ roll: "temaki", dessert: "fruit", tempura: "false", soy: "true", wasabi: "false" });
     const keys = fieldsFor(cfg, false).map((f) => f.key);
     expect(keys).toContain("temaki");
     expect(keys).not.toContain("maki");
     expect(keys).not.toContain("tempura");
     expect(keys).toContain("colors");
+    expect(keys).not.toContain("eggW"); // pas de wasabi dans ce menu
+    expect(fieldsFor(sushiConfig({ wasabi: "true" }), false).map((f) => f.key)).toContain("eggW");
     expect(fieldsFor(cfg, true).map((f) => f.key)).toEqual(["melon", "orange", "pineapple"]);
   });
-  it("menu par défaut : maki, pudding, tempura, sashimi, gyoza", () => {
+  it("menu par défaut : maki, flan, tempura, sashimi, gyoza", () => {
     const cfg = sushiConfig({});
     expect(cfg.roll).toBe("maki");
-    expect(cfg.dessert).toBe("pudding");
-    expect([...cfg.cards].sort()).toEqual(["dumpling", "sashimi", "tempura"]);
+    expect(cfg.dessert).toBe("flan");
+    expect([...cfg.cards].sort()).toEqual(["dumpling", "sashimi", "tempura", "wasabi"]);
   });
   it("saisie : champ vide = 0, refus d'un nombre invalide ou d'un wasabi en trop", () => {
     const fields = fieldsFor(sushiConfig({}), false);
@@ -104,7 +110,7 @@ describe("Sushi Go Party ! : menu, saisie, partie", () => {
   it("encodage aller-retour et totaux de la partie : 3 manches + desserts", () => {
     const r1 = round({ A: { tempura: 2 }, B: { sashimi: 3 } });
     const r2 = round({ A: { dumpling: 3 }, B: {} });
-    const d = round({ A: { pudding: 1 }, B: { pudding: 3 } }, true);
+    const d = round({ A: { flan: 1 }, B: { flan: 3 } }, true);
     expect(sushiModule.decodeRound(sushiModule.encodeRound(r1))).toEqual(r1);
     const m: StoredMatch = {
       id: "m", moduleId: "sushi", createdAt: 0, settings: {}, rounds: [r1, r2, d].map((r) => sushiModule.encodeRound(r)),

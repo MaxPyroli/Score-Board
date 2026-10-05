@@ -331,27 +331,27 @@ function sushiGame(): GameDefinition {
   const done = (m: StoredMatch) => m.rounds.length;
   return {
     id: sushiModule.id, displayName: sushiModule.displayName,
-    tagline: "2 à 8 joueurs · menu de ton choix, makis, puddings et comparaisons calculés",
+    tagline: "2 à 8 joueurs · menu de ton choix, makis, flans et comparaisons calculés",
     minPlayers: sushiModule.minPlayers, maxPlayers: sushiModule.maxPlayers,
     choiceOptions: [
       {
-        key: SETTING_ROLL, label: "Rouleau du menu", default: "maki",
+        key: SETTING_ROLL, label: "Makis du menu", default: "maki",
         choices: [
-          { value: "maki", label: "Maki", description: "Le plus d'icônes : 6 points, puis 3." },
+          { value: "maki", label: "Makis saumon", description: "Le plus de symboles : 6 points, puis 3." },
           { value: "temaki", label: "Temaki", description: "Le plus : +4 points, le moins : −4." },
-          { value: "uramaki", label: "Uramaki", description: "Course à 10 icônes : 8, 5 puis 2 points." },
+          { value: "california", label: "California", description: "Course à 10 symboles : 8 puis 6 points ; le plus de symboles en fin de manche : 2." },
         ],
       },
       {
-        key: SETTING_DESSERT, label: "Dessert du menu", default: "pudding",
+        key: SETTING_DESSERT, label: "Dessert du menu", default: "flan",
         choices: [
-          { value: "pudding", label: "Pudding", description: "Le plus : +6 points, le moins : −6." },
-          { value: "icecream", label: "Glace au thé vert", description: "12 points par ensemble de 4." },
+          { value: "flan", label: "Flan", description: "Le plus : +6 points, le moins : −6." },
+          { value: "icecream", label: "Glace matcha", description: "12 points par ensemble de 4." },
           { value: "fruit", label: "Fruits", description: "Points selon le nombre de chaque fruit." },
         ],
       },
     ],
-    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: `${c.kind === "apero" ? "Apéritif" : "Spécial"} · ${c.description}`, default: c.default })),
+    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: `${c.kind === "apero" ? "Hors-d'œuvre" : "Supplément"} · ${c.description}`, default: c.default })),
     numberOptions: [], fixedSettings: {},
     totals: t,
     roundScores: (m) => roundScores(sushiModule, m),

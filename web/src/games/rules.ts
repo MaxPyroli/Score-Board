@@ -269,20 +269,32 @@ const sushi = (): RulesDoc => ({
   title: "Sushi Go Party !",
   summary:
     "Jeu de 2 à 8 joueurs : on choisit une carte dans sa main, on passe le reste à son voisin, et on compose devant soi la meilleure assiette. " +
-    "Trois manches comptées une à une, puis les desserts comptés à la fin. Le plus gros total gagne.",
+    "Trois manches comptées une à une, puis les desserts comptés à la fin. Le plus gros total gagne. Règles tirées du règlement officiel (Cocktail Games).",
   sections: [
+    {
+      id: "menu",
+      title: "Le menu",
+      paragraphs: ["À chaque partie, on choisit ce qui est au menu : les sushis (toujours), puis :"],
+      bullets: [
+        "1 sorte de makis (makis saumon, California ou temaki) ;",
+        "3 sortes de hors-d'œuvre (tempura, sashimis, gyoza, anguille, tofu, onigiri, edamame, soupe miso) ;",
+        "2 sortes de suppléments (baguettes, sauce soja, thé, menu, cuillère, commande spéciale, boîte à emporter, wasabi) ;",
+        "1 sorte de dessert (flan, glace matcha, fruits).",
+        "Menu et commande spéciale : pas à 7 ou 8 joueurs. Cuillère et edamame : pas à 2 joueurs.",
+      ],
+    },
     {
       id: "points",
       title: "Les points d'une manche",
       bullets: [
-        "Nigiri : œuf 1, saumon 2, calamar 3 ; posé sur un wasabi, il vaut le triple.",
-        "Tempura : 5 points par paire. Sashimi : 10 points par trio.",
+        "Sushis (toujours dans le jeu) : omelette 1, saumon 2, calamar 3. Posé sur un wasabi, un sushi vaut le triple (3, 6, 9).",
+        "Tempura : 5 points par paire. Sashimis : 10 points par trio.",
         `Gyoza : ${DUMPLING_POINTS.slice(1, 5).join(", ")} puis ${DUMPLING_POINTS[5]} points pour 1, 2, 3, 4 puis 5 cartes ou plus.`,
         "Anguille : 1 carte −3 points ; 2 cartes ou plus 7 points. Tofu : 1 carte 2 points, 2 cartes 6 points, 3 ou plus 0.",
-        `Onigiri : ${ONIGIRI_POINTS.slice(1).join(", ")} points pour 1, 2, 3 ou 4 formes différentes (chaque ensemble compte à part).`,
+        `Onigiri : ${ONIGIRI_POINTS.slice(1).join(", ")} points pour 1, 2, 3 ou 4 formes différentes (on peut faire plusieurs séries).`,
         "Soupe miso : 3 points ; si plusieurs sont jouées au même tour, toutes sont défaussées et ne rapportent rien (ne les compte pas).",
-        "Boîte à emporter : 2 points par carte retournée. Thé : pour chaque thé, 1 point par carte du plus grand ensemble de même couleur de fond.",
-        "Wasabi (toujours dans le jeu), baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes : la commande spéciale se compte comme la carte copiée.",
+        "Boîte à emporter : 2 points par carte retournée. Thé : chaque thé vaut 1 point par carte de la couleur de fond choisie (la plus représentée devant toi).",
+        "Wasabi, baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes ; la commande spéciale se compte comme la carte copiée.",
       ],
     },
     {
@@ -290,19 +302,19 @@ const sushi = (): RulesDoc => ({
       title: "Les points par comparaison",
       paragraphs: ["L'appli compare les joueurs et attribue ces points toute seule. En cas d'égalité, tous les ex æquo reçoivent les points complets."],
       bullets: [
-        "Maki : le plus d'icônes 6 points, le deuxième 3 points (il faut en avoir au moins une). À 6 joueurs ou plus : 6, 4 et 2 points pour les trois premiers. Une égalité en tête supprime la place suivante.",
-        "Temaki : le plus +4 points, le moins −4 points (pas de malus à 2 joueurs). À égalité, tous les ex æquo reçoivent les points.",
-        "Uramaki : le premier à atteindre 10 icônes 8 points, le deuxième 5, le troisième 2. En fin de manche, les places restantes vont à ceux qui en ont le plus. Tu indiques la place de chacun.",
-        "Edamame : 1 point par adversaire qui en a aussi, 4 points par carte au maximum.",
-        "Sauce soja : 4 points par sauce soja pour celui qui a le plus de couleurs de fond différentes (sauce comprise).",
+        "Makis saumon : le plus de symboles 6 points, le deuxième (au moins 1) 3 points. À 6 joueurs ou plus : 6, 4 et 2 points pour les trois premiers.",
+        "Temaki : le plus +4 points, le moins (ou aucun) −4 points ; pas de malus à 2 joueurs.",
+        "California : le premier à atteindre 10 symboles gagne 8 points, le deuxième 6 points (tu indiques qui a pris chaque place) ; en fin de manche, le plus de symboles devant soi gagne 2 points.",
+        "Edamame : 1 point par adversaire qui en a aussi, 4 points par carte au maximum ; seul à en avoir : rien.",
+        "Sauce soja : chaque sauce vaut 4 points pour celui qui a le plus de couleurs de fond différentes devant lui (tous les joueurs sont comparés, même sans sauce soja).",
       ],
     },
     {
       id: "desserts",
       title: "Les desserts (fin de partie)",
       bullets: [
-        "Pudding : le plus +6 points, le moins −6 points (pas de malus à 2 joueurs). À égalité, tous les ex æquo reçoivent les points.",
-        "Glace au thé vert : 12 points par ensemble de 4.",
+        "Flan : le plus +6 points, le moins (ou aucun) −6 points ; pas de malus à 2 joueurs.",
+        "Glace matcha : 12 points par série de 4.",
         `Fruits : pour chaque sorte (pastèque, orange, ananas), selon le nombre de symboles : ${FRUIT_POINTS.join(", ")} points pour 0, 1, 2, 3, 4 puis 5 ou plus.`,
         "Les desserts pris pendant les manches sont mis de côté et ne comptent qu'à la fin : indique le total de la partie.",
       ],
@@ -310,16 +322,16 @@ const sushi = (): RulesDoc => ({
     {
       id: "egalite",
       title: "En cas d'égalité",
-      paragraphs: ["Celui qui a le plus de puddings l'emporte."],
+      paragraphs: ["Celui qui a le plus de cartes dessert l'emporte."],
     },
     {
       id: "appli",
       title: "Dans l'appli",
       bullets: [
-        "À la création, choisis le menu : un rouleau, un dessert et les apéritifs et spéciaux de ta partie. L'appli ne propose que ces cartes à la saisie.",
+        "À la création, choisis le menu : les makis, le dessert et les hors-d'œuvre et suppléments de ta partie. L'appli ne propose que ces cartes à la saisie.",
         "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte.",
         "Les points s'affichent en direct et les comparaisons se font entre tous les joueurs : pense à saisir tout le monde avant de valider.",
-        "Carte menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
+        "Menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
       ],
     },
   ],
