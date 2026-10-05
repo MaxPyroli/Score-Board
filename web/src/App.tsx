@@ -3,6 +3,7 @@ import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutR
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
+import { UpdateBanner, useAppUpdate } from "./pwa";
 import { HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
@@ -45,7 +46,8 @@ function useNav(initial?: Screen) {
   return { screen: stack[stack.length - 1], push, back, replace };
 }
 
-export default function App() {
+/** Écrans de l'appli. `onIdle` : vrai à l'accueil (aucune saisie en cours). */
+function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const { matches, save, remove } = useMatches();
   // Écran à rouvrir après une actualisation (calculé une seule fois, au démarrage).
   const [boot] = useState(() => {
@@ -58,6 +60,8 @@ export default function App() {
     return { resume, screen };
   });
   const nav = useNav(boot.screen);
+
+  useEffect(() => onIdle(nav.screen.kind === "home"), [nav.screen.kind, onIdle]);
   const { screen } = nav;
 
   // --- Partage (hôte) ---
@@ -245,5 +249,15 @@ function Missing({ onBack }: { onBack(): void }) {
         <button className="btn" onClick={onBack}>Retour</button>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  const update = useAppUpdate();
+  return (
+    <>
+      <Screens onIdle={update.setIdle} />
+      {update.ready && !update.applying && <UpdateBanner onApply={update.apply} />}
+    </>
   );
 }

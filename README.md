@@ -7,7 +7,9 @@ par le Tarot. Kotlin + Jetpack Compose, 100 % hors-ligne, stockage local (Room).
 
 Même appli en TypeScript (Vite + React), pour itérer vite et l'utiliser aussi sur iPhone via le navigateur
 (« Ajouter à l'écran d'accueil »). Mêmes règles et mêmes formats de manche que le Kotlin, tests portés.
-Données enregistrées sur l'appareil (localStorage).
+Données enregistrées sur l'appareil (localStorage). Le site est installable et fonctionne sans internet
+(service worker, `vite-plugin-pwa`) ; une nouvelle version est appliquée toute seule à l'accueil, ou proposée par un bandeau
+pendant une saisie. Le partage en direct, lui, demande internet.
 
 Partage en direct via Firebase Realtime Database : l'hôte clique sur Partager (code à 4 caractères + QR
 code qui ouvre `#join=CODE`), les autres suivent en lecture seule ; la reconnexion est automatique. Marche sur tous
