@@ -341,7 +341,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <PlayerGrid players={match.players}>
             {(p) => (
               <span className="name">
-                {online && <span className={`dot ${online.includes(p.id) ? "on" : "off"}`} role="img" aria-label={online.includes(p.id) ? "connecté" : "hors ligne"} />}
+                {online && <span className={`dot ${online.includes(p.id) ? "on" : "off"}`} role="img" aria-label={online.includes(p.id) ? "connecté" : "déconnecté"} />}
                 {p.name}
               </span>
             )}
@@ -365,7 +365,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
-        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> hors ligne</p>}
+        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> déconnecté</p>}
         {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}

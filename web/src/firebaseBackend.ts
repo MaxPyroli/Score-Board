@@ -55,24 +55,37 @@ export function createFirebaseBackend(config: FirebaseOptions): Backend {
 
     announce(code) {
       let stopped = false;
-      let me: Promise<ReturnType<typeof ref>> | null = null;
-      const getRef = () => (me ??= (async () => {
-        const r = ref(db, `viewers/${code}/${await uid()}`);
-        await onDisconnect(r).remove();
-        return r;
-      })());
+      let latest: ClaimData | null = null;
+      const meRef = (async () => ref(db, `viewers/${code}/${await uid()}`))();
+      const value = (claim: ClaimData): ClaimData => {
+        const v: ClaimData = { p: claim.p };
+        if (claim.n) v.n = claim.n;
+        if (claim.r !== undefined) v.r = claim.r;
+        if (claim.s !== undefined) v.s = claim.s;
+        if (claim.f) v.f = true;
+        return v;
+      };
+      const write = async () => {
+        const r = await meRef;
+        if (stopped || !latest) return;
+        await onDisconnect(r).remove(); // retiré par le serveur si cet appareil se déconnecte
+        await set(r, value(latest));
+      };
+      // À chaque (re)connexion — retour de veille, réseau revenu — on se signale de nouveau : pendant la coupure,
+      // le serveur a retiré notre signature, et sans cela on resterait « déconnecté » alors qu'on est revenu.
+      const offConn = later(async () => {
+        await meRef;
+        return onValue(ref(db, ".info/connected"), (s) => { if (s.val() === true) void write().catch(() => {}); });
+      });
       return {
         set(claim) {
-          const value: ClaimData = { p: claim.p };
-          if (claim.n) value.n = claim.n;
-          if (claim.r !== undefined) value.r = claim.r;
-          if (claim.s !== undefined) value.s = claim.s;
-          if (claim.f) value.f = true;
-          void getRef().then((r) => (stopped ? undefined : set(r, value))).catch(() => {});
+          latest = claim;
+          void write().catch(() => {});
         },
         stop() {
           stopped = true;
-          void me?.then((r) => remove(r)).catch(() => {});
+          offConn();
+          void meRef.then((r) => remove(r)).catch(() => {});
         },
       };
     },
