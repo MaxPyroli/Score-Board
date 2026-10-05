@@ -77,7 +77,9 @@ p.hint { margin: 6px 0 0; }
 
 .card { background: var(--surface); border: 1px solid var(--outline); border-radius: 16px; }
 button.card { text-align: left; width: 100%; }
-.games, .list { display: flex; flex-direction: column; gap: 8px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+/* Cartes de choix (jeux, modes) : toutes de la même hauteur, celle de la plus haute, pour uniformiser. */
+.games { display: grid; grid-auto-rows: 1fr; gap: 8px; }
 .game { display: flex; flex-direction: column; gap: 2px; padding: 16px 16px; position: relative; overflow: hidden; min-height: 92px; justify-content: center; background: linear-gradient(135deg, var(--g1), var(--g2)); color: #fff; border: 0; }
 .game .hint { color: rgba(255,255,255,.88); max-width: 72%; }
 .game strong, .game .hint { position: relative; z-index: 1; }
@@ -225,8 +227,8 @@ button.card { text-align: left; width: 100%; }
 .entry-row.edit { flex-direction: column; align-items: stretch; gap: 4px; }
 .entry-row.edit .entry-field.compact { justify-content: flex-start; }
 
-.choices { display: flex; flex-direction: column; gap: 8px; }
-.choice { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; }
+.choices { display: grid; grid-auto-rows: 1fr; gap: 8px; }
+.choice { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 12px 14px; }
 .choice.on { border-color: var(--primary); background: var(--primary-soft); }
 .entry-row.quick { gap: 8px; }
 .quick-total { min-width: 2.5em; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
