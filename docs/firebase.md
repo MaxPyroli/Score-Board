@@ -16,6 +16,11 @@
 6. Envoie ce bloc à Claude (il n'est pas secret : il est public par conception, la sécurité vient
    des règles de l'étape 4). Il le colle dans `web/src/firebaseConfig.ts` et publie.
 
+## Mettre à jour les règles
+
+Quand `firebase/database.rules.json` change (par exemple pour les pastilles « connecté » et le changement de nom),
+recolle son contenu dans l'onglet **Rules** de la base, puis **Publish**.
+
 ## Comment c'est protégé
 
 - Il faut être connecté (anonymement) pour lire ou écrire ; chaque appareil a son identifiant.

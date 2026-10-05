@@ -2,7 +2,7 @@
 // en lecture seule (Firebase Realtime Database, voir backend.ts et docs/firebase.md).
 import type { StoredMatch } from "./core";
 import { gameById } from "./games/registry";
-import { getBackend, type Backend } from "./backend";
+import { getBackend, type Backend, type Claim } from "./backend";
 
 export const CODE_LENGTH = 4;
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sans 0/O ni 1/I, comme sur Android
@@ -75,20 +75,34 @@ const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
 
 export type HostStatus = "starting" | "sharing" | "error";
 
+export interface HostInfo {
+  status: HostStatus;
+  code: string;
+  /** Appareils connectés autres que celui de l'hôte. */
+  viewers: number;
+  /** Joueurs actuellement connectés. */
+  online: string[];
+  /** Signatures de tous les appareils connectés (changements de nom demandés inclus). */
+  claims: Claim[];
+}
+
 /** Côté hôte : publie la partie à chaque changement et compte les spectateurs. */
 export class HostSession {
   code = generateCode();
   private backend: Backend | null = null;
   private latest: StoredMatch;
   private stopped = false;
-  private viewers = 0;
-  private offViewers: (() => void) | null = null;
+  private claims: Claim[] = [];
+  private ownUid = "";
+  private offClaims: (() => void) | null = null;
+  private announcer: ReturnType<Backend["announce"]> | null = null;
+  private identity: { p: string; n?: string } | null = null;
   private wakeLock: { release(): Promise<void> } | null = null;
   private onVisible = () => { if (document.visibilityState === "visible" && !this.stopped) void this.keepAwake(); };
 
   constructor(
     match: StoredMatch,
-    private onChange: (s: { status: HostStatus; code: string; viewers: number }) => void,
+    private onChange: (s: HostInfo) => void,
   ) {
     this.latest = match;
     void this.keepAwake();
@@ -97,7 +111,13 @@ export class HostSession {
   }
 
   private emit(status: HostStatus) {
-    this.onChange({ status, code: this.code, viewers: this.viewers });
+    this.onChange({
+      status,
+      code: this.code,
+      viewers: this.claims.filter((c) => c.uid !== this.ownUid).length,
+      online: this.claims.filter((c) => c.p).map((c) => c.p),
+      claims: this.claims,
+    });
   }
 
   /** Garde l'écran allumé pendant le partage : un téléphone en veille coupe la connexion. */
@@ -117,7 +137,10 @@ export class HostSession {
         const result = await withTimeout(backend.publish(this.code, wrap(this.latest)), 15000);
         if (this.stopped) return void backend.remove(this.code).catch(() => {});
         if (result === "ok") {
-          this.offViewers = backend.countViewers(this.code, (n) => { this.viewers = n; this.emit("sharing"); });
+          this.ownUid = await backend.uid();
+          this.announcer = backend.announce(this.code);
+          if (this.identity) this.announcer.set(this.identity);
+          this.offClaims = backend.watchClaims(this.code, (claims) => { this.claims = claims; this.emit("sharing"); });
           return this.emit("sharing");
         }
         this.code = generateCode(); // code déjà pris : on en tire un autre
@@ -126,6 +149,12 @@ export class HostSession {
     } catch {
       if (!this.stopped) this.emit("error");
     }
+  }
+
+  /** L'hôte dit quel joueur il est (`""` = aucun) : il apparaît alors comme connecté. */
+  claim(p: string, n?: string) {
+    this.identity = { p, ...(n ? { n } : {}) };
+    this.announcer?.set(this.identity);
   }
 
   update(match: StoredMatch) {
@@ -138,7 +167,8 @@ export class HostSession {
     this.stopped = true;
     document.removeEventListener("visibilitychange", this.onVisible);
     void this.wakeLock?.release().catch(() => {});
-    this.offViewers?.();
+    this.offClaims?.();
+    this.announcer?.stop();
     void this.backend?.remove(this.code).catch(() => {});
   }
 }
@@ -149,7 +179,7 @@ export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
   | { kind: "failed"; reason: FailReason }
-  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean };
+  | { kind: "live"; match: StoredMatch; connected: boolean; ended: boolean; online: string[] };
 
 const FIRST_ANSWER_MS = 20000;
 
@@ -161,7 +191,9 @@ export class SpectatorSession {
   private connected = true;
   private ended = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
-  private presenceOn = false;
+  private announcer: ReturnType<Backend["announce"]> | null = null;
+  private identity: { p: string; n?: string } | null = null;
+  private online: string[] = [];
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
@@ -175,7 +207,7 @@ export class SpectatorSession {
   }
 
   private emitLive() {
-    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended });
+    if (this.match) this.onChange({ kind: "live", match: this.match, connected: this.connected, ended: this.ended, online: this.online });
   }
 
   private async start() {
@@ -198,13 +230,27 @@ export class SpectatorSession {
           if (!match) return this.match ? undefined : this.fail("invalid");
           this.match = match;
           this.ended = false;
-          if (!this.presenceOn) { this.presenceOn = true; this.stopFns.push(backend.presence(this.code)); }
+          if (!this.announcer) {
+            this.announcer = backend.announce(this.code);
+            this.stopFns.push(() => this.announcer?.stop());
+            if (this.identity) this.announcer.set(this.identity);
+            this.stopFns.push(backend.watchClaims(this.code, (claims) => {
+              this.online = claims.filter((c) => c.p).map((c) => c.p);
+              this.emitLive();
+            }));
+          }
           this.emitLive();
         },
         (up) => { this.connected = up; this.emitLive(); },
         () => this.fail("unreachable"),
       ),
     );
+  }
+
+  /** Cet appareil dit quel joueur il est (`""` = regarde seulement) et, éventuellement, son nouveau nom. */
+  claim(p: string, n?: string) {
+    this.identity = { p, ...(n ? { n } : {}) };
+    this.announcer?.set(this.identity);
   }
 
   stop() {

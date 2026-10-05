@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { matchWithRound, matchWithRoundReplaced, matchWithoutRound } from "./core";
+import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
-import { useMatches } from "./store";
+import { newId, useMatches } from "./store";
 import { HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
-import { codeFromHash, HostSession, SpectatorSession, type HostStatus, type JoinState } from "./session";
+import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
 
 type Screen =
   | { kind: "home" }
@@ -47,7 +47,7 @@ export default function App() {
 
   // --- Partage (hôte) ---
   const hostRef = useRef<HostSession | null>(null);
-  const [host, setHost] = useState<{ matchId: string; status: HostStatus; code: string; viewers: number } | null>(null);
+  const [host, setHost] = useState<(HostInfo & { matchId: string }) | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const startSharing = (matchId: string) => {
     const m = matches.find((x) => x.id === matchId);
@@ -64,6 +64,18 @@ export default function App() {
     else stopSharing();
   }, [matches]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => hostRef.current?.stop(), []);
+  // Un invité a changé de nom : l'hôte (version de référence) l'applique si le nom est valide.
+  useEffect(() => {
+    if (!host) return;
+    const original = matches.find((x) => x.id === host.matchId);
+    if (!original) return;
+    let current = original;
+    for (const c of host.claims) {
+      const renamed = c.n && c.p ? renamePlayer(current, c.p, c.n) : null;
+      if (renamed) current = renamed;
+    }
+    if (current !== original) save(current);
+  }, [host?.claims]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Rejoindre (spectateur) ---
   const spectatorRef = useRef<SpectatorSession | null>(null);
@@ -104,6 +116,13 @@ export default function App() {
         onOpen={(m) => nav.push({ kind: "match", matchId: m.id })}
         onDelete={(m) => { if (host?.matchId === m.id) stopSharing(); remove(m.id); }}
         onJoin={() => nav.push({ kind: "join" })}
+        onReplay={(old) => {
+          const settings = { ...old.settings };
+          delete settings[SETTING_FINISHED];
+          const m = { ...old, id: newId(), players: old.players.map((p) => ({ ...p, id: newId() })), rounds: [], settings, createdAt: Date.now() };
+          save(m);
+          nav.push({ kind: "match", matchId: m.id });
+        }}
       />
     );
 
@@ -114,6 +133,7 @@ export default function App() {
       return (
         <MatchScreen
           match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
+          online={live.online} onClaim={(p, n) => spectatorRef.current?.claim(p, n)}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
             ? <p className="note-lost">L'hôte a arrêté le partage : voici la dernière version.</p>
@@ -152,6 +172,8 @@ export default function App() {
         onDelete={() => { nav.back(); if (host?.matchId === match.id) stopSharing(); remove(match.id); }}
         sharing={host?.matchId === match.id && host.status === "sharing" ? { code: host.code, viewers: host.viewers } : null}
         onShare={() => setShareOpen(true)}
+        online={host?.matchId === match.id && host.status === "sharing" ? host.online : null}
+        onClaim={(p, n) => hostRef.current?.claim(p, n)}
       />
       {shareOpen && (
         <ShareDialog

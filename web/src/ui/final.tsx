@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Dialog } from "./components";
-import { finalMessage, ordinal, plain, type RankedPlayer, type StoredMatch } from "../core";
+import { MAX_NAME_LENGTH, finalMessage, ordinal, plain, type RankedPlayer, type StoredMatch } from "../core";
 
 /** « Qui es-tu ? » : choisir son joueur dans la partie (ou regarder seulement). */
 export function WhoAreYou({ match, current, onPick, onClose }: {
@@ -50,5 +51,29 @@ export function FinalScreen({ ranked, meId, onClose, onResume, onChangeMe }: {
         {onResume && <button className="btn outline" onClick={onResume}>Reprendre la partie</button>}
       </div>
     </div>
+  );
+}
+
+/** Changer son nom de joueur, à tout moment. */
+export function RenameDialog({ current, validate, onSubmit, onClose }: {
+  current: string;
+  validate(raw: string): string | null;
+  onSubmit(raw: string): void;
+  onClose(): void;
+}) {
+  const [text, setText] = useState(current);
+  const ok = validate(text) !== null;
+  return (
+    <Dialog title="Changer mon nom" onClose={onClose}>
+      <input
+        className="field wide" autoFocus value={text} maxLength={MAX_NAME_LENGTH} aria-label="Mon nom"
+        onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && ok) onSubmit(text); }}
+      />
+      {!ok && text.trim() !== "" && <p className="error">Ce nom est déjà pris par un autre joueur.</p>}
+      <div className="buttons">
+        <button className="btn outline" onClick={onClose}>Annuler</button>
+        <button className="btn" disabled={!ok} onClick={() => onSubmit(text)}>Valider</button>
+      </div>
+    </Dialog>
   );
 }

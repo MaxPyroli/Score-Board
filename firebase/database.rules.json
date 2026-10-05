@@ -18,7 +18,10 @@
         ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
-          ".validate": "newData.val() === true"
+          ".validate": "!newData.exists() || newData.hasChild('p')",
+          "p": { ".validate": "newData.isString() && newData.val().length < 65" },
+          "n": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "$other": { ".validate": false }
         }
       }
     }

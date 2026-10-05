@@ -46,7 +46,7 @@ export function ShareDialog({ host, onStart, onStop, onClose }: {
           <div className="code">{host.code}</div>
           {qr && <img className="qr" src={qr} alt={`QR code de la partie ${host.code}`} width={220} height={220} />}
           <p className="hint center">
-            {host.status === "starting" ? "Connexion…" : `${host.viewers} spectateur${host.viewers > 1 ? "s" : ""} connecté${host.viewers > 1 ? "s" : ""}`}
+            {host.status === "starting" ? "Connexion…" : `${host.viewers} appareil${host.viewers > 1 ? "s" : ""} connecté${host.viewers > 1 ? "s" : ""}`}
           </p>
           <div className="buttons">
             <button className="btn outline" onClick={onClose}>Fermer</button>
