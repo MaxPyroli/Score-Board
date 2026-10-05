@@ -282,7 +282,7 @@ const sushi = (): RulesDoc => ({
         `Onigiri : ${ONIGIRI_POINTS.slice(1).join(", ")} points pour 1, 2, 3 ou 4 formes différentes (chaque ensemble compte à part).`,
         "Soupe miso : 3 points ; si plusieurs sont jouées au même tour, toutes sont défaussées et ne rapportent rien (ne les compte pas).",
         "Boîte à emporter : 2 points par carte retournée. Thé : pour chaque thé, 1 point par carte du plus grand ensemble de même couleur de fond.",
-        "Wasabi, baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes : la commande spéciale se compte comme la carte copiée.",
+        "Wasabi (toujours dans le jeu), baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes : la commande spéciale se compte comme la carte copiée.",
       ],
     },
     {
@@ -291,7 +291,7 @@ const sushi = (): RulesDoc => ({
       paragraphs: ["L'appli compare les joueurs et attribue ces points toute seule. En cas d'égalité, tous les ex æquo reçoivent les points complets."],
       bullets: [
         "Maki : le plus d'icônes 6 points, le deuxième 3 points (il faut en avoir au moins une). À 6 joueurs ou plus : 6, 4 et 2 points pour les trois premiers. Une égalité en tête supprime la place suivante.",
-        "Temaki : le plus +4 points, le moins −4 points (pas de malus à 2 joueurs).",
+        "Temaki : le plus +4 points, le moins −4 points (pas de malus à 2 joueurs). À égalité, tous les ex æquo reçoivent les points.",
         "Uramaki : le premier à atteindre 10 icônes 8 points, le deuxième 5, le troisième 2. En fin de manche, les places restantes vont à ceux qui en ont le plus. Tu indiques la place de chacun.",
         "Edamame : 1 point par adversaire qui en a aussi, 4 points par carte au maximum.",
         "Sauce soja : 4 points par sauce soja pour celui qui a le plus de couleurs de fond différentes (sauce comprise).",
@@ -301,7 +301,7 @@ const sushi = (): RulesDoc => ({
       id: "desserts",
       title: "Les desserts (fin de partie)",
       bullets: [
-        "Pudding : le plus +6 points, le moins −6 points (pas de malus à 2 joueurs).",
+        "Pudding : le plus +6 points, le moins −6 points (pas de malus à 2 joueurs). À égalité, tous les ex æquo reçoivent les points.",
         "Glace au thé vert : 12 points par ensemble de 4.",
         `Fruits : pour chaque sorte (pastèque, orange, ananas), selon le nombre de symboles : ${FRUIT_POINTS.join(", ")} points pour 0, 1, 2, 3, 4 puis 5 ou plus.`,
         "Les desserts pris pendant les manches sont mis de côté et ne comptent qu'à la fin : indique le total de la partie.",

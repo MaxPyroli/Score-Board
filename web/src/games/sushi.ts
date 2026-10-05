@@ -12,19 +12,23 @@ export type Roll = "maki" | "temaki" | "uramaki";
 export type Dessert = "pudding" | "icecream" | "fruit";
 
 /** Cartes à cocher à la création (apéritifs et spéciaux qui rapportent des points). */
-export interface MenuCard { key: string; label: string; description: string; default: boolean }
+export interface MenuCard { key: string; label: string; description: string; default: boolean; kind: "apero" | "special" }
 export const MENU_CARDS: MenuCard[] = [
-  { key: "tempura", label: "Tempura", description: "2 cartes = 5 points.", default: true },
-  { key: "sashimi", label: "Sashimi", description: "3 cartes = 10 points.", default: true },
-  { key: "dumpling", label: "Gyoza (dumplings)", description: "1, 3, 6, 10, 15 points selon le nombre.", default: true },
-  { key: "eel", label: "Anguille", description: "1 carte = −3 ; 2 cartes ou plus = 7.", default: false },
-  { key: "tofu", label: "Tofu", description: "1 carte = 2 ; 2 cartes = 6 ; 3 ou plus = 0.", default: false },
-  { key: "onigiri", label: "Onigiri", description: "1, 4, 9, 16 points selon le nombre de formes différentes.", default: false },
-  { key: "edamame", label: "Edamame", description: "1 point par adversaire qui en a aussi (4 par carte au maximum).", default: false },
-  { key: "miso", label: "Soupe miso", description: "3 points chacune (annulée si jouée en même temps qu'une autre).", default: false },
-  { key: "soy", label: "Sauce soja", description: "4 points par carte pour celui qui a le plus de couleurs différentes.", default: false },
-  { key: "tea", label: "Thé", description: "1 point par carte du plus grand ensemble de même couleur, pour chaque thé.", default: false },
-  { key: "takeout", label: "Boîte à emporter", description: "2 points par carte retournée.", default: false },
+  { key: "tempura", label: "Tempura", description: "2 cartes = 5 points.", default: true, kind: "apero" },
+  { key: "sashimi", label: "Sashimi", description: "3 cartes = 10 points.", default: true, kind: "apero" },
+  { key: "dumpling", label: "Gyoza (dumplings)", description: "1, 3, 6, 10, 15 points selon le nombre.", default: true, kind: "apero" },
+  { key: "eel", label: "Anguille", description: "1 carte = −3 ; 2 cartes ou plus = 7.", default: false, kind: "apero" },
+  { key: "tofu", label: "Tofu", description: "1 carte = 2 ; 2 cartes = 6 ; 3 ou plus = 0.", default: false, kind: "apero" },
+  { key: "onigiri", label: "Onigiri", description: "1, 4, 9, 16 points selon le nombre de formes différentes.", default: false, kind: "apero" },
+  { key: "edamame", label: "Edamame", description: "1 point par adversaire qui en a aussi (4 par carte au maximum).", default: false, kind: "apero" },
+  { key: "miso", label: "Soupe miso", description: "3 points chacune (annulée si jouée en même temps qu'une autre).", default: false, kind: "apero" },
+  { key: "soy", label: "Sauce soja", description: "4 points par carte pour celui qui a le plus de couleurs différentes.", default: false, kind: "special" },
+  { key: "tea", label: "Thé", description: "1 point par carte du plus grand ensemble de même couleur, pour chaque thé.", default: false, kind: "special" },
+  { key: "chopsticks", label: "Baguettes", description: "Prendre 2 cartes au tour suivant ; ne rapporte rien (rien à saisir).", default: false, kind: "special" },
+  { key: "menu", label: "Menu", description: "Piocher 4 cartes du paquet inutilisé et en jouer une ; rien à saisir.", default: false, kind: "special" },
+  { key: "spoon", label: "Cuillère", description: "Réclamer une carte à un adversaire ; rien à saisir.", default: false, kind: "special" },
+  { key: "specialorder", label: "Commande spéciale", description: "Copie une carte déjà jouée : compte-la dans sa sorte ; rien à saisir.", default: false, kind: "special" },
+  { key: "takeout", label: "Boîte à emporter", description: "2 points par carte retournée.", default: false, kind: "special" },
 ];
 
 export interface SushiConfig {
@@ -166,22 +170,20 @@ export function scoreSushi(round: SushiRound): Scores {
   const maki = placePoints(ids, (id) => val(id, "maki"), n >= 6 ? [6, 4, 2] : [6, 3]);
   for (const [id, pts] of Object.entries(maki)) add(id, pts);
 
-  // Temaki : le plus +4, le moins −4 (pas de malus à deux joueurs) ; si tout le monde est à égalité, rien.
-  const temaki = ids.map((id) => val(id, "temaki"));
-  if (Math.max(...temaki) !== Math.min(...temaki)) {
+  // Temaki et pudding : le plus reçoit le bonus, le moins le malus (pas de malus à deux joueurs). Égalité : tous les ex æquo
+  // reçoivent les points complets (à égalité parfaite, bonus et malus se compensent).
+  const mostAndFewest = (key: string, bonus: number, malus: number) => {
+    const counts = ids.map((id) => val(id, key));
+    const most = Math.max(...counts);
+    const fewest = Math.min(...counts);
+    if (most === 0) return; // carte absente du menu, ou personne n'en a
     for (const id of ids) {
-      if (val(id, "temaki") === Math.max(...temaki)) add(id, 4);
-      else if (n > 2 && val(id, "temaki") === Math.min(...temaki)) add(id, -4);
+      if (val(id, key) === most) add(id, bonus);
+      if (n > 2 && val(id, key) === fewest) add(id, malus);
     }
-  }
-  // Pudding : le plus +6, le moins −6 (pas de malus à deux joueurs), mêmes règles d'égalité.
-  const pudding = ids.map((id) => val(id, "pudding"));
-  if (Math.max(...pudding) !== Math.min(...pudding)) {
-    for (const id of ids) {
-      if (val(id, "pudding") === Math.max(...pudding)) add(id, 6);
-      else if (n > 2 && val(id, "pudding") === Math.min(...pudding)) add(id, -6);
-    }
-  }
+  };
+  mostAndFewest("temaki", 4, -4);
+  mostAndFewest("pudding", 6, -6);
   // Sauce soja : 4 points par carte pour qui a le plus de couleurs différentes (égalité : tous les ex æquo).
   const colors = ids.map((id) => val(id, "colors"));
   const bestColors = Math.max(0, ...colors);

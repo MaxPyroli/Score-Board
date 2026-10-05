@@ -60,10 +60,12 @@ describe("Sushi Go Party ! : comparaisons entre joueurs", () => {
     expect(three("temaki", 3, 1, 2)).toEqual({ A: 4, B: -4, C: 0 });
     expect(three("temaki", 3, 3, 0)).toEqual({ A: 4, B: 4, C: -4 });
     expect(three("temaki", 2, 2, 2)).toEqual({ A: 0, B: 0, C: 0 });
+    expect(scoreSushi(round({ A: { temaki: 2 }, B: { temaki: 2 } }))).toEqual({ A: 4, B: 4 });
   });
   it("pudding : +6 / −6, sans malus à deux joueurs", () => {
     expect(three("pudding", 4, 2, 0)).toEqual({ A: 6, B: 0, C: -6 });
     expect(scoreSushi(round({ A: { pudding: 3 }, B: { pudding: 1 } }))).toEqual({ A: 6, B: 0 });
+    expect(scoreSushi(round({ A: { pudding: 2 }, B: { pudding: 2 } }, true))).toEqual({ A: 6, B: 6 });
   });
   it("edamame : 1 point par adversaire qui en a, 4 par carte au maximum", () => {
     expect(three("edamame", 2, 1, 0)).toEqual({ A: 2, B: 1, C: 0 });

@@ -351,7 +351,7 @@ function sushiGame(): GameDefinition {
         ],
       },
     ],
-    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: c.description, default: c.default })),
+    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: `${c.kind === "apero" ? "Apéritif" : "Spécial"} · ${c.description}`, default: c.default })),
     numberOptions: [], fixedSettings: {},
     totals: t,
     roundScores: (m) => roundScores(sushiModule, m),
