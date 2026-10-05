@@ -50,7 +50,7 @@ export function GuestEntryCard({ match, game, meId, entries, mine, onSubmit, onW
   onSubmit(entry: Entry): void;
   onWithdraw(): void;
 }) {
-  const cfg = game.guestEntry!;
+  const cfg = game.guestEntry!(match)!;
   const name = match.players.find((p) => p.id === meId)?.name ?? "";
   return (
     <div className="card entry-card">
@@ -76,7 +76,7 @@ export function HostEntryPanel({ match, game, entries, onEntry }: {
   entries: Entries;
   onEntry(playerId: string, entry: Entry): void;
 }) {
-  const cfg = game.guestEntry!;
+  const cfg = game.guestEntry!(match)!;
   const attempt = tryBuildRound(game, match, entries);
   return (
     <div className="card entry-card">

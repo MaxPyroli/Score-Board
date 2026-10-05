@@ -8,7 +8,7 @@ import {
   type TarotDraft,
 } from "../games/tarot";
 import { buildSkyjo, calculerSkyjo, emptySkyjoDraft, skyjoDraftFrom, skyjoModule, type SkyjoDraft } from "../games/skyjo";
-import { buildFree, emptyFreeDraft, freeDraftFrom, type FreeDraft, type FreeRound } from "../games/counter";
+import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winnerRound, type FreeDraft, type FreeRound } from "../games/counter";
 
 const title = (match: StoredMatch, index: number | null) =>
   index !== null ? `Modifier la manche ${index + 1}` : `Manche ${match.rounds.length + 1}`;
@@ -263,13 +263,16 @@ export function SkyjoEditor(props: EditorProps) {
   );
 }
 
-export function CounterEditor(props: EditorProps & { module: GameModule<FreeRound>; allowNegative: boolean }) {
-  const { match, roundIndex, onSave, module, allowNegative } = props;
+/** `negate` : mode décompte, on saisit les points marqués et ils sont retirés du total. */
+export function CounterEditor(props: EditorProps & { module: GameModule<FreeRound>; allowNegative: boolean; negate?: boolean }) {
+  const { match, roundIndex, onSave, module, allowNegative, negate } = props;
   const ids = match.players.map((p) => p.id);
   const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
   const [draft, setDraft] = useState<FreeDraft>(() => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
-    return existing !== undefined ? freeDraftFrom(module.decodeRound(existing), ids) : emptyFreeDraft(ids);
+    if (existing === undefined) return emptyFreeDraft(ids);
+    const round = module.decodeRound(existing);
+    return freeDraftFrom(negate ? negateRound(round) : round, ids);
   });
   const built = useMemo(() => buildFree(draft, nameOf, allowNegative), [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -277,15 +280,43 @@ export function CounterEditor(props: EditorProps & { module: GameModule<FreeRoun
     <Frame
       {...props}
       canSave={!!built.round}
-      onValidate={() => built.round && onSave(module.encodeRound(built.round))}
+      onValidate={() => built.round && onSave(module.encodeRound(negate ? negateRound(built.round) : built.round))}
       footer={built.error ? <div className="error">{built.error}</div> : <div className="hint">Un champ vide compte 0.</div>}
     >
-      <Section title="Points de la manche">
+      <Section title={negate ? "Points marqués (retirés du total)" : "Points de la manche"}>
         <ScoreInputs
           match={match} texts={draft.texts} negatives={draft.negatives} allowNegativeToggle={allowNegative}
           onText={(id, v) => setDraft((d) => ({ ...d, texts: { ...d.texts, [id]: v } }))}
           onNegative={(id, v) => setDraft((d) => ({ ...d, negatives: v ? [...d.negatives, id] : d.negatives.filter((x) => x !== id) }))}
         />
+      </Section>
+    </Frame>
+  );
+}
+
+/** Mode « manches gagnées » : on coche qui a gagné la manche (plusieurs en cas d'égalité). */
+export function WinnerEditor(props: EditorProps & { module: GameModule<FreeRound> }) {
+  const { match, roundIndex, onSave, module } = props;
+  const ids = match.players.map((p) => p.id);
+  const [winners, setWinners] = useState<string[]>(() => {
+    const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
+    return existing !== undefined ? changesOf(module.decodeRound(existing), ids).map((c) => c.id) : [];
+  });
+  const toggle = (id: string) => setWinners((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]));
+  return (
+    <Frame
+      {...props}
+      canSave={winners.length > 0}
+      onValidate={() => onSave(module.encodeRound(winnerRound(ids, winners)))}
+      footer={<div className={winners.length ? "hint" : "error"}>{winners.length ? "Chaque gagnant marque une manche." : "Choisis au moins un gagnant."}</div>}
+    >
+      <Section title="Qui a gagné la manche ?">
+        <Chips>
+          {match.players.map((p) => (
+            <Chip key={p.id} label={p.name} selected={winners.includes(p.id)} onClick={() => toggle(p.id)} />
+          ))}
+        </Chips>
+        <p className="hint">En cas d'égalité, coche plusieurs joueurs.</p>
       </Section>
     </Frame>
   );

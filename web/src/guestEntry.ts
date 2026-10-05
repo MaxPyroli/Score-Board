@@ -28,8 +28,9 @@ export type RoundAttempt = { raw: string } | { waiting: string[] } | { error: st
 
 /** Manche prête à être ajoutée ? Tous les joueurs doivent avoir un score ; sinon on dit qui on attend. */
 export function tryBuildRound(game: GameDefinition, match: StoredMatch, entries: Entries): RoundAttempt {
-  if (!game.guestEntry) return { error: "Ce jeu ne permet pas la saisie par les joueurs." };
+  const config = game.guestEntry?.(match);
+  if (!config) return { error: "Ce jeu ne permet pas la saisie par les joueurs." };
   const waiting = match.players.filter((p) => !entries[p.id]).map((p) => p.name);
   if (waiting.length > 0) return { waiting };
-  return game.guestEntry.build(match, entries);
+  return config.build(match, entries);
 }

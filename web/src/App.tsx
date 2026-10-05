@@ -103,7 +103,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     if (!host || host.status !== "sharing") return;
     const m = matches.find((x) => x.id === host.matchId);
     const g = m && gameById(m.moduleId);
-    if (!m || !g?.guestEntry || m.settings[SETTING_FINISHED] === "true") return;
+    if (!m || !g?.guestEntry?.(m) || m.settings[SETTING_FINISHED] === "true") return;
     const round = m.rounds.length;
     const mine = hostEntries && hostEntries.matchId === m.id && hostEntries.round === round ? hostEntries.entries : {};
     const attempt = tryBuildRound(g, m, { ...mine, ...entriesFromClaims(host.claims, m, round) });

@@ -2,7 +2,7 @@ declare const __BUILD_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
 /** Numéro de version affiché : augmenté de 0.001 uniquement quand on ajoute des fonctionnalités (voir CLAUDE.md). */
-export const APP_VERSION = "0.005";
+export const APP_VERSION = "0.006";
 
 export const CONTACT_URL = "https://github.com/MaxPyroli/Score-Board/issues";
 
