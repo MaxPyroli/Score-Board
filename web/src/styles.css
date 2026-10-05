@@ -249,12 +249,14 @@ button.card { text-align: left; width: 100%; }
 [data-game="skyjo"] { --g1: #0b5d8a; --g2: #1d3f9b; --primary: #1d6fb8; --primary-soft: #dbeafe; }
 [data-game="sixquiprend"] { --g1: #b4430c; --g2: #7c2d12; --primary: #c2570c; --primary-soft: #fde8d6; }
 [data-game="rail"] { --g1: #8f1d2c; --g2: #4a1020; --primary: #b32a3d; --primary-soft: #fadde1; }
+[data-game="sushi"] { --g1: #e0533d; --g2: #8c2a4a; --primary: #d2452f; --primary-soft: #fde3dd; }
 [data-game="free"] { --g1: #1f6f5c; --g2: #0f4c3f; }
 @media (prefers-color-scheme: dark) {
   [data-game="tarot"] { --primary: #b99af0; --primary-soft: #2e2147; }
   [data-game="skyjo"] { --primary: #7db7ff; --primary-soft: #18304f; }
   [data-game="sixquiprend"] { --primary: #ffa66b; --primary-soft: #4a2512; }
   [data-game="rail"] { --primary: #ff8a98; --primary-soft: #4a1b24; }
+  [data-game="sushi"] { --primary: #ff9a85; --primary-soft: #4d2119; }
 }
 
 /* ---- Visuels facultatifs (voir src/games/themes.ts) : image à droite, fondu vers la couleur du jeu côté titre ---- */
@@ -304,4 +306,5 @@ button.card { text-align: left; width: 100%; }
 .route-row .stepper .value { font-size: 1.2rem; min-width: 1.6ch; }
 .route-row .icon.round { min-width: 36px; height: 36px; font-size: 1.2rem; }
 .rail-fields.two { grid-template-columns: repeat(2, 1fr); }
+.sushi-group { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--primary); margin: 8px 0 2px; }
 .rail-bonus { display: flex; flex-direction: column; gap: 2px; color: var(--primary); font-weight: 600; font-size: .9rem; }

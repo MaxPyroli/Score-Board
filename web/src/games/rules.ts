@@ -2,6 +2,7 @@ import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
 import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
 import { SKYJO_DEFAULT_TARGET } from "./skyjo";
+import { DUMPLING_POINTS, FRUIT_POINTS, ONIGIRI_POINTS } from "./sushi";
 
 /** Règles d'un jeu : un résumé, puis des sections dépliables (texte, listes, tableaux). Rédigées pour l'appli. */
 export interface RulesSection {
@@ -264,7 +265,67 @@ const rail = (): RulesDoc => ({
   ],
 });
 
-const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sixquiprend: sixQuiPrend, free };
+const sushi = (): RulesDoc => ({
+  title: "Sushi Go Party !",
+  summary:
+    "Jeu de 2 à 8 joueurs : on choisit une carte dans sa main, on passe le reste à son voisin, et on compose devant soi la meilleure assiette. " +
+    "Trois manches comptées une à une, puis les desserts comptés à la fin. Le plus gros total gagne.",
+  sections: [
+    {
+      id: "points",
+      title: "Les points d'une manche",
+      bullets: [
+        "Nigiri : œuf 1, saumon 2, calamar 3 ; posé sur un wasabi, il vaut le triple.",
+        "Tempura : 5 points par paire. Sashimi : 10 points par trio.",
+        `Gyoza : ${DUMPLING_POINTS.slice(1, 5).join(", ")} puis ${DUMPLING_POINTS[5]} points pour 1, 2, 3, 4 puis 5 cartes ou plus.`,
+        "Anguille : 1 carte −3 points ; 2 cartes ou plus 7 points. Tofu : 1 carte 2 points, 2 cartes 6 points, 3 ou plus 0.",
+        `Onigiri : ${ONIGIRI_POINTS.slice(1).join(", ")} points pour 1, 2, 3 ou 4 formes différentes (chaque ensemble compte à part).`,
+        "Soupe miso : 3 points ; si plusieurs sont jouées au même tour, toutes sont défaussées et ne rapportent rien (ne les compte pas).",
+        "Boîte à emporter : 2 points par carte retournée. Thé : pour chaque thé, 1 point par carte du plus grand ensemble de même couleur de fond.",
+        "Wasabi, baguettes, menu, cuillère et commande spéciale ne rapportent rien par eux-mêmes : la commande spéciale se compte comme la carte copiée.",
+      ],
+    },
+    {
+      id: "comparaisons",
+      title: "Les points par comparaison",
+      paragraphs: ["L'appli compare les joueurs et attribue ces points toute seule. En cas d'égalité, tous les ex æquo reçoivent les points complets."],
+      bullets: [
+        "Maki : le plus d'icônes 6 points, le deuxième 3 points (il faut en avoir au moins une). À 6 joueurs ou plus : 6, 4 et 2 points pour les trois premiers. Une égalité en tête supprime la place suivante.",
+        "Temaki : le plus +4 points, le moins −4 points (pas de malus à 2 joueurs).",
+        "Uramaki : le premier à atteindre 10 icônes 8 points, le deuxième 5, le troisième 2. En fin de manche, les places restantes vont à ceux qui en ont le plus. Tu indiques la place de chacun.",
+        "Edamame : 1 point par adversaire qui en a aussi, 4 points par carte au maximum.",
+        "Sauce soja : 4 points par sauce soja pour celui qui a le plus de couleurs de fond différentes (sauce comprise).",
+      ],
+    },
+    {
+      id: "desserts",
+      title: "Les desserts (fin de partie)",
+      bullets: [
+        "Pudding : le plus +6 points, le moins −6 points (pas de malus à 2 joueurs).",
+        "Glace au thé vert : 12 points par ensemble de 4.",
+        `Fruits : pour chaque sorte (pastèque, orange, ananas), selon le nombre de symboles : ${FRUIT_POINTS.join(", ")} points pour 0, 1, 2, 3, 4 puis 5 ou plus.`,
+        "Les desserts pris pendant les manches sont mis de côté et ne comptent qu'à la fin : indique le total de la partie.",
+      ],
+    },
+    {
+      id: "egalite",
+      title: "En cas d'égalité",
+      paragraphs: ["Celui qui a le plus de puddings l'emporte."],
+    },
+    {
+      id: "appli",
+      title: "Dans l'appli",
+      bullets: [
+        "À la création, choisis le menu : un rouleau, un dessert et les apéritifs et spéciaux de ta partie. L'appli ne propose que ces cartes à la saisie.",
+        "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte.",
+        "Les points s'affichent en direct et les comparaisons se font entre tous les joueurs : pense à saisir tout le monde avant de valider.",
+        "Carte menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
+      ],
+    },
+  ],
+});
+
+const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sushi, sixquiprend: sixQuiPrend, free };
 
 /** Règles d'un jeu (par identifiant), ou `undefined` si le jeu n'en a pas. */
 export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.();

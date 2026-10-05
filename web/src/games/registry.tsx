@@ -10,10 +10,11 @@ import {
   COUNTER_MODES, FREE, SETTING_MODE, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
   negateRound, startOf, type CounterMode, type FreeRound,
 } from "./counter";
-import { CounterEditor, RailEditor, SkyjoEditor, TarotEditor, WinnerEditor } from "../ui/editors";
+import { CounterEditor, RailEditor, SkyjoEditor, SushiEditor, TarotEditor, WinnerEditor } from "../ui/editors";
 import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
+import { MENU_CARDS, ROUNDS_BEFORE_DESSERT, SETTING_DESSERT, SETTING_ROLL, sushiModule } from "./sushi";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
 export type Values = Record<string, string>;
@@ -324,6 +325,50 @@ function railGame(): GameDefinition {
   };
 }
 
+/** Sushi Go Party ! : trois manches, puis les desserts de toute la partie ; le menu choisi décide des cartes proposées. */
+function sushiGame(): GameDefinition {
+  const t = (m: StoredMatch) => totals(sushiModule, m);
+  const done = (m: StoredMatch) => m.rounds.length;
+  return {
+    id: sushiModule.id, displayName: sushiModule.displayName,
+    tagline: "2 à 8 joueurs · menu de ton choix, makis, puddings et comparaisons calculés",
+    minPlayers: sushiModule.minPlayers, maxPlayers: sushiModule.maxPlayers,
+    choiceOptions: [
+      {
+        key: SETTING_ROLL, label: "Rouleau du menu", default: "maki",
+        choices: [
+          { value: "maki", label: "Maki", description: "Le plus d'icônes : 6 points, puis 3." },
+          { value: "temaki", label: "Temaki", description: "Le plus : +4 points, le moins : −4." },
+          { value: "uramaki", label: "Uramaki", description: "Course à 10 icônes : 8, 5 puis 2 points." },
+        ],
+      },
+      {
+        key: SETTING_DESSERT, label: "Dessert du menu", default: "pudding",
+        choices: [
+          { value: "pudding", label: "Pudding", description: "Le plus : +6 points, le moins : −6." },
+          { value: "icecream", label: "Glace au thé vert", description: "12 points par ensemble de 4." },
+          { value: "fruit", label: "Fruits", description: "Points selon le nombre de chaque fruit." },
+        ],
+      },
+    ],
+    options: MENU_CARDS.map((c) => ({ key: c.key, label: c.label, description: c.description, default: c.default })),
+    numberOptions: [], fixedSettings: {},
+    totals: t,
+    roundScores: (m) => roundScores(sushiModule, m),
+    describeRound(m, i) {
+      const round = sushiModule.decodeRound(m.rounds[i]);
+      return { headline: round.dessert ? "Desserts" : `Manche ${i + 1}`, detail: "" };
+    },
+    status: (m) => (done(m) < ROUNDS_BEFORE_DESSERT ? `Manche ${done(m) + 1} sur ${ROUNDS_BEFORE_DESSERT}` : done(m) === ROUNDS_BEFORE_DESSERT ? "Compte les desserts de toute la partie." : null),
+    lowestWins: () => false,
+    canFinish: (m) => done(m) > ROUNDS_BEFORE_DESSERT,
+    canAddRound: (m) => done(m) <= ROUNDS_BEFORE_DESSERT,
+    quickSteps: () => null,
+    leaderId: (m) => leader(m.players, t(m), false)?.id ?? null,
+    Editor: SushiEditor,
+  };
+}
+
 function buildGames(): GameDefinition[] {
   const tarot: GameDefinition = {
     id: tarotModule.id, displayName: "Tarot", tagline: "3, 4 ou 5 joueurs · contrats, bouts, poignées, chelem",
@@ -372,7 +417,7 @@ function buildGames(): GameDefinition[] {
     Editor: SkyjoEditor,
   };
   return [
-    tarot, skyjo, railGame(),
+    tarot, skyjo, railGame(), sushiGame(),
     counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false),
     freeCounterGame(),
   ];

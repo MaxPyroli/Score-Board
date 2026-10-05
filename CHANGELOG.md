@@ -2,6 +2,9 @@
 
 Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnalité (pas pour un correctif).
 
+## v0.013 · 5 oct. 2026
+- Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs). Tu choisis le menu à la création ; saisie des 3 manches puis des desserts ; points calculés tout seuls, comparaisons entre joueurs comprises (makis, temakis, puddings, edamame, sauce soja).
+
 ## v0.012 · 5 oct. 2026
 - Notes de version : lien en bas de l'accueil.
 
