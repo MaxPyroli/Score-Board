@@ -1,3 +1,4 @@
+import { catalogGame } from "../games/catalog";
 // Illustrations maison des jeux : trois cartes en éventail avec un symbole propre à chaque jeu.
 // Volontairement stylisées et sans logo officiel ; en SVG, donc légères et disponibles hors ligne.
 const CARDS: Record<string, [string, string, string]> = {
@@ -9,8 +10,11 @@ const CARDS: Record<string, [string, string, string]> = {
   free: ["+5", "−1", "0"],
 };
 
+const initial = (name: string) => name.trim().charAt(0).toUpperCase();
+
 export function GameArt({ gameId, className = "" }: { gameId: string; className?: string }) {
-  const labels = CARDS[gameId] ?? CARDS.free;
+  const entry = catalogGame(gameId);
+  const labels = CARDS[gameId] ?? (entry ? [initial(entry.name), entry.emoji, "★"] : CARDS.free);
   const cards = [
     { r: -18, x: 14, y: 22, label: labels[0] },
     { r: 0, x: 46, y: 10, label: labels[1] },

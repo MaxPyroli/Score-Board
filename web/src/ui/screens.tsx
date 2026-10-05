@@ -33,6 +33,9 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const assistant = useAssistant();
+  const [query, setQuery] = useState("");
+  const plainText = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const shown = GAMES.filter((g) => plainText(`${g.displayName} ${g.tagline}`).includes(plainText(query.trim())));
   return (
     <div className="screen">
       <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
@@ -65,8 +68,12 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
         </Section>
         )}
         <Section title="Nouvelle partie">
+          {GAMES.length > 8 && (
+            <input className="field wide game-search" type="search" placeholder="Chercher un jeu" aria-label="Chercher un jeu" value={query} onChange={(e) => setQuery(e.target.value)} />
+          )}
+          {shown.length === 0 && <p className="hint">Aucun jeu ne correspond.</p>}
           <div className="games">
-            {GAMES.map((g) => {
+            {shown.map((g) => {
               const bg = gameImage(g.id, "bg");
               const logo = gameImage(g.id, "logo");
               return (

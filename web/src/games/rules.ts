@@ -1,3 +1,4 @@
+import { catalogGame } from "./catalog";
 import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
 import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
@@ -341,4 +342,22 @@ const sushi = (): RulesDoc => ({
 const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sushi, sixquiprend: sixQuiPrend, free };
 
 /** Règles d'un jeu (par identifiant), ou `undefined` si le jeu n'en a pas. */
-export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.();
+export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.() ?? catalogRules(gameId);
+
+/** Jeux du catalogue : pas de règles détaillées (voir le règlement du jeu), seulement le fonctionnement du comptage dans l'appli. */
+function catalogRules(gameId: string): RulesDoc | undefined {
+  const g = catalogGame(gameId);
+  if (!g) return undefined;
+  const bullets = [
+    "L'appli compte les points : à chaque manche, saisis le score de chaque joueur ; les totaux se cumulent.",
+    g.lowest ? "Dans ce jeu, le plus petit score gagne : l'appli met en tête celui qui en a le moins." : "Le plus grand total gagne.",
+    ...(g.target ? [`Objectif habituel : ${g.target} points (réglable à la création de la partie) ; l'appli te prévient quand quelqu'un l'atteint.`] : ["Tu peux fixer un objectif de points à la création de la partie ; l'appli te prévient quand quelqu'un l'atteint."]),
+    ...(g.negative ? ["Les scores négatifs sont acceptés."] : []),
+    "Pour les règles et les barèmes de comptage, voir le règlement du jeu : l'appli ne calcule pas encore les points à ta place pour ce jeu.",
+  ];
+  return {
+    title: g.name,
+    summary: `${g.name} : ${g.blurb}. Compteur de points par manche, de ${g.min === g.max ? g.min : `${g.min} à ${g.max}`} joueurs.`,
+    sections: [{ id: "appli", title: "Dans l'appli", bullets }],
+  };
+}

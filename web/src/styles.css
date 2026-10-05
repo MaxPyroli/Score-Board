@@ -317,3 +317,5 @@ button.card { text-align: left; width: 100%; }
 .sparkle { position: absolute; z-index: 2; top: 8px; right: 10px; font-size: 1.15rem; filter: drop-shadow(0 0 6px rgba(255, 255, 255, .9)); animation: sparkle 2.4s ease-in-out infinite; }
 @keyframes sparkle { 0%, 100% { opacity: .75; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .sparkle { animation: none; } }
+
+.game-search { margin-bottom: 10px; }

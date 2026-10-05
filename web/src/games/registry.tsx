@@ -16,6 +16,7 @@ import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
 import { assistantEnabled } from "../assistant";
+import { CATALOG, catalogModule, catalogTagline, installCatalogThemes } from "./catalog";
 import { ROUNDS_BEFORE_DESSERT, SETTING_ASSISTANT, SETUP_DEFAULTS, menuProblem, sushiModule } from "./sushi";
 
 /** Réglages choisis à la création d'une partie (tous en texte : « true »/« false », nombres, choix). */
@@ -456,8 +457,10 @@ function buildGames(): GameDefinition[] {
     tarot, skyjo, railGame(), sushiGame(),
     counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false),
     freeCounterGame(),
+    ...[...CATALOG].sort((a, b) => a.name.localeCompare(b.name, "fr")).map((g) => counterGame(catalogModule(g), catalogTagline(g), g.lowest ?? false, g.target ?? null, g.negative ?? false)),
   ];
 }
 
+installCatalogThemes();
 export const GAMES: GameDefinition[] = buildGames();
 export const gameById = (id: string) => GAMES.find((g) => g.id === id);

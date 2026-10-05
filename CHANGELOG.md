@@ -2,6 +2,10 @@
 
 Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnalité (pas pour un correctif).
 
+## v0.014 · 5 oct. 2026
+- 38 nouveaux jeux dans la liste (Catan, Carcassonne, Azul, Wingspan, Uno, Mille Bornes, Scrabble, Yams, Splendor, 7 Wonders, Cascadia…), chacun avec ses couleurs, son nombre de joueurs et un compteur de points par manche.
+- Champ de recherche pour retrouver un jeu dans la liste.
+
 ## v0.013 · 5 oct. 2026
 - L'accueil affiche d'abord les parties en cours.
 - Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs), avec un compteur classique par manche (les invités peuvent saisir leur score).
