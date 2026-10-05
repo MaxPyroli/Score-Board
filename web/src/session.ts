@@ -79,6 +79,15 @@ export class HostSession {
   private latest: StoredMatch;
   private stopped = false;
   code = generateCode();
+  private wakeLock: { release(): Promise<void> } | null = null;
+  private onVisible = () => { if (document.visibilityState === "visible" && !this.stopped) void this.keepAwake(); };
+
+  /** Garde l'écran allumé pendant le partage : un téléphone en veille coupe la connexion. */
+  private async keepAwake() {
+    try {
+      this.wakeLock = (await (navigator as unknown as { wakeLock?: { request(t: string): Promise<{ release(): Promise<void> }> } }).wakeLock?.request("screen")) ?? null;
+    } catch { /* non supporté ou refusé : sans importance */ }
+  }
 
   constructor(
     match: StoredMatch,
@@ -86,6 +95,8 @@ export class HostSession {
   ) {
     this.latest = match;
     this.open(0);
+    void this.keepAwake();
+    document.addEventListener("visibilitychange", this.onVisible);
   }
 
   private emit(status: HostStatus) {
@@ -128,60 +139,83 @@ export class HostSession {
 
   stop() {
     this.stopped = true;
+    document.removeEventListener("visibilitychange", this.onVisible);
+    void this.wakeLock?.release().catch(() => {});
     this.peer?.destroy();
     this.conns.clear();
   }
 }
 
+export type FailReason = "unknown" | "unreachable" | "blocked";
+
 export type JoinState =
   | { kind: "idle" }
   | { kind: "connecting" }
-  | { kind: "notFound" }
+  | { kind: "failed"; reason: FailReason }
   | { kind: "live"; match: StoredMatch; connected: boolean };
 
 const ATTEMPT_MS = 5000;
-const FIRST_GIVE_UP_MS = 15000;
+/** Une connexion en cours d'établissement n'est pas relancée avant ce délai (le relais peut être lent). */
+const NEGOTIATION_MS = 25000;
+const FIRST_GIVE_UP_MS = 30000;
+/** Si l'annuaire répond « code inconnu » à chaque essai, inutile d'attendre plus longtemps. */
+const UNKNOWN_GIVE_UP_MS = 12000;
 const RECONNECT_GIVE_UP_MS = 10 * 60 * 1000;
 
 /** Côté invité : suit la partie en lecture seule et se reconnecte tout seul si le lien se coupe. */
 export class SpectatorSession {
   private peer: Peer | null = null;
   private conn: DataConnection | null = null;
+  private connStartedAt = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private stopped = false;
   private match: StoredMatch | null = null;
   private lostAt = 0;
   private startedAt = Date.now();
+  private brokerOpened = false;
+  private lastPeerUnavailable = 0;
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
     onChange({ kind: "connecting" });
     const opts = peerOptions();
     this.peer = opts ? new Peer(opts) : new Peer();
-    this.peer.on("open", () => this.attempt());
+    this.peer.on("open", () => { this.brokerOpened = true; this.attempt(); });
     this.peer.on("error", (err) => {
-      if (!this.stopped && (err as { type?: string }).type !== "peer-unavailable") this.scheduleRetry();
+      if (this.stopped) return;
+      if ((err as { type?: string }).type === "peer-unavailable") {
+        this.lastPeerUnavailable = Date.now();
+        // La tentative est terminée (hôte introuvable) : on libère pour pouvoir la relancer.
+        this.conn?.close();
+        this.conn = null;
+      }
+      this.scheduleRetry();
     });
     this.peer.on("disconnected", () => { if (!this.stopped && !this.peer?.destroyed) this.peer?.reconnect(); });
+    this.scheduleRetry();
   }
 
   private attempt() {
     if (this.stopped || !this.peer || this.peer.disconnected) return this.scheduleRetry();
+    // Ne pas casser une connexion en cours d'établissement.
+    if (this.conn && !this.conn.open && Date.now() - this.connStartedAt < NEGOTIATION_MS) return this.scheduleRetry();
     this.conn?.close();
     const conn = this.peer.connect(PEER_PREFIX + this.code, { reliable: true });
     this.conn = conn;
+    this.connStartedAt = Date.now();
     conn.on("data", (data) => {
       const match = validateReceived(data);
       if (!match) return;
       this.match = match;
+      this.lostAt = 0;
       this.onChange({ kind: "live", match, connected: true });
     });
-    conn.on("close", () => this.lost());
-    conn.on("error", () => this.lost());
+    conn.on("close", () => this.lost(conn));
+    conn.on("error", () => this.lost(conn));
     this.scheduleRetry(); // vérifie plus tard que la connexion a bien abouti
   }
 
-  private lost() {
-    if (this.stopped) return;
+  private lost(conn: DataConnection) {
+    if (this.stopped || conn !== this.conn) return;
     if (this.match) {
       if (!this.lostAt) this.lostAt = Date.now();
       this.onChange({ kind: "live", match: this.match, connected: false });
@@ -193,20 +227,32 @@ export class SpectatorSession {
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
       if (this.stopped) return;
-      if (this.conn?.open) { this.lostAt = 0; return; }
+      if (this.conn?.open && this.match) { this.lostAt = 0; return; }
+      const now = Date.now();
       if (!this.match) {
-        if (Date.now() - this.startedAt > FIRST_GIVE_UP_MS) return this.giveUp();
+        if (this.failReason(now)) return this.giveUp();
       } else {
-        if (!this.lostAt) this.lostAt = Date.now();
-        if (Date.now() - this.lostAt > RECONNECT_GIVE_UP_MS) return this.giveUp();
+        if (!this.lostAt) this.lostAt = now;
+        if (now - this.lostAt > RECONNECT_GIVE_UP_MS) return this.giveUp();
       }
       this.attempt();
     }, ATTEMPT_MS);
   }
 
+  /** Pourquoi la première connexion échoue, une fois le délai écoulé ; `null` = patienter encore. */
+  private failReason(now: number): FailReason | null {
+    const elapsed = now - this.startedAt;
+    if (this.lastPeerUnavailable && now - this.lastPeerUnavailable < ATTEMPT_MS * 2 && elapsed > UNKNOWN_GIVE_UP_MS) return "unknown";
+    if (elapsed <= FIRST_GIVE_UP_MS) return null;
+    if (!this.brokerOpened) return "unreachable";
+    return this.lastPeerUnavailable ? "unknown" : "blocked";
+  }
+
   private giveUp() {
+    const reason = this.failReason(Date.now()) ?? "blocked";
+    const match = this.match;
     this.stop();
-    this.onChange(this.match ? { kind: "live", match: this.match, connected: false } : { kind: "notFound" });
+    this.onChange(match ? { kind: "live", match, connected: false } : { kind: "failed", reason });
   }
 
   stop() {

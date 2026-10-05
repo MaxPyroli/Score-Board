@@ -52,6 +52,12 @@ export function ShareDialog({ host, onStart, onStop, onClose }: {
   );
 }
 
+const FAIL_TEXT = {
+  unknown: "Code inconnu : vérifie le code, et que l'hôte garde l'appli ouverte avec le partage actif.",
+  unreachable: "Impossible de joindre le service de mise en relation. Vérifie ta connexion internet (ou essaie un autre réseau).",
+  blocked: "Le code est bon, mais la connexion directe n'a pas pu s'établir. Le réseau (Wi-Fi d'école, de travail…) la bloque peut-être : essaie en 4G, sur le même réseau que l'hôte.",
+} as const;
+
 export function JoinScreen({ state, onJoin, onBack, initialCode }: {
   state: JoinState;
   onJoin(code: string): void;
@@ -74,7 +80,7 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
           maxLength={CODE_LENGTH + 1} placeholder="K7F2" aria-label="Code de la partie"
           value={text} onChange={(e) => setText(e.target.value.toUpperCase())}
         />
-        {state.kind === "notFound" && <p className="error">Partie introuvable. Vérifie le code et que l'hôte partage toujours sa partie.</p>}
+        {state.kind === "failed" && <p className="error">{FAIL_TEXT[state.reason]}</p>}
         <button className="btn full" disabled={!code || busy} onClick={() => code && onJoin(code)}>
           {busy ? "Connexion…" : "Rejoindre"}
         </button>
