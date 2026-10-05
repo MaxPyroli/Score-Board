@@ -9,6 +9,8 @@ import { useRecentlyGone } from "../presence";
 import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
 import { GameArt } from "./GameArt";
 import { gameImage } from "../games/themes";
+import { modeOf } from "../games/counter";
+import { RulesSheet } from "./RulesSheet";
 import { GuestEntryCard, HostEntryPanel } from "./entry";
 import type { ClaimData } from "../backend";
 import type { Entries, Entry } from "../guestEntry";
@@ -111,6 +113,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
   onBack(): void;
   onStart(m: StoredMatch): void;
 }) {
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [count, setCount] = useState(Math.max(game.minPlayers, Math.min(4, game.maxPlayers)));
   const [names, setNames] = useState<string[]>(loadNames);
   // Tous les réglages sont gardés en texte (« true »/« false », nombres, choix), comme dans la partie.
@@ -160,7 +163,12 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
   return (
     <div className="screen" data-game={game.id}>
-      <TopBar title={game.displayName} onBack={onBack} />
+      <TopBar
+        title={game.displayName}
+        onBack={onBack}
+        actions={<button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>}
+      />
+      {rulesOpen && <RulesSheet gameId={game.id} onClose={() => setRulesOpen(false)} />}
       <main className="content">
         <Section title="Nombre de joueurs">
           <Stepper value={count} min={game.minPlayers} max={game.maxPlayers} onChange={setCount} label="Nombre de joueurs" />
@@ -272,6 +280,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const lead = match.rounds.length > 0 ? game.leaderId(match) : null;
   const [menu, setMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [undone, setUndone] = useState<StoredMatch | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -334,8 +343,10 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       <TopBar
         title={title ?? game.displayName}
         onBack={onBack}
-        actions={readOnly ? undefined : (
+        actions={(
           <>
+            <button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>
+            {readOnly ? null : <>
             {onShare && <button className="icon" aria-label="Partager la partie" onClick={onShare}>⇪</button>}
           <div className="menu-wrap">
             <button className="icon" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}>⋮</button>
@@ -348,9 +359,11 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
               </div>
             )}
           </div>
+            </>}
           </>
         )}
       />
+      {rulesOpen && <RulesSheet gameId={game.id} focus={game.id === "free" ? `mode-${modeOf(match.settings)}` : undefined} onClose={() => setRulesOpen(false)} />}
       <main className="content">
         <div
           className={`card board ${compact ? "compact" : match.players.length > 4 ? "mid" : ""} ${gameImage(game.id, "bg") ? "has-bg" : ""}`}
