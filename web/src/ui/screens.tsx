@@ -76,11 +76,13 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                 >
                   {!bg && !logo && <GameArt gameId={g.id} />}
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
-                  <span className="game-title">
-                    <strong>{g.displayName}</strong>
-                    {assistant && g.assistant && <span className="assistant-pill" title="Mode assistant disponible pour ce jeu">✨ Assistant</span>}
-                  </span>
+                  <strong>{g.displayName}</strong>
                   <span className="hint">{g.tagline}</span>
+                  {g.assistant && (
+                    <span className={`assistant-stamp ${assistant ? "on" : ""}`} title={assistant ? "Mode assistant activé" : "Active le mode assistant en bas de l'accueil"}>
+                      <span>Compatible</span><span>mode assistant</span>
+                    </span>
+                  )}
                 </button>
               );
             })}

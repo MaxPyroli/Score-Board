@@ -313,16 +313,11 @@ button.card { text-align: left; width: 100%; }
 /* Mode assistant : interrupteur discret en bas de l'accueil, et étincelle sur les jeux compatibles */
 .assistant-toggle { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--muted); cursor: pointer; }
 .assistant-toggle input { width: 14px; height: 14px; accent-color: var(--primary); }
-.game-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; position: relative; z-index: 1; }
-/* Pastille « Assistant » : verre dépoli avec un reflet qui passe de temps en temps */
-.assistant-pill {
-  position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px; border-radius: 999px;
-  font-size: .68rem; font-weight: 700; letter-spacing: .03em; color: #fff; background: rgba(255, 255, 255, .2);
-  border: 1px solid rgba(255, 255, 255, .6); box-shadow: 0 0 10px rgba(255, 255, 255, .35); backdrop-filter: blur(3px);
+/* Tampon « Compatible mode assistant » : posé en biais en haut à droite de la carte ; plus marqué quand le mode est activé */
+.assistant-stamp {
+  position: absolute; z-index: 2; top: 9px; right: 10px; display: flex; flex-direction: column; align-items: center; line-height: 1.15;
+  padding: 3px 8px; border: 2px solid rgba(255, 255, 255, .75); border-radius: 6px; outline: 1px solid rgba(255, 255, 255, .45); outline-offset: 2px;
+  color: #fff; font-size: .6rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; text-align: center;
+  transform: rotate(-6deg); opacity: .8; background: rgba(0, 0, 0, .12); text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
-.assistant-pill::after {
-  content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .75) 50%, transparent 70%);
-  transform: translateX(-120%); animation: pill-shine 3.2s ease-in-out infinite;
-}
-@keyframes pill-shine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
-@media (prefers-reduced-motion: reduce) { .assistant-pill::after { animation: none; } }
+.assistant-stamp.on { opacity: 1; background: rgba(255, 255, 255, .22); box-shadow: 0 0 12px rgba(255, 255, 255, .5); }
