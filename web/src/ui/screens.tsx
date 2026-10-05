@@ -357,19 +357,20 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           style={gameImage(game.id, "bg") ? ({ "--bg-url": `url("${gameImage(game.id, "bg")}")` } as React.CSSProperties) : undefined}
         >
           {!gameImage(game.id, "bg") && <GameArt gameId={game.id} className="board-art" />}
-          <PlayerGrid players={match.players}>
+          {/* Un seul tableau (nom au-dessus du score) : à beaucoup de joueurs, il passe sur plusieurs lignes sans décaler noms et scores. */}
+          <PlayerGrid players={match.players} className={match.players.length > 6 ? "many" : ""}>
             {(p) => (
-              <span className="name">
-                {online && (() => {
-                  const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : "off";
-                  return <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : state === "recent" ? "déconnecté depuis peu" : "hors ligne"} />;
-                })()}
-                {p.name}
-              </span>
+              <>
+                <span className="name">
+                  {online && (() => {
+                    const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : "off";
+                    return <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : state === "recent" ? "déconnecté depuis peu" : "hors ligne"} />;
+                  })()}
+                  {p.name}
+                </span>
+                <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />
+              </>
             )}
-          </PlayerGrid>
-          <PlayerGrid players={match.players}>
-            {(p) => <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />}
           </PlayerGrid>
         </div>
         {note}
@@ -428,8 +429,13 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
                 <button key={index} className="card round" disabled={readOnly} onClick={() => onEditRound(index)}>
                   <strong>{d.headline ? `${index + 1}. ${d.headline}` : `Manche ${index + 1}`}</strong>
                   {d.detail && <span className="hint">{d.detail}</span>}
-                  <PlayerGrid players={match.players} className="divided">
-                    {(p) => <Score value={roundScores[index][p.id] ?? 0} withSign />}
+                  <PlayerGrid players={match.players} className={`divided ${match.players.length > 6 ? "many" : ""}`}>
+                    {(p) => (
+                      <>
+                        {match.players.length > 6 && <span className="name">{p.name}</span>}
+                        <Score value={roundScores[index][p.id] ?? 0} withSign />
+                      </>
+                    )}
                   </PlayerGrid>
                 </button>
               );

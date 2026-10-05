@@ -105,6 +105,10 @@ button.card { text-align: left; width: 100%; }
 .score.big { font-size: 1.6rem; margin-top: 2px; }
 .board.mid .score.big { font-size: 1.3rem; }
 .board.compact .score.big { font-size: 1.05rem; }
+/* Beaucoup de joueurs : plusieurs lignes, avec un peu d'air entre elles. */
+.grid.many { row-gap: 12px; }
+.grid.many .name { font-size: .78rem; }
+.board .grid.many .score.big { font-size: 1.25rem; }
 .score.leader { color: var(--primary); }
 .score { position: relative; white-space: nowrap; }
 .score.leader::after { content: "★"; position: absolute; top: -.35em; right: -.8em; font-size: .5em; }

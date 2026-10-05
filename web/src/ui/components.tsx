@@ -1,8 +1,15 @@
 import type { CSSProperties, ReactNode } from "react";
 import { plain, signed, type Player } from "../core";
 
+/** Nombre de colonnes : une seule ligne jusqu'à 6 joueurs, puis des lignes équilibrées de 5 joueurs au plus (7 → 4+3, 12 → 3 × 4). */
+export function gridColumns(n: number): number {
+  if (n <= 6) return Math.max(1, n);
+  const rows = Math.ceil(n / 5);
+  return Math.ceil(n / rows);
+}
+
 export function PlayerGrid({ players, children, className = "" }: { players: Player[]; children: (p: Player) => ReactNode; className?: string }) {
-  const style: CSSProperties = { gridTemplateColumns: `repeat(${players.length}, minmax(0, 1fr))` };
+  const style: CSSProperties = { gridTemplateColumns: `repeat(${gridColumns(players.length)}, minmax(0, 1fr))` };
   return (
     <div className={`grid ${className}`} style={style}>
       {players.map((p) => (
