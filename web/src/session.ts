@@ -88,7 +88,7 @@ export interface HostInfo {
 
 /** Côté hôte : publie la partie à chaque changement et compte les spectateurs. */
 export class HostSession {
-  code = generateCode();
+  code: string;
   private backend: Backend | null = null;
   private latest: StoredMatch;
   private stopped = false;
@@ -103,7 +103,10 @@ export class HostSession {
   constructor(
     match: StoredMatch,
     private onChange: (s: HostInfo) => void,
+    /** Code à reprendre après une actualisation de la page (les invités restent connectés). */
+    resumeCode?: string,
   ) {
+    this.code = resumeCode && normalizeCode(resumeCode) ? resumeCode : generateCode();
     this.latest = match;
     void this.keepAwake();
     document.addEventListener("visibilitychange", this.onVisible);

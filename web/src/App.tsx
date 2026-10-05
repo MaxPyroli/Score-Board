@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
+import { loadResume, patchResume } from "./resume";
 import { HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
@@ -14,11 +15,15 @@ type Screen =
   | { kind: "join" };
 
 /** Pile d'écrans reliée à l'historique du navigateur : le bouton « retour » du téléphone fonctionne. */
-function useNav() {
-  const [stack, setStack] = useState<Screen[]>([{ kind: "home" }]);
+function useNav(initial?: Screen) {
+  const [stack, setStack] = useState<Screen[]>(() => (initial ? [{ kind: "home" }, initial] : [{ kind: "home" }]));
 
   useEffect(() => {
-    history.replaceState({ depth: 0 }, "");
+    // Après une actualisation, le navigateur garde son historique : on ne le recrée que s'il ne correspond pas.
+    if ((history.state?.depth as number | undefined) !== stack.length - 1) {
+      history.replaceState({ depth: 0 }, "");
+      for (let i = 1; i < stack.length; i++) history.pushState({ depth: i }, "");
+    }
     const onPop = (e: PopStateEvent) => {
       const depth = (e.state?.depth as number | undefined) ?? 0;
       setStack((s) => s.slice(0, depth + 1));
@@ -42,20 +47,37 @@ function useNav() {
 
 export default function App() {
   const { matches, save, remove } = useMatches();
-  const nav = useNav();
+  // Écran à rouvrir après une actualisation (calculé une seule fois, au démarrage).
+  const [boot] = useState(() => {
+    const resume = loadResume();
+    const view = resume.view;
+    const screen: Screen | undefined =
+      view?.kind === "match" && matches.some((m) => m.id === view.matchId) ? { kind: "match", matchId: view.matchId }
+      : view?.kind === "join" && resume.joined ? { kind: "join" }
+      : undefined;
+    return { resume, screen };
+  });
+  const nav = useNav(boot.screen);
   const { screen } = nav;
 
   // --- Partage (hôte) ---
   const hostRef = useRef<HostSession | null>(null);
   const [host, setHost] = useState<(HostInfo & { matchId: string }) | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
-  const startSharing = (matchId: string) => {
+  // Joueur que l'hôte dit être : gardé ici car il peut être annoncé avant que le partage (re)démarre.
+  const hostClaim = useRef<{ matchId: string; p: string; n?: string } | null>(null);
+  const startSharing = (matchId: string, resumeCode?: string) => {
     const m = matches.find((x) => x.id === matchId);
     if (!m) return;
     hostRef.current?.stop();
-    hostRef.current = new HostSession(m, (st) => setHost({ matchId, ...st }));
+    hostRef.current = new HostSession(m, (st) => {
+      setHost({ matchId, ...st });
+      if (st.status === "sharing") patchResume({ hosting: { matchId, code: st.code } });
+    }, resumeCode);
+    const c = hostClaim.current;
+    if (c && c.matchId === matchId) hostRef.current.claim(c.p, c.n);
   };
-  const stopSharing = () => { hostRef.current?.stop(); hostRef.current = null; setHost(null); };
+  const stopSharing = () => { hostRef.current?.stop(); hostRef.current = null; setHost(null); patchResume({ hosting: undefined }); };
   // Chaque modification de la partie partagée est renvoyée aux spectateurs ; partie supprimée = partage arrêté.
   useEffect(() => {
     if (!host) return;
@@ -84,13 +106,23 @@ export default function App() {
   const startJoin = (code: string) => {
     spectatorRef.current?.stop();
     spectatorRef.current = new SpectatorSession(code, setJoin);
+    patchResume({ joined: { code } });
   };
   const leaveJoin = useCallback(() => {
     spectatorRef.current?.stop();
     spectatorRef.current = null;
     setJoin({ kind: "idle" });
+    patchResume({ joined: undefined });
   }, []);
   useEffect(() => { if (screen.kind !== "join") leaveJoin(); }, [screen.kind, leaveJoin]);
+
+  // Mémorise l'écran courant pour le rouvrir après une actualisation.
+  useEffect(() => {
+    patchResume({
+      view: screen.kind === "match" || screen.kind === "round" ? { kind: "match", matchId: screen.matchId }
+        : screen.kind === "join" ? { kind: "join" } : undefined,
+    });
+  }, [screen]);
 
   // Lien du QR code (#join=CODE) : ouvre directement l'écran « rejoindre », au chargement comme si le site est déjà ouvert.
   const openFromHash = useCallback(() => {
@@ -103,7 +135,14 @@ export default function App() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const hashHandled = useRef(false);
   useEffect(() => {
-    if (!hashHandled.current) { hashHandled.current = true; openFromHash(); }
+    if (!hashHandled.current) {
+      hashHandled.current = true;
+      openFromHash();
+      // Actualisation : on reprend la partie suivie (invité) ou le partage en cours (hôte).
+      if (!codeFromHash(location.hash) && boot.screen?.kind === "join" && boot.resume.joined) startJoin(boot.resume.joined.code);
+      const h = boot.resume.hosting;
+      if (h) startSharing(h.matchId, h.code);
+    }
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
   }, [openFromHash]);
@@ -173,7 +212,7 @@ export default function App() {
         sharing={host?.matchId === match.id && host.status === "sharing" ? { code: host.code, viewers: host.viewers } : null}
         onShare={() => setShareOpen(true)}
         online={host?.matchId === match.id && host.status === "sharing" ? host.online : null}
-        onClaim={(p, n) => hostRef.current?.claim(p, n)}
+        onClaim={(p, n) => { hostClaim.current = { matchId: match.id, p, n }; hostRef.current?.claim(p, n); }}
       />
       {shareOpen && (
         <ShareDialog
