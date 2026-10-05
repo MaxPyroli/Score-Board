@@ -6,6 +6,9 @@ import { loadGroups, newId, rememberGroup } from "../store";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
+import { GuestEntryCard, HostEntryPanel } from "./entry";
+import type { ClaimData } from "../backend";
+import type { Entries, Entry } from "../guestEntry";
 
 // ---------------------------------------------------------------- Accueil
 
@@ -193,7 +196,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, ended }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -212,7 +215,13 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   /** Joueurs actuellement connectés ; `null` hors partage (pas de pastilles). */
   online?: string[] | null;
   /** Signale à la session quel joueur est cet appareil et, s'il vient de changer de nom, le nouveau nom. */
-  onClaim?: (playerId: string, requestedName?: string) => void;
+  onClaim?: (data: ClaimData) => void;
+  /** Saisies des joueurs pour la manche en cours (invités et hôte réunis). */
+  entries?: Entries;
+  /** Hôte : saisie faite par l'hôte pour un joueur sans l'appli. */
+  onHostEntry?: (playerId: string, entry: Entry) => void;
+  /** Invité : l'hôte a arrêté le partage (plus de saisie possible). */
+  ended?: boolean;
 }) {
   const totals = game.totals(match);
   const roundScores = game.roundScores(match);
@@ -246,7 +255,17 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const [pendingName, setPendingName] = useState<string | undefined>();
   const myName = match.players.find((p) => p.id === me)?.name;
   // Signature de cet appareil dans la session (qui je suis, nom demandé s'il y en a un).
-  useEffect(() => { if (me !== undefined) onClaim?.(me ?? "", pendingName); }, [me, pendingName]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Ma saisie de la manche en cours (invité) ; elle est abandonnée dès qu'une manche est ajoutée.
+  const [myEntry, setMyEntry] = useState<{ r: number; entry: Entry } | null>(null);
+  useEffect(() => { if (myEntry && myEntry.r !== match.rounds.length) setMyEntry(null); }, [match.rounds.length, myEntry]);
+  useEffect(() => {
+    if (me === undefined) return;
+    onClaim?.({
+      p: me ?? "",
+      ...(pendingName ? { n: pendingName } : {}),
+      ...(myEntry ? { r: myEntry.r, s: myEntry.entry.score, ...(myEntry.entry.finisher ? { f: true } : {}) } : {}),
+    });
+  }, [me, pendingName, myEntry]); // eslint-disable-line react-hooks/exhaustive-deps
   // Invité : la demande de nom est terminée quand l'hôte l'a appliquée (ou après 8 s si elle n'a pas abouti).
   useEffect(() => {
     if (pendingName === undefined) return;
@@ -318,6 +337,15 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </p>
         )}
         {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot off" /> hors ligne</p>}
+        {readOnly && game.guestEntry && me && !finished && !ended && (
+          <GuestEntryCard
+            match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}
+            onSubmit={(entry) => setMyEntry({ r: match.rounds.length, entry })} onWithdraw={() => setMyEntry(null)}
+          />
+        )}
+        {!readOnly && game.guestEntry && sharing && !finished && onHostEntry && (
+          <HostEntryPanel match={match} game={game} entries={entries ?? {}} onEntry={onHostEntry} />
+        )}
         {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
 
         {match.rounds.length === 0 ? (

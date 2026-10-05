@@ -202,3 +202,15 @@ button.card { text-align: left; width: 100%; }
 .dot.on { background: #2fb36d; box-shadow: 0 0 0 2px rgba(47,179,109,.25); }
 .dot.off { background: var(--outline); }
 .me-note button + button { margin-left: 2px; }
+
+.entry-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; margin: 8px 0; }
+.entry-field { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.entry-field .field { width: 84px; }
+.entry-field.compact { justify-content: flex-end; gap: 6px; }
+.entry-sent { display: flex; justify-content: space-between; align-items: center; }
+.entry-sent .link { margin: 0; padding: 4px 0; color: var(--primary); }
+.entry-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 0; border-top: 1px solid var(--outline); }
+.entry-row .name { flex: 1; color: var(--text); font-weight: 600; }
+.entry-value { color: var(--primary); font-weight: 600; }
+.entry-row.edit { flex-direction: column; align-items: stretch; gap: 4px; }
+.entry-row.edit .entry-field.compact { justify-content: flex-start; }

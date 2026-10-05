@@ -7,10 +7,18 @@
         ".read": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
         ".write": "auth != null && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/) && (!data.exists() || data.child('owner').val() === auth.uid || data.child('updatedAt').val() < now - 86400000) && (!newData.exists() || newData.child('owner').val() === auth.uid)",
         ".validate": "!newData.exists() || (newData.hasChildren(['owner', 'updatedAt', 'payload']) && newData.child('payload').isString() && newData.child('payload').val().length < 200000)",
-        "owner": { ".validate": "newData.isString()" },
-        "updatedAt": { ".validate": "newData.isNumber()" },
-        "payload": { ".validate": "newData.isString()" },
-        "$other": { ".validate": false }
+        "owner": {
+          ".validate": "newData.isString()"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "payload": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
       }
     },
     "viewers": {
@@ -19,9 +27,24 @@
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && $code.matches(/^[A-HJ-NP-Z2-9]{4}$/)",
           ".validate": "!newData.exists() || newData.hasChild('p')",
-          "p": { ".validate": "newData.isString() && newData.val().length < 65" },
-          "n": { ".validate": "newData.isString() && newData.val().length <= 20" },
-          "$other": { ".validate": false }
+          "p": {
+            ".validate": "newData.isString() && newData.val().length < 65"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length <= 20"
+          },
+          "$other": {
+            ".validate": false
+          },
+          "r": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 10000"
+          },
+          "s": {
+            ".validate": "newData.isString() && newData.val().length <= 8"
+          },
+          "f": {
+            ".validate": "newData.val() === true"
+          }
         }
       }
     }
