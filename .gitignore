@@ -6,3 +6,5 @@ build/
 local.properties
 *.iml
 .kotlin/
+*.jks
+upload-key*

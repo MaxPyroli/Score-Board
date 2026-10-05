@@ -10,7 +10,7 @@ pluginManagement {
         kotlin("android") version "2.0.21"
         kotlin("plugin.serialization") version "2.0.21"
         kotlin("plugin.compose") version "2.0.21"
-        id("com.android.application") version "8.7.3"
+        id("com.android.application") version "8.10.1"
         id("com.google.devtools.ksp") version "2.0.21-1.0.28"
     }
 }

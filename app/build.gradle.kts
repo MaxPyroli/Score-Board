@@ -8,13 +8,14 @@ plugins {
 
 android {
     namespace = "com.panagames.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.panagames.app"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 1
+        targetSdk = 36
+        // Google Play exige un versionCode qui augmente à chaque envoi : la CI de publication le fournit.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = "0.1.0"
     }
 
@@ -27,12 +28,26 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+
+        // Clé d'envoi Google Play : fournie uniquement par la CI de publication (secrets GitHub).
+        create("release") {
+            val keystorePath = System.getenv("UPLOAD_KEYSTORE_PATH")
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("UPLOAD_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("UPLOAD_KEY_ALIAS")
+                keyPassword = System.getenv("UPLOAD_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             // À activer (avec règles ProGuard pour Room et kotlinx.serialization) avant la publication.
             isMinifyEnabled = false
+            if (System.getenv("UPLOAD_KEYSTORE_PATH") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
