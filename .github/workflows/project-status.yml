@@ -1,0 +1,88 @@
+name: Statut dans le tableau
+
+# Range la carte d'un ticket dans la bonne colonne du tableau GitHub Projects :
+#   fermé → « Fait » ; étiquette « en cours » → « En cours » ; sinon → « À faire ».
+# Réglages (Settings → Secrets and variables → Actions) :
+#   secret   PROJECT_TOKEN   : jeton « classic » avec le droit `project` (et `repo` si le dépôt est privé)
+#   variable PROJECT_NUMBER  : numéro du tableau (adresse …/projects/<numéro>)
+#   variables facultatives   : PROJECT_OWNER (défaut : propriétaire du dépôt), STATUS_TODO, STATUS_DOING, STATUS_DONE
+# Attention : GitHub n'exécute les déclencheurs « issues » que depuis la branche par défaut (main).
+
+on:
+  issues:
+    types: [labeled, unlabeled, closed, reopened, opened]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Numéro du ticket à ranger (test manuel)"
+        required: true
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    # Les autres étiquettes n'ont pas d'effet sur le tableau.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action != 'labeled' && github.event.action != 'unlabeled') ||
+      github.event.label.name == 'en cours'
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER }}
+          PROJECT_OWNER: ${{ vars.PROJECT_OWNER }}
+          STATUS_TODO: ${{ vars.STATUS_TODO }}
+          STATUS_DOING: ${{ vars.STATUS_DOING }}
+          STATUS_DONE: ${{ vars.STATUS_DONE }}
+          ISSUE_INPUT: ${{ github.event.inputs.issue }}
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const number = Number(process.env.PROJECT_NUMBER);
+            if (!number) core.setFailed("La variable PROJECT_NUMBER n'est pas définie.");
+            const owner = process.env.PROJECT_OWNER || context.repo.owner;
+            const names = {
+              todo: process.env.STATUS_TODO || "À faire",
+              doing: process.env.STATUS_DOING || "En cours",
+              done: process.env.STATUS_DONE || "Fait",
+            };
+            const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+            // Le ticket concerné, avec son état et ses étiquettes actuels.
+            const issueNumber = context.payload.issue?.number ?? Number(process.env.ISSUE_INPUT);
+            const { data: issue } = await github.request("GET /repos/{owner}/{repo}/issues/{n}", {
+              owner: context.repo.owner, repo: context.repo.repo, n: issueNumber,
+            });
+            const wanted = issue.state === "closed" ? "done"
+              : issue.labels.some((l) => (typeof l === "string" ? l : l.name) === "en cours") ? "doing" : "todo";
+
+            // Le tableau (compte personnel ou organisation) et son champ « Status ».
+            const projectFields = `id fields(first: 30) { nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } }`;
+            let project;
+            for (const kind of ["user", "organization"]) {
+              try {
+                const r = await github.graphql(`query($o:String!,$n:Int!){ ${kind}(login:$o){ projectV2(number:$n){ ${projectFields} } } }`, { o: owner, n: number });
+                project = r[kind]?.projectV2;
+                if (project) break;
+              } catch (e) { /* on essaie l'autre type de compte */ }
+            }
+            if (!project) return core.setFailed(`Tableau n°${number} introuvable pour ${owner} (jeton ou numéro incorrect ?).`);
+            const status = project.fields.nodes.find((f) => f?.name && norm(f.name) === "status");
+            if (!status) return core.setFailed("Le tableau n'a pas de champ « Status ».");
+            const option = status.options.find((o) => norm(o.name) === norm(names[wanted]));
+            if (!option) return core.setFailed(`Colonne « ${names[wanted]} » introuvable. Colonnes : ${status.options.map((o) => o.name).join(", ")}.`);
+
+            // La carte du ticket dans ce tableau (ajoutée si elle n'y est pas encore).
+            const { node } = await github.graphql(
+              `query($id:ID!){ node(id:$id){ ... on Issue { projectItems(first: 20) { nodes { id project { id } } } } } }`,
+              { id: issue.node_id });
+            let item = node.projectItems.nodes.find((i) => i.project.id === project.id)?.id;
+            if (!item) {
+              const added = await github.graphql(
+                `mutation($p:ID!,$c:ID!){ addProjectV2ItemById(input:{projectId:$p, contentId:$c}){ item { id } } }`,
+                { p: project.id, c: issue.node_id });
+              item = added.addProjectV2ItemById.item.id;
+            }
+            await github.graphql(
+              `mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){ updateProjectV2ItemFieldValue(input:{projectId:$p, itemId:$i, fieldId:$f, value:{singleSelectOptionId:$o}}){ projectV2Item { id } } }`,
+              { p: project.id, i: item, f: status.id, o: option.id });
+            core.info(`Ticket #${issueNumber} → « ${option.name} »`);
