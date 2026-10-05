@@ -3,6 +3,7 @@ import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./component
 import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, validName, withSetting, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
+import { Meeple } from "./Meeple";
 import { ChangelogSheet } from "./ChangelogSheet";
 import { setAssistantEnabled, useAssistant } from "../assistant";
 import { CONTACT_URL, versionLabel } from "../version";
@@ -35,7 +36,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
   const assistant = useAssistant();
   return (
     <div className="screen">
-      <TopBar title="Score Board" actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
+      <TopBar title={<><Meeple />Score Board</>} actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
       <main className="content">
         {matches.length > 0 && (
         <Section title="Parties en cours">
@@ -71,9 +72,11 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
               const logo = gameImage(g.id, "logo");
               return (
                 <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant ? (assistant ? "assist assist-on" : "assist") : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
+                  <span className="box-frame" aria-hidden="true" />
+                  {g.assistant && assistant && <span className="shine" aria-hidden="true" />}
                   {!bg && !logo && <GameArt gameId={g.id} />}
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
                   <strong>{g.displayName}</strong>
