@@ -76,9 +76,11 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                 >
                   {!bg && !logo && <GameArt gameId={g.id} />}
                   {logo && <img className="game-logo" src={logo} alt="" aria-hidden="true" />}
-                  <strong>{g.displayName}</strong>
+                  <span className="game-title">
+                    <strong>{g.displayName}</strong>
+                    {assistant && g.assistant && <span className="assistant-pill" title="Mode assistant disponible pour ce jeu">✨ Assistant</span>}
+                  </span>
                   <span className="hint">{g.tagline}</span>
-                  {assistant && g.assistant && <span className="sparkle" role="img" aria-label="Mode assistant disponible" title="Mode assistant disponible">✨</span>}
                 </button>
               );
             })}

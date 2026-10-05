@@ -313,7 +313,16 @@ button.card { text-align: left; width: 100%; }
 /* Mode assistant : interrupteur discret en bas de l'accueil, et étincelle sur les jeux compatibles */
 .assistant-toggle { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: var(--muted); cursor: pointer; }
 .assistant-toggle input { width: 14px; height: 14px; accent-color: var(--primary); }
-.card.game { position: relative; }
-.sparkle { position: absolute; z-index: 2; top: 8px; right: 10px; font-size: 1.15rem; filter: drop-shadow(0 0 6px rgba(255, 255, 255, .9)); animation: sparkle 2.4s ease-in-out infinite; }
-@keyframes sparkle { 0%, 100% { opacity: .75; transform: scale(1) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(12deg); } }
-@media (prefers-reduced-motion: reduce) { .sparkle { animation: none; } }
+.game-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; position: relative; z-index: 1; }
+/* Pastille « Assistant » : verre dépoli avec un reflet qui passe de temps en temps */
+.assistant-pill {
+  position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px; border-radius: 999px;
+  font-size: .68rem; font-weight: 700; letter-spacing: .03em; color: #fff; background: rgba(255, 255, 255, .2);
+  border: 1px solid rgba(255, 255, 255, .6); box-shadow: 0 0 10px rgba(255, 255, 255, .35); backdrop-filter: blur(3px);
+}
+.assistant-pill::after {
+  content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, .75) 50%, transparent 70%);
+  transform: translateX(-120%); animation: pill-shine 3.2s ease-in-out infinite;
+}
+@keyframes pill-shine { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) { .assistant-pill::after { animation: none; } }
