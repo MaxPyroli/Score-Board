@@ -7,9 +7,18 @@ on:
   pull_request:
     paths: ["web/**", ".github/workflows/web.yml"]
 
+# Deux versions du site (même GitHub Pages, branche gh-pages) :
+#  - publique : à la racine, mise à jour seulement à la fusion sur main ;
+#  - bêta : dans /beta/, mise à jour à chaque envoi sur une branche claude/** (pour tester avant de publier).
+concurrency:
+  group: web-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_CHANNEL: ${{ github.ref == 'refs/heads/main' && 'public' || 'beta' }}
     defaults:
       run:
         working-directory: web
@@ -28,21 +37,36 @@ jobs:
           name: score-board-web
           path: web/dist
 
-  # Publication sur GitHub Pages (branche gh-pages) : seulement depuis main ou la branche de travail.
+  # Publication sur GitHub Pages (branche gh-pages). Les deux versions coexistent : keep_files garde l'autre intacte.
   deploy:
     needs: build
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    # Une seule publication à la fois, pour que la version publique et la bêta ne s'écrasent pas.
+    concurrency:
+      group: gh-pages-publish
+      cancel-in-progress: false
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: score-board-web
           path: dist
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Publier la version publique (racine)
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist
           publish_branch: gh-pages
-          force_orphan: true
+          keep_files: true
+      - name: Publier la bêta (dossier beta)
+        if: github.ref != 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          publish_branch: gh-pages
+          destination_dir: beta
+          keep_files: true

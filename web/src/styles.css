@@ -347,3 +347,9 @@ button.card { text-align: left; width: 100%; }
 }
 @keyframes card-shine { 0%, 50% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
 @media (prefers-reduced-motion: reduce) { .game.assist-on, .game .shine { animation: none; } }
+
+/* Version bêta : ruban en biais dans le coin, pour ne jamais confondre avec la version publique */
+[data-channel="beta"] body::after {
+  content: "BÊTA"; position: fixed; z-index: 101; bottom: 16px; left: -36px; width: 120px; padding: 3px 0; text-align: center; pointer-events: none;
+  transform: rotate(45deg); background: #c2570c; color: #fff; font-size: .68rem; font-weight: 800; letter-spacing: .12em; box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}

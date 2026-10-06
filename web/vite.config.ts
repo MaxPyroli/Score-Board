@@ -14,6 +14,9 @@ function commit(): string {
   }
 }
 
+// Version bêta (publiée dans /beta/) ou publique : voir src/channel.ts et .github/workflows/web.yml.
+const beta = process.env.VITE_CHANNEL === "beta";
+
 // base "./" : le site fonctionne depuis n'importe quel sous-dossier (GitHub Pages).
 export default defineConfig({
   base: "./",
@@ -25,15 +28,16 @@ export default defineConfig({
       registerType: "prompt",
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
-        name: "Score Board",
-        short_name: "Score Board",
+        id: beta ? "./beta/" : "./",
+        name: beta ? "Score Board BÊTA" : "Score Board",
+        short_name: beta ? "SB BÊTA" : "Score Board",
         description: "Compteur de points pour jeux de société",
         lang: "fr",
         start_url: "./",
         scope: "./",
         display: "standalone",
         background_color: "#f6f5f1",
-        theme_color: "#1f6f5c",
+        theme_color: beta ? "#c2570c" : "#1f6f5c",
         icons: [
           { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
@@ -44,6 +48,8 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,jpg,jpeg,webp,webmanifest}"],
         cleanupOutdatedCaches: true,
         navigateFallback: "index.html",
+        // La version publique ne doit jamais répondre à la place de la bêta (même site, dossier /beta/).
+        navigateFallbackDenylist: beta ? [] : [/\/beta(\/|$)/],
       },
     }),
   ],
