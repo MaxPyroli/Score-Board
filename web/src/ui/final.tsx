@@ -36,11 +36,13 @@ export function WhoAreYou({ match, current, taken = [], recent = [], onPick, onC
 }
 
 /** Écran de fin de partie : résultat personnel (si on a choisi son joueur) et classement. */
-export function FinalScreen({ ranked, meId, onClose, onResume, onChangeMe }: {
+export function FinalScreen({ ranked, meId, onClose, onResume, onReplay, onChangeMe }: {
   ranked: RankedPlayer[];
   meId: string | null;
   onClose(): void;
   onResume?: () => void;
+  /** Nouvelle partie avec les mêmes joueurs et réglages. */
+  onReplay?: () => void;
   onChangeMe?: () => void;
 }) {
   const { headline, detail } = finalMessage(ranked, meId);
@@ -61,6 +63,7 @@ export function FinalScreen({ ranked, meId, onClose, onResume, onChangeMe }: {
           </div>
         ))}
         <button className="btn" onClick={onClose}>Voir la partie</button>
+        {onReplay && <button className="btn outline" onClick={onReplay}>Rejouer</button>}
         {onChangeMe && <button className="btn outline" onClick={onChangeMe}>{meId ? "Ce n'est pas moi" : "Qui suis-je ?"}</button>}
         {onResume && <button className="btn outline" onClick={onResume}>Reprendre la partie</button>}
       </div>

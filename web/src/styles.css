@@ -407,3 +407,5 @@ button.card { text-align: left; width: 100%; }
 .rank-row .token { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); outline-color: var(--primary); box-shadow: 0 3px 0 color-mix(in srgb, var(--primary) 55%, #000); }
 .board .score.big.leader { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #fff1c2; outline-color: rgba(90, 58, 0, .45); box-shadow: 0 3px 0 #9a6a10, 0 0 14px rgba(255, 214, 102, .55); }
 @media (prefers-reduced-motion: reduce) { .stamp-end { animation: none; } }
+
+.history-btn { width: 100%; margin-top: 14px; }

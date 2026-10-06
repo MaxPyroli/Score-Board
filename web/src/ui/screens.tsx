@@ -23,26 +23,29 @@ import type { Entries, Entry } from "../guestEntry";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay }: {
+export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory }: {
   matches: StoredMatch[];
   onNew(game: GameDefinition): void;
   onOpen(m: StoredMatch): void;
   onDelete(m: StoredMatch): void;
   onJoin(): void;
-  /** Nouvelle partie avec le même jeu, les mêmes joueurs et les mêmes réglages. */
-  onReplay(m: StoredMatch): void;
+  /** Ouvre l'historique (parties terminées). */
+  onHistory(): void;
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const assistant = useAssistant();
+  // Les parties terminées vont dans l'historique ; l'accueil ne montre que celles en cours.
+  const ongoing = matches.filter((m) => !isFinished(m));
+  const finishedCount = matches.length - ongoing.length;
   return (
     <div className="screen">
       <TopBar title={<><Meeple />Score Board</>} actions={<button className="btn outline small" onClick={onJoin}>Rejoindre</button>} />
       <main className="content">
-        {matches.length > 0 && (
+        {ongoing.length > 0 && (
         <Section title="Parties en cours">
           <div className="list">
-            {matches.map((m) => {
+            {ongoing.map((m) => {
               const game = GAMES.find((g) => g.id === m.moduleId);
               if (!game) return null;
               const totals = game.totals(m);
@@ -58,13 +61,17 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
                       {m.players.map((p) => `${p.name} ${plain(totals[p.id] ?? 0)}${p.id === lead ? " ★" : ""}`).join(" · ")}
                     </span>
                   </button>
-                  <button className="btn outline small" onClick={() => onReplay(m)} aria-label={`Rejouer ${game.displayName} avec les mêmes joueurs`}>Rejouer</button>
                   <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
                 </div>
               );
             })}
           </div>
         </Section>
+        )}
+        {finishedCount > 0 && (
+          <button className="btn outline history-btn" onClick={onHistory}>
+            <span aria-hidden="true">📜</span> Historique · {finishedCount} partie{finishedCount > 1 ? "s" : ""} terminée{finishedCount > 1 ? "s" : ""}
+          </button>
         )}
         <Section title="Nouvelle partie">
           <div className="games">
@@ -105,6 +112,54 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
         <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
       </footer>
       {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
+      {toDelete && (
+        <Dialog title="Supprimer la partie ?" onClose={() => setToDelete(null)}>
+          <p>Les scores de cette partie seront perdus.</p>
+          <div className="buttons">
+            <button className="btn outline" onClick={() => setToDelete(null)}>Annuler</button>
+            <button className="btn danger" onClick={() => { onDelete(toDelete); setToDelete(null); }}>Supprimer</button>
+          </div>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- Historique
+
+/** Parties terminées, les plus récentes d'abord : on peut les rouvrir (et les rejouer de l'intérieur) ou les supprimer. */
+export function HistoryScreen({ matches, onOpen, onDelete, onBack }: {
+  matches: StoredMatch[];
+  onOpen(m: StoredMatch): void;
+  onDelete(m: StoredMatch): void;
+  onBack(): void;
+}) {
+  const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
+  const finished = matches.filter(isFinished);
+  return (
+    <div className="screen">
+      <TopBar title="Historique" onBack={onBack} />
+      <main className="content">
+        {finished.length === 0 && <p className="hint empty">Aucune partie terminée pour l'instant.<br />Une partie terminée apparaît ici.</p>}
+        <div className="list">
+          {finished.map((m) => {
+            const game = GAMES.find((g) => g.id === m.moduleId);
+            if (!game) return null;
+            const ranked = ranking(m.players, game.totals(m), game.lowestWins(m));
+            const winners = ranked.filter((r) => r.rank === 1).map((r) => r.player.name);
+            return (
+              <div key={m.id} className="card row" data-game={m.moduleId}>
+                <button className="row-main" onClick={() => onOpen(m)}>
+                  <strong>{game.displayName}</strong>
+                  <span className="hint">{dateFormat.format(m.createdAt)} · {m.rounds.length} manche{m.rounds.length > 1 ? "s" : ""}</span>
+                  <span className="hint">🏆 {winners.join(" et ") || "—"} · {ranked.map((r) => `${r.player.name} ${plain(r.total)}`).join(" · ")}</span>
+                </button>
+                <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
+              </div>
+            );
+          })}
+        </div>
+      </main>
       {toDelete && (
         <Dialog title="Supprimer la partie ?" onClose={() => setToDelete(null)}>
           <p>Les scores de cette partie seront perdus.</p>
@@ -277,7 +332,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, taken, ended }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, onReplay, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, taken, ended }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -305,6 +360,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   taken?: string[];
   /** Invité : l'hôte a arrêté le partage (plus de saisie possible). */
   ended?: boolean;
+  /** Nouvelle partie avec le même jeu, les mêmes joueurs et les mêmes réglages (partie terminée, hôte seulement). */
+  onReplay?: () => void;
 }) {
   const totals = game.totals(match);
   const roundScores = game.roundScores(match);
@@ -462,7 +519,12 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             ))}
           </div>
         )}
-        {finished && hideFinal && <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>}
+        {finished && hideFinal && (
+          <div className="buttons">
+            <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>
+            {onReplay && !readOnly && <button className="btn outline small" onClick={onReplay}>Rejouer</button>}
+          </div>
+        )}
 
         {match.rounds.length === 0 ? (
           <p className="hint empty">{game.id === "rail" ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && <><br />Appuie sur « {game.id === "rail" ? "Nouveau décompte" : "Nouvelle manche"} » pour commencer.</>}</p>
@@ -514,6 +576,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           onClose={() => setHideFinal(true)}
           onChangeMe={() => setPickerOpen(true)}
           onResume={readOnly ? undefined : () => onChange(withSetting(match, SETTING_FINISHED, "false"))}
+          onReplay={readOnly ? undefined : onReplay}
         />
       )}
       {confirmDelete && (

@@ -5,7 +5,7 @@ import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
 import { UpdateBanner, useAppUpdate } from "./pwa";
-import { HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
+import { HistoryScreen, HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
 import type { ClaimData } from "./backend";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
@@ -15,7 +15,8 @@ type Screen =
   | { kind: "new"; gameId: string }
   | { kind: "match"; matchId: string }
   | { kind: "round"; matchId: string; index: number | null }
-  | { kind: "join" };
+  | { kind: "join" }
+  | { kind: "history" };
 
 /** Pile d'écrans reliée à l'historique du navigateur : le bouton « retour » du téléphone fonctionne. */
 function useNav(initial?: Screen) {
@@ -183,13 +184,17 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         onOpen={(m) => nav.push({ kind: "match", matchId: m.id })}
         onDelete={(m) => { if (host?.matchId === m.id) stopSharing(); remove(m.id); }}
         onJoin={() => nav.push({ kind: "join" })}
-        onReplay={(old) => {
-          const settings = { ...old.settings };
-          delete settings[SETTING_FINISHED];
-          const m = { ...old, id: newId(), players: old.players.map((p) => ({ ...p, id: newId() })), rounds: [], settings, createdAt: Date.now() };
-          save(m);
-          nav.push({ kind: "match", matchId: m.id });
-        }}
+        onHistory={() => nav.push({ kind: "history" })}
+      />
+    );
+
+  if (screen.kind === "history")
+    return (
+      <HistoryScreen
+        matches={matches}
+        onOpen={(m) => nav.push({ kind: "match", matchId: m.id })}
+        onDelete={(m) => { if (host?.matchId === m.id) stopSharing(); remove(m.id); }}
+        onBack={nav.back}
       />
     );
 
@@ -238,6 +243,14 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         onNewRound={() => nav.push({ kind: "round", matchId: match.id, index: null })}
         onEditRound={(i) => nav.push({ kind: "round", matchId: match.id, index: i })}
         onChange={save}
+        onReplay={() => {
+          // Même jeu, mêmes joueurs et réglages ; la partie terminée reste dans l'historique.
+          const settings = { ...match.settings };
+          delete settings[SETTING_FINISHED];
+          const m = { ...match, id: newId(), players: match.players.map((p) => ({ ...p, id: newId() })), rounds: [], settings, createdAt: Date.now() };
+          save(m);
+          nav.replace({ kind: "match", matchId: m.id });
+        }}
         onDelete={() => { nav.back(); if (host?.matchId === match.id) stopSharing(); remove(match.id); }}
         sharing={host?.matchId === match.id && host.status === "sharing" ? { code: host.code, viewers: host.viewers } : null}
         onShare={() => setShareOpen(true)}
