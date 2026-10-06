@@ -217,7 +217,7 @@ function ScoreInputs({ match, texts, negatives, onText, onNegative, extra, allow
           <div key={p.id} className="input-row">
             <span className="name">{p.name}</span>
             {allowNegativeToggle && (
-              <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Score négatif pour ${p.name}`} onClick={() => onNegative(p.id, !neg)}>−</button>
+              <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Signe du score de ${p.name} : ${neg ? "négatif" : "positif"} (toucher pour changer)`} onClick={() => onNegative(p.id, !neg)}>{neg ? "−" : "+"}</button>
             )}
             <input
               className="field" inputMode="decimal" autoComplete="off" placeholder="0" aria-label={`Score de ${p.name}`}
