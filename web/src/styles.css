@@ -413,3 +413,38 @@ button.card { text-align: left; width: 100%; }
     inset 0 4px 9px rgba(0, 0, 0, .4), inset 0 -2px 0 rgba(255, 255, 255, .2); /* face creusée */
 }
 .game.assist-on:active { animation: none; }
+
+/* ---- Boutons colorés et cartes de jeux : plus de matière (biseau, rebord éclairé) et un enfoncement plus marqué ---- */
+.btn { --slab: color-mix(in srgb, var(--primary) 58%, #000); }
+.btn.danger { --slab: color-mix(in srgb, var(--danger) 58%, #000); }
+.fab { --slab: color-mix(in srgb, var(--primary) 58%, #000); }
+.game { --slab: rgba(0, 0, 0, .34); }
+.btn:not(.outline), .fab, .game:not(.assist-on) {
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .32), inset 0 -3px 0 rgba(0, 0, 0, .16),   /* biseau : reflet en haut, ombre en bas */
+    0 var(--sink) 0 var(--slab),                                                   /* tranche */
+    0 0 0 3px rgba(0, 0, 0, .10), 0 0 0 4px rgba(255, 255, 255, .3),              /* logement creusé autour, rebord éclairé */
+    0 calc(var(--sink) + 8px) 14px rgba(0, 0, 0, .16);                             /* ombre sur le support */
+  transition: transform .3s cubic-bezier(.3, 1.9, .5, 1), box-shadow .22s ease-out, filter .2s;                /* ressort au relâchement */
+}
+.btn:not(.outline):active:not(:disabled), .fab:active {
+  transition-duration: .04s;
+  transform: translateY(var(--sink)) scale(.985); filter: brightness(.86) saturate(1.1);
+  box-shadow:
+    0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62),                               /* fente sombre au-dessus : la profondeur du trou */
+    0 calc(var(--sink) * -1) 0 3px rgba(0, 0, 0, .28),                             /* parois */
+    0 3px 0 3px rgba(255, 255, 255, .55),                                          /* rebord du bas, bien éclairé */
+    inset 0 6px 12px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(255, 255, 255, .25);   /* face creusée */
+}
+/* Cartes de jeux : la carte s'incline du côté où on appuie, comme une vraie touche qu'on enfonce d'un coin */
+.game:active, .game.assist-on:active {
+  transition-duration: .05s;
+  transform: perspective(560px) translateY(var(--sink)) rotateX(calc(var(--py, 0) * -6deg)) rotateY(calc(var(--px, 0) * 6deg)) scale(.982);
+  filter: brightness(.88) saturate(1.1);
+  box-shadow:
+    0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62), 0 calc(var(--sink) * -1) 0 3px rgba(0, 0, 0, .28),
+    0 3px 0 3px rgba(255, 255, 255, .55),
+    inset 0 8px 16px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(255, 255, 255, .25);
+}
+.game.assist-on:active { box-shadow: 0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 8px 16px rgba(0, 0, 0, .5); }
+@media (prefers-reduced-motion: reduce) { .btn, .fab, .game { transition: none; } }
