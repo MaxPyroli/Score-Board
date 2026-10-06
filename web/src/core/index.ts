@@ -83,7 +83,7 @@ export function parseScore(text: string, negative = false): number | null {
   const trimmed = text.trim();
   if (!NUMBER.test(trimmed)) return null;
   const value = Number(trimmed.replace(",", "."));
-  return negative || trimmed.startsWith("-") ? -Math.abs(value) : value;
+  return value === 0 ? 0 : negative || trimmed.startsWith("-") ? -Math.abs(value) : value;
 }
 
 export const SETTING_TARGET = "target";
