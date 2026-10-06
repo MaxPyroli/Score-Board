@@ -79,8 +79,9 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               const bg = gameImage(g.id, "bg");
               const logo = gameImage(g.id, "logo");
               return (
+                <div key={g.id} className="game-socket">
                 <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)}
+                  className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
                   <span className="box-frame" aria-hidden="true" />
@@ -95,6 +96,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
                     </span>
                   )}
                 </button>
+                </div>
               );
             })}
           </div>
