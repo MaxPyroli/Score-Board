@@ -166,7 +166,7 @@ const sixQuiPrend = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "À chaque manche, tape le nombre de têtes de bœuf ramassées par chaque joueur (un champ vide compte 0).",
-        "Un message s'affiche quand l'objectif de 66 est atteint ; l'appli te propose alors de terminer la partie.",
+        "La partie s'arrête quand un joueur atteint 66 têtes de bœuf (limite réglable à la création) : l'appli la termine alors toute seule.",
         "Chaque invité peut saisir lui-même son score depuis son téléphone.",
       ],
     },

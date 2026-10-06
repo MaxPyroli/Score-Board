@@ -123,10 +123,10 @@ export interface GameDefinition {
   Editor: ComponentType<EditorProps>;
 }
 
-const targetOption = (def: string | null): NumberOption => ({
+const targetOption = (def: string | null, endAt = false): NumberOption => ({
   key: SETTING_TARGET,
-  label: "Objectif de points (facultatif)",
-  description: "Un message s'affiche quand un joueur l'atteint.",
+  label: endAt ? "La partie s'arrête à (têtes de bœuf)" : "Objectif de points (facultatif)",
+  description: endAt ? "Quand un joueur atteint ou dépasse ce total, la partie est terminée." : "Un message s'affiche quand un joueur l'atteint.",
   default: def,
 });
 
@@ -134,7 +134,7 @@ const nameMap = (m: StoredMatch) => (id: string) => m.players.find((p) => p.id =
 
 function counterGame(
   module: GameModule<any>, tagline: string, lowestWins: boolean | null, defaultTarget: string | null,
-  allowNegative: boolean,
+  allowNegative: boolean, endAt = false,
 ): GameDefinition {
   const lowest = (m: StoredMatch) => flag(m, SETTING_LOWEST_WINS);
   return {
@@ -142,12 +142,12 @@ function counterGame(
     options: lowestWins === null
       ? [{ key: SETTING_LOWEST_WINS, label: "Le plus petit score gagne", description: "À activer pour les jeux où il faut marquer le moins de points.", default: false }]
       : [],
-    numberOptions: [targetOption(defaultTarget)],
+    numberOptions: [targetOption(defaultTarget, endAt)],
     fixedSettings: lowestWins === null ? {} : { [SETTING_LOWEST_WINS]: String(lowestWins) },
     totals: (m) => totals(module, m),
     roundScores: (m) => roundScores(module, m),
     describeRound: () => ({ headline: "", detail: "" }),
-    status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m)),
+    status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m), endAt),
     lowestWins: lowest,
     canFinish: (m) => targetReached(m, totals(module, m)),
     quickSteps: () => null,
@@ -460,7 +460,7 @@ function buildGames(): GameDefinition[] {
   };
   return [
     tarot, skyjo, railGame(), sushiGame(),
-    counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false),
+    counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false, true),
     freeCounterGame(),
   ];
 }

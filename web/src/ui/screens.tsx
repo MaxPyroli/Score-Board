@@ -348,7 +348,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, onReplay, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, taken, ended }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, onReplay, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntries, taken, ended }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -371,7 +371,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   /** Saisies des joueurs pour la manche en cours (invités et hôte réunis). */
   entries?: Entries;
   /** Hôte : saisie faite par l'hôte pour un joueur sans l'appli. */
-  onHostEntry?: (playerId: string, entry: Entry) => void;
+  onHostEntries?: (entries: Record<string, Entry>) => void;
   /** Joueurs déjà pris par un autre appareil connecté. */
   taken?: string[];
   /** Invité : l'hôte a arrêté le partage (plus de saisie possible). */
@@ -523,8 +523,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             onSubmit={(entry) => setMyEntry({ r: match.rounds.length, entry })} onWithdraw={() => setMyEntry(null)}
           />
         )}
-        {!readOnly && game.guestEntry?.(match) && sharing && !finished && onHostEntry && (
-          <HostEntryPanel match={match} game={game} entries={entries ?? {}} onEntry={onHostEntry} />
+        {!readOnly && game.guestEntry?.(match) && sharing && !finished && onHostEntries && (
+          <HostEntryPanel match={match} game={game} entries={entries ?? {}} online={online ?? null} onEntries={onHostEntries} />
         )}
         {quickSteps && !readOnly && !finished && (
           <div className="card entry-card">

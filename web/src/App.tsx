@@ -278,11 +278,11 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
           return { ...mine, ...(host?.matchId === match.id ? hostClaimed : {}) };
         })()}
         taken={host?.matchId === match.id ? takenPlayers(host.claims, host.ownUid) : []}
-        onHostEntry={(playerId, entry) =>
+        onHostEntries={(added) =>
           setHostEntries((prev) => {
             const round = match.rounds.length;
             const base = prev && prev.matchId === match.id && prev.round === round ? prev.entries : {};
-            return { matchId: match.id, round, entries: { ...base, [playerId]: entry } };
+            return { matchId: match.id, round, entries: { ...base, ...added } };
           })}
       />
       {shareOpen && (

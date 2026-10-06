@@ -71,32 +71,64 @@ export function GuestEntryCard({ match, game, meId, entries, mine, onSubmit, onW
   );
 }
 
-/** Côté hôte : où en est la saisie de la manche, avec saisie pour les joueurs sans l'appli. */
-export function HostEntryPanel({ match, game, entries, onEntry }: {
+type Draft = { text: string; neg: boolean; finisher: boolean };
+const draftValue = (d: Draft | undefined): string => (d && d.text.trim() !== "" ? (d.neg ? "-" : "") + d.text.trim() : "0");
+
+/**
+ * Côté hôte : où en est la saisie de la manche. L'hôte tape les scores de ceux qui n'ont pas l'appli, puis valide tout
+ * d'un coup. Un champ laissé vide compte 0, sauf pour un joueur connecté avec l'appli : on attend sa propre saisie.
+ */
+export function HostEntryPanel({ match, game, entries, online, onEntries }: {
   match: StoredMatch;
   game: GameDefinition;
   entries: Entries;
-  onEntry(playerId: string, entry: Entry): void;
+  online: string[] | null;
+  onEntries(entries: Record<string, Entry>): void;
 }) {
   const cfg = game.guestEntry!(match)!;
   const attempt = tryBuildRound(game, match, entries);
+  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const set = (id: string, patch: Partial<Draft>) => setDrafts((d) => ({ ...d, [id]: { ...(d[id] ?? { text: "", neg: false, finisher: false }), ...patch } }));
+  const open = match.players.filter((p) => !entries[p.id]);
+  // Joueurs dont la saisie sera envoyée : ceux qui ont tapé quelque chose, et ceux qui n'ont pas l'appli (champ vide = 0).
+  const toSend = open.filter((p) => (drafts[p.id]?.text ?? "").trim() !== "" || drafts[p.id]?.finisher || !(online ?? []).includes(p.id));
+  const invalid = toSend.some((p) => parseScore(draftValue(drafts[p.id])) === null);
+  const validate = () => {
+    onEntries(Object.fromEntries(toSend.map((p) => [p.id, { score: draftValue(drafts[p.id]), finisher: drafts[p.id]?.finisher ?? false }])));
+    setDrafts({});
+  };
   return (
     <div className="card entry-card">
-      <strong>Manche {match.rounds.length + 1} · saisie des joueurs</strong>
-      <span className="hint">Chacun envoie son score ; la manche s'ajoute toute seule quand tout le monde a saisi. Saisis toi-même pour ceux qui n'ont pas l'appli.</span>
+      <strong>Manche {match.rounds.length + 1} · scores</strong>
       {match.players.map((p) => {
         const e = entries[p.id];
+        const d = drafts[p.id];
+        const waitsForGuest = (online ?? []).includes(p.id);
         return (
-          <div key={p.id} className={`entry-row ${e ? "" : "edit"}`}>
+          <div key={p.id} className="entry-row">
             <span className="name">{p.name}</span>
             {e ? (
               <span className="entry-value">✓ {e.score}{e.finisher ? " · a terminé" : ""}</span>
             ) : (
-              <ScoreField compact onSubmit={(entry) => onEntry(p.id, entry)} withFinisher={cfg.finisher} allowNegative={cfg.allowNegative} submitLabel="OK" />
+              <span className="entry-field compact">
+                {cfg.allowNegative && (
+                  <button type="button" className={`chip sign ${d?.neg ? "on" : ""}`} aria-pressed={!!d?.neg} aria-label={`Signe du score de ${p.name}`} onClick={() => set(p.id, { neg: !d?.neg })}><PlusMinus plus={!d?.neg} /></button>
+                )}
+                <input
+                  className="field" inputMode="decimal" autoComplete="off" placeholder={waitsForGuest ? "attend" : "0"} aria-label={`Score de ${p.name}`}
+                  value={d?.text ?? ""} onChange={(ev) => set(p.id, { text: ev.target.value })}
+                />
+                {cfg.finisher && (
+                  <button type="button" className={`chip ${d?.finisher ? "on" : ""}`} aria-pressed={!!d?.finisher} onClick={() => set(p.id, { finisher: !d?.finisher })}>A terminé</button>
+                )}
+              </span>
             )}
           </div>
         );
       })}
+      {open.length > 0 && (
+        <button type="button" className="btn full" disabled={toSend.length === 0 || invalid} onClick={validate}>Valider les scores</button>
+      )}
       {"error" in attempt && <span className="error">{attempt.error}</span>}
       {"waiting" in attempt && <span className="hint">On attend : {attempt.waiting.join(", ")}.</span>}
     </div>

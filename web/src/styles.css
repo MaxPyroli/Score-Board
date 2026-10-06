@@ -509,3 +509,8 @@ button.card { text-align: left; width: 100%; }
 .ticket-score.lead { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #7a5410; box-shadow: 0 2px 0 #9a6a10; }
 .ticket-perf { flex: none; position: relative; width: 0; border-left: 2.5px dashed color-mix(in srgb, var(--ink) 45%, transparent); margin: 8px 0; }
 .card.ticket > .icon { align-self: center; margin: 0 4px 0 2px; }
+
+/* Saisie de l'hôte : lignes compactes (un seul bouton « Valider les scores ») */
+.entry-card .entry-row { padding: 2px 0; min-height: 0; }
+.entry-card .entry-row .field { height: 38px; width: 76px; padding: 0 8px; font-size: 1rem; }
+.entry-card { gap: 6px; }
