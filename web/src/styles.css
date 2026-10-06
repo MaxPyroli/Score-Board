@@ -481,3 +481,6 @@ button.card { text-align: left; width: 100%; }
 .topbar .icon.round.back, .topbar .icon.round.plain { margin: 0; width: 42px; min-width: 42px; height: 42px; flex: none; }
 .topbar .actions { display: flex; align-items: center; gap: 8px; }
 .topbar h1 { padding-left: 4px; min-width: 0; }
+
+/* Boutons ronds clairs (retour, partager, menu) : pas de reflet intérieur en haut, sinon ils ont l'air creux */
+.icon.round.back:not(:active):not(.pressed), .icon.round.plain:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
