@@ -378,7 +378,7 @@ button.card { text-align: left; width: 100%; }
 /* ---- Effet « bouton » façon dessin animé : gros contour d'encre, ombre pleine décalée (sans flou), reflet et ombre en aplats ;
    à l'appui, le bouton descend sur son ombre (qui disparaît) et rebondit au relâchement. ---- */
 :root { --ink: #2a2118; }
-@media (prefers-color-scheme: dark) { :root { --ink: #000; } }
+@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; } }
 .btn, .fab, .chip, .card.choice, .icon.round, .game {
   border: 2.5px solid var(--ink); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
 }
