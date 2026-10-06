@@ -334,14 +334,7 @@ button.card { text-align: left; width: 100%; }
 .assistant-stamp.on { opacity: 1; background: rgba(255, 255, 255, .22); box-shadow: 0 0 12px rgba(255, 255, 255, .5); }
 
 /* ---- Direction artistique « jeu de société » : cartes de jeux façon boîte, couture, halo des jeux compatibles ---- */
-.game { border-radius: 18px; box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 6px 14px rgba(0, 0, 0, .12); transition: transform .12s, box-shadow .12s; }
-.game:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .12); }
 .box-frame { position: absolute; inset: 6px; z-index: 1; border: 1.5px dashed rgba(255, 255, 255, .4); border-radius: 13px; pointer-events: none; }
-.game.assist-on { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); animation: card-halo 2.8s ease-in-out infinite; }
-@keyframes card-halo {
-  0%, 100% { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45); }
-  50% { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85); }
-}
 .game .shine {
   position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-130%);
   background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .38) 50%, transparent 62%); animation: card-shine 4.2s ease-in-out infinite;
@@ -354,3 +347,36 @@ button.card { text-align: left; width: 100%; }
   content: "BÊTA"; position: fixed; z-index: 101; bottom: 16px; left: -36px; width: 120px; padding: 3px 0; text-align: center; pointer-events: none;
   transform: rotate(45deg); background: #c2570c; color: #fff; font-size: .68rem; font-weight: 800; letter-spacing: .12em; box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
+
+/* ---- Effet « bouton » : une vraie tranche sous chaque bouton et chaque carte, qui s'enfonce franchement au toucher ---- */
+.btn, .fab, .chip, .game, .card.choice, .icon.round {
+  transition: transform .07s ease-out, box-shadow .07s ease-out;
+}
+.btn { box-shadow: 0 5px 0 color-mix(in srgb, var(--primary) 58%, #000), 0 8px 12px rgba(0, 0, 0, .12); }
+.btn.outline { box-shadow: 0 4px 0 var(--outline), 0 6px 10px rgba(0, 0, 0, .06); }
+.btn.danger { box-shadow: 0 5px 0 color-mix(in srgb, var(--danger) 58%, #000), 0 8px 12px rgba(0, 0, 0, .12); }
+.btn:active:not(:disabled), .fab:active { transform: translateY(5px); box-shadow: 0 0 0 transparent, 0 1px 3px rgba(0, 0, 0, .15); }
+.btn.outline:active:not(:disabled) { box-shadow: 0 0 0 var(--outline); }
+.btn:disabled { box-shadow: 0 2px 0 color-mix(in srgb, var(--primary) 58%, #000); }
+.fab { box-shadow: 0 6px 0 color-mix(in srgb, var(--primary) 58%, #000), 0 10px 18px rgba(0, 0, 0, .25); }
+.fab:active { transform: translateY(6px); }
+.chip { box-shadow: 0 3px 0 var(--outline); }
+.chip.on { box-shadow: 0 3px 0 color-mix(in srgb, var(--primary) 55%, #000); }
+.chip:active { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+.card.choice { box-shadow: 0 4px 0 var(--outline); }
+.card.choice.on { box-shadow: 0 4px 0 color-mix(in srgb, var(--primary) 60%, #000); }
+.card.choice:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+.icon.round { box-shadow: 0 3px 0 color-mix(in srgb, var(--primary-soft) 70%, #000); }
+.icon.round:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 transparent; }
+/* Cartes de jeux : grosse tranche de carton, qui s'écrase presque entièrement */
+.game { border-radius: 18px; box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 12px 18px rgba(0, 0, 0, .14); }
+.game:active { transform: translateY(7px); box-shadow: 0 0 0 rgba(0, 0, 0, .32), 0 1px 3px rgba(0, 0, 0, .2); }
+.game.assist-on { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); animation: card-halo 2.8s ease-in-out infinite; }
+.game.assist-on:active { animation: none; box-shadow: 0 0 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); }
+@keyframes card-halo {
+  0%, 100% { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45); }
+  50% { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85); }
+}
+.games, .chips, .buttons, .choices { padding-bottom: 8px; }
+.bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 18px); }
+@media (prefers-reduced-motion: reduce) { .game.assist-on { animation: none; } .btn, .fab, .chip, .game, .card.choice, .icon.round { transition: none; } }
