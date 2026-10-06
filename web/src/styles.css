@@ -377,29 +377,30 @@ button.card { text-align: left; width: 100%; }
 
 /* ---- Effet « bouton » façon dessin animé : gros contour d'encre, ombre pleine décalée (sans flou), reflet et ombre en aplats ;
    à l'appui, le bouton descend sur son ombre (qui disparaît) et rebondit au relâchement. ---- */
-:root { --ink: #2a2118; }
-@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; } }
+:root { --ink: #2a2118; --cast: var(--ink); }
+/* Mode sombre : contour blanc cassé, ombre pleine en gris-bleu pour qu'elle se distingue du contour */
+@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; --cast: #55606b; } }
 .btn, .fab, .chip, .card.choice, .icon.round, .game {
   border: 2.5px solid var(--ink); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
 }
 .btn { --sink: 4px; } .fab { --sink: 5px; } .chip { --sink: 3px; } .card.choice { --sink: 4px; } .icon.round { --sink: 3px; } .game { --sink: 6px; border-width: 3px; border-radius: 18px; }
 .btn, .fab, .chip, .card.choice, .icon.round, .game {
-  box-shadow: 0 var(--sink) 0 var(--ink), inset 0 3px 0 rgba(255, 255, 255, .34), inset 0 -4px 0 rgba(0, 0, 0, .16);
+  box-shadow: 0 var(--sink) 0 var(--cast), inset 0 3px 0 rgba(255, 255, 255, .34), inset 0 -4px 0 rgba(0, 0, 0, .16);
 }
-.btn.outline { border-color: var(--ink); box-shadow: 0 var(--sink) 0 var(--ink), inset 0 -4px 0 rgba(0, 0, 0, .06); }
+.btn.outline { border-color: var(--ink); box-shadow: 0 var(--sink) 0 var(--cast), inset 0 -4px 0 rgba(0, 0, 0, .06); }
 .btn:active:not(:disabled), .fab:active, .chip:active, .card.choice:active, .icon.round:active:not(:disabled), .game:active {
   transition-duration: .04s; transform: translateY(var(--sink));
-  box-shadow: 0 0 0 var(--ink), inset 0 4px 0 rgba(0, 0, 0, .24);
+  box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .24);
 }
-.btn:disabled { box-shadow: 0 2px 0 var(--ink); }
+.btn:disabled { box-shadow: 0 2px 0 var(--cast); }
 .game strong { text-shadow: 0 2px 0 rgba(0, 0, 0, .3); }
 
 /* Jeux compatibles avec le mode assistant : halo doré qui pulse autour du contour */
 .game.assist-on { animation: card-halo 2.8s ease-in-out infinite; }
-.game.assist-on:active { animation: none; box-shadow: 0 0 0 var(--ink), 0 0 0 3px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 4px 0 rgba(0, 0, 0, .24); }
+.game.assist-on:active { animation: none; box-shadow: 0 0 0 var(--cast), 0 0 0 3px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 4px 0 rgba(0, 0, 0, .24); }
 @keyframes card-halo {
-  0%, 100% { box-shadow: 0 var(--sink) 0 var(--ink), 0 0 0 3px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45), inset 0 3px 0 rgba(255, 255, 255, .34); }
-  50% { box-shadow: 0 var(--sink) 0 var(--ink), 0 0 0 3px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85), inset 0 3px 0 rgba(255, 255, 255, .34); }
+  0%, 100% { box-shadow: 0 var(--sink) 0 var(--cast), 0 0 0 3px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45), inset 0 3px 0 rgba(255, 255, 255, .34); }
+  50% { box-shadow: 0 var(--sink) 0 var(--cast), 0 0 0 3px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85), inset 0 3px 0 rgba(255, 255, 255, .34); }
 }
 .games, .chips, .buttons, .choices { padding-bottom: 10px; }
 .bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 18px); }
