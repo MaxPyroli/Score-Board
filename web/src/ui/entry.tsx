@@ -15,8 +15,9 @@ function ScoreField({ onSubmit, withFinisher, allowNegative, submitLabel, compac
   const [text, setText] = useState("");
   const [neg, setNeg] = useState(false);
   const [finisher, setFinisher] = useState(false);
-  const signed = (neg ? "-" : "") + text.trim();
-  const valid = text.trim() !== "" && parseScore(signed) !== null;
+  const empty = text.trim() === ""; // champ vide = 0 (le « 0 » grisé est une vraie valeur)
+  const signed = empty ? "0" : (neg ? "-" : "") + text.trim();
+  const valid = parseScore(signed) !== null;
   return (
     <div className={`entry-field ${compact ? "compact" : ""}`}>
       {allowNegative && (

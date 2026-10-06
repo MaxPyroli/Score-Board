@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { entriesFromClaims, takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
+import { takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
+import { useStickyEntries } from "./stickyEntries";
 import { SETTING_FINISHED, finishMatch, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
@@ -107,6 +108,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   // Saisies tapées par l'hôte pour des joueurs sans l'appli (valables pour une seule manche).
   const [hostEntries, setHostEntries] = useState<{ matchId: string; round: number; entries: Record<string, Entry> } | null>(null);
   const addedRound = useRef<string>("");
+  const hostMatch = host ? matches.find((x) => x.id === host.matchId) : undefined;
+  const hostClaimed = useStickyEntries(host?.claims ?? [], hostMatch);
   // Le garde-fou « une seule fois par manche » retombe dès que le nombre de manches change (ajout, annulation).
   const hostRounds = host ? matches.find((x) => x.id === host.matchId)?.rounds.length : undefined;
   useEffect(() => { addedRound.current = ""; }, [hostRounds]);
@@ -118,14 +121,14 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     if (!m || !g?.guestEntry?.(m) || m.settings[SETTING_FINISHED] === "true") return;
     const round = m.rounds.length;
     const mine = hostEntries && hostEntries.matchId === m.id && hostEntries.round === round ? hostEntries.entries : {};
-    const attempt = tryBuildRound(g, m, { ...mine, ...entriesFromClaims(host.claims, m, round) });
+    const attempt = tryBuildRound(g, m, { ...mine, ...hostClaimed });
     const key = `${m.id}:${round}`;
     if ("raw" in attempt && addedRound.current !== key) {
       addedRound.current = key; // une seule fois par manche, même si l'effet se redéclenche
       save(endIfReached(m, matchWithRound(m, attempt.raw)));
       setHostEntries(null);
     }
-  }, [host?.claims, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hostClaimed, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
   // Un invité a changé de nom : l'hôte (version de référence) l'applique si le nom est valide.
   useEffect(() => {
     if (!host) return;
@@ -142,6 +145,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   // --- Rejoindre (spectateur) ---
   const spectatorRef = useRef<SpectatorSession | null>(null);
   const [join, setJoin] = useState<JoinState>({ kind: "idle" });
+  const liveEntries = useStickyEntries(join.kind === "live" ? join.claims : [], join.kind === "live" ? join.match : null);
   const [initialCode, setInitialCode] = useState<string | undefined>();
   const startJoin = (code: string) => {
     spectatorRef.current?.stop();
@@ -217,7 +221,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         <MatchScreen
           match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
           online={live.online} onClaim={(d) => spectatorRef.current?.claim(d)} ended={live.ended}
-          entries={entriesFromClaims(live.claims, live.match, live.match.rounds.length)}
+          entries={liveEntries}
           taken={takenPlayers(live.claims, live.myUid)}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
@@ -271,7 +275,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         entries={(() => {
           const round = match.rounds.length;
           const mine = hostEntries && hostEntries.matchId === match.id && hostEntries.round === round ? hostEntries.entries : {};
-          return { ...mine, ...entriesFromClaims(host?.matchId === match.id ? host.claims : [], match, round) };
+          return { ...mine, ...(host?.matchId === match.id ? hostClaimed : {}) };
         })()}
         taken={host?.matchId === match.id ? takenPlayers(host.claims, host.ownUid) : []}
         onHostEntry={(playerId, entry) =>

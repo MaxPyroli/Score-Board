@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entriesFromClaims, takenPlayers, tryBuildRound } from "./guestEntry";
+import { entriesFromClaims, mergeStickyEntries, takenPlayers, tryBuildRound } from "./guestEntry";
 import { gameById } from "./games/registry";
 import type { StoredMatch } from "./core";
 
@@ -52,5 +52,21 @@ describe("places prises", () => {
     const claims = [{ uid: "me", p: "A" }, { uid: "u2", p: "B" }, { uid: "u3", p: "" }, { uid: "u4", p: "B" }, { uid: "u5", p: "C", r: 1, s: "4" }];
     expect(takenPlayers(claims, "me")).toEqual(["B", "C"]);
     expect(takenPlayers([], "me")).toEqual([]);
+  });
+});
+
+describe("saisies conservées pendant une coupure", () => {
+  const m = match("free");
+  it("la signature d'un appareil disparaît (déconnexion) : sa saisie reste ; elle revient telle quelle", () => {
+    const first = mergeStickyEntries({}, [claim("u1", "A", 0, "7")], m, 0);
+    expect(first).toEqual({ A: { score: "7", finisher: false } });
+    const offline = mergeStickyEntries(first, [], m, 0);
+    expect(offline).toEqual(first);
+    expect(mergeStickyEntries(offline, [claim("u1", "A", 0, "7")], m, 0)).toEqual(first);
+  });
+  it("« Modifier » (signature sans saisie) retire la saisie ; une nouvelle valeur la remplace", () => {
+    const first = mergeStickyEntries({}, [claim("u1", "A", 0, "7"), claim("u2", "B", 0, "2")], m, 0);
+    expect(mergeStickyEntries(first, [{ uid: "u1", p: "A" }, claim("u2", "B", 0, "2")], m, 0)).toEqual({ B: { score: "2", finisher: false } });
+    expect(mergeStickyEntries(first, [claim("u1", "A", 0, "9")], m, 0).A.score).toBe("9");
   });
 });

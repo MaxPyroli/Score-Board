@@ -42,3 +42,15 @@ export function tryBuildRound(game: GameDefinition, match: StoredMatch, entries:
 export function takenPlayers(claims: Claim[], myUid: string): string[] {
   return [...new Set(claims.filter((c) => c.p && c.uid !== myUid).map((c) => c.p))];
 }
+
+/**
+ * Saisies « collantes » : une saisie déjà reçue n'est oubliée que si son auteur la retire (sa signature est là,
+ * mais sans saisie pour cette manche). Si l'appareil se déconnecte, sa signature disparaît du serveur : on garde
+ * alors la saisie, qui revient telle quelle à la reconnexion. Sans cela, un score validé « disparaissait » le temps d'une coupure.
+ */
+export function mergeStickyEntries(prev: Entries, claims: Claim[], match: StoredMatch, roundIndex: number): Entries {
+  const fresh = entriesFromClaims(claims, match, roundIndex);
+  const out: Entries = { ...prev };
+  for (const c of claims) if (c.p && !(c.p in fresh)) delete out[c.p];
+  return { ...out, ...fresh };
+}

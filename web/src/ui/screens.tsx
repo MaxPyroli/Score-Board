@@ -414,8 +414,19 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const myName = match.players.find((p) => p.id === me)?.name;
   // Signature de cet appareil dans la session (qui je suis, nom demandé s'il y en a un).
   // Ma saisie de la manche en cours (invité) ; elle est abandonnée dès qu'une manche est ajoutée.
-  const [myEntry, setMyEntry] = useState<{ r: number; entry: Entry } | null>(null);
-  useEffect(() => { if (myEntry && myEntry.r !== match.rounds.length) setMyEntry(null); }, [match.rounds.length, myEntry]);
+  // Elle est aussi gardée dans le téléphone : si la page se recharge ou se ferme, la saisie déjà envoyée n'est pas perdue.
+  const entryKey = `entry:${match.id}:${me ?? ""}`;
+  const [myEntry, setMyEntryState] = useState<{ r: number; entry: Entry } | null>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(entryKey) ?? "null");
+      return v && typeof v.r === "number" && typeof v.entry?.score === "string" ? v : null;
+    } catch { return null; }
+  });
+  const setMyEntry = (v: { r: number; entry: Entry } | null) => {
+    setMyEntryState(v);
+    try { v ? localStorage.setItem(entryKey, JSON.stringify(v)) : localStorage.removeItem(entryKey); } catch { /* stockage indisponible */ }
+  };
+  useEffect(() => { if (myEntry && myEntry.r !== match.rounds.length) setMyEntry(null); }, [match.rounds.length, myEntry]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (me === undefined) return;
     onClaim?.({

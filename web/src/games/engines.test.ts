@@ -184,9 +184,9 @@ describe("Skyjo", () => {
 });
 
 describe("Compteur libre et cœur", () => {
-  it("champ vide = 0, au moins un score, négatif refusé si interdit", () => {
+  it("champ vide = 0 (même si tout est vide), négatif refusé si interdit", () => {
     const n = (id: string) => id;
-    expect(buildFree(emptyFreeDraft(["A", "B"]), n).error).toMatch(/au moins/);
+    expect(buildFree(emptyFreeDraft(["A", "B"]), n).round).toEqual({ points: { A: 0, B: 0 } });
     expect(buildFree({ players: ["A", "B"], texts: { A: "12,5" }, negatives: [] }, n).round).toEqual({ points: { A: 12.5, B: 0 } });
     expect(buildFree({ players: ["A"], texts: { A: "4" }, negatives: ["A"] }, n, false).error).toMatch(/négatif/);
     expect(FREE.decodeRound(FREE.encodeRound({ points: { A: 1 } }))).toEqual({ points: { A: 1 } });
