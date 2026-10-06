@@ -24,6 +24,34 @@ import type { Entries, Entry } from "../guestEntry";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+/** Fiche de partie : une « tranche » colorée aux couleurs du jeu, les scores en jetons, un pointillé avant la corbeille. */
+function MatchTicket({ match, game, status, scores, onOpen, onDelete }: {
+  match: StoredMatch; game: GameDefinition; status: string;
+  scores: { name: string; total: string; lead: boolean }[];
+  onOpen(): void; onDelete(): void;
+}) {
+  return (
+    <div className="card ticket" data-game={match.moduleId}>
+      <button className="ticket-main" onClick={onOpen}>
+        <span className="ticket-spine" aria-hidden="true"><span>{status}</span></span>
+        <span className="ticket-body">
+          <strong>{game.displayName}</strong>
+          <span className="hint">{dateFormat.format(match.createdAt)} · {match.rounds.length} manche{match.rounds.length > 1 ? "s" : ""}</span>
+          <span className="ticket-scores">
+            {scores.map((sc, i) => (
+              <span key={i} className={`ticket-score ${sc.lead ? "lead" : ""}`}>
+                {sc.lead && <span aria-label="en tête">★</span>}{sc.name} <b>{sc.total}</b>
+              </span>
+            ))}
+          </span>
+        </span>
+      </button>
+      <span className="ticket-perf" aria-hidden="true" />
+      <button className="icon" aria-label="Supprimer la partie" onClick={onDelete}>🗑</button>
+    </div>
+  );
+}
+
 export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory }: {
   matches: StoredMatch[];
   onNew(game: GameDefinition): void;
@@ -52,18 +80,10 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               const totals = game.totals(m);
               const lead = m.rounds.length > 0 ? game.leaderId(m) : null;
               return (
-                <div key={m.id} className="card row">
-                  <button className="row-main" onClick={() => onOpen(m)}>
-                    <strong>{game.displayName}</strong>
-                    <span className="hint">
-                      {dateFormat.format(m.createdAt)} · {m.rounds.length} manche{m.rounds.length > 1 ? "s" : ""}
-                    </span>
-                    <span className="hint">
-                      {m.players.map((p) => `${p.name} ${plain(totals[p.id] ?? 0)}${p.id === lead ? " ★" : ""}`).join(" · ")}
-                    </span>
-                  </button>
-                  <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
-                </div>
+                <MatchTicket
+                  key={m.id} match={m} game={game} status="En cours" onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
+                  scores={m.players.map((p) => ({ name: p.name, total: plain(totals[p.id] ?? 0), lead: p.id === lead }))}
+                />
               );
             })}
           </div>
@@ -147,16 +167,11 @@ export function HistoryScreen({ matches, onOpen, onDelete, onBack }: {
             const game = GAMES.find((g) => g.id === m.moduleId);
             if (!game) return null;
             const ranked = ranking(m.players, game.totals(m), game.lowestWins(m));
-            const winners = ranked.filter((r) => r.rank === 1).map((r) => r.player.name);
             return (
-              <div key={m.id} className="card row" data-game={m.moduleId}>
-                <button className="row-main" onClick={() => onOpen(m)}>
-                  <strong>{game.displayName}</strong>
-                  <span className="hint">{dateFormat.format(m.createdAt)} · {m.rounds.length} manche{m.rounds.length > 1 ? "s" : ""}</span>
-                  <span className="hint">🏆 {winners.join(" et ") || "—"} · {ranked.map((r) => `${r.player.name} ${plain(r.total)}`).join(" · ")}</span>
-                </button>
-                <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
-              </div>
+              <MatchTicket
+                key={m.id} match={m} game={game} status="Terminée" onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
+                scores={ranked.map((r) => ({ name: r.player.name, total: plain(r.total), lead: r.rank === 1 }))}
+              />
             );
           })}
         </div>
