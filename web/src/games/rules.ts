@@ -1,3 +1,4 @@
+import { IS_BETA } from "../channel";
 import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
 import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
@@ -329,10 +330,13 @@ const sushi = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "Par défaut, un compteur classique : à chaque manche, tu saisis les points de chaque joueur (tu peux ajouter les desserts à la dernière manche).",
-        "Mode assistant (à activer en bas de l'accueil, jeux avec le tampon « compatible mode assistant ») : l'appli fait le décompte carte par carte, en suivant les règles ci-dessus.",
-        "Avec l'assistant, tu choisis le menu à la création : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
-        "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte : les points s'affichent en direct et les comparaisons se font entre tous les joueurs, pense donc à saisir tout le monde avant de valider.",
-        "Menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
+        // Le mode assistant n'existe qu'en bêta pour l'instant.
+        ...(IS_BETA ? [
+          "Mode assistant (à activer en bas de l'accueil, jeux avec le tampon « compatible mode assistant ») : l'appli fait le décompte carte par carte, en suivant les règles ci-dessus.",
+          "Avec l'assistant, tu choisis le menu à la création : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
+          "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte : les points s'affichent en direct et les comparaisons se font entre tous les joueurs, pense donc à saisir tout le monde avant de valider.",
+          "Menu ou commande spéciale : compte simplement la carte obtenue ou copiée, si sa sorte fait partie de ton menu.",
+        ] : []),
       ],
     },
   ],

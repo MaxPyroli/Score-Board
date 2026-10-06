@@ -95,10 +95,12 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
       </main>
       <footer className="footer">
         <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
-        <label className="assistant-toggle" title="Ajoute des aides aux jeux compatibles, marqués d'un tampon (menus, choix par catégories…)">
-          <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
-          <span>Mode assistant</span>
-        </label>
+        {IS_BETA && (
+          <label className="assistant-toggle" title="Ajoute des aides aux jeux compatibles, marqués d'un tampon (menus, choix par catégories…)">
+            <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
+            <span>Mode assistant</span>
+          </label>
+        )}
         {IS_BETA && <span>Version de test · <a href={PUBLIC_URL}>Version publique</a></span>}
         <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
       </footer>

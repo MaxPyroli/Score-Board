@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import changelog from "../../../CHANGELOG.md?raw";
+import { IS_BETA } from "../channel";
 
 type Entry = { title: string; items: string[] };
 
@@ -8,7 +9,11 @@ function parse(raw: string): Entry[] {
   const entries: Entry[] = [];
   for (const line of raw.split("\n")) {
     if (line.startsWith("## ")) entries.push({ title: line.slice(3).trim(), items: [] });
-    else if (line.startsWith("- ") && entries.length) entries[entries.length - 1].items.push(line.slice(2).trim());
+    else if (line.startsWith("- ") && entries.length) {
+      const text = line.slice(2).trim();
+      // Le mode assistant n'est visible qu'en bêta : la version publique n'en parle pas.
+      if (IS_BETA || !/assistant/i.test(text)) entries[entries.length - 1].items.push(text);
+    }
   }
   return entries;
 }
