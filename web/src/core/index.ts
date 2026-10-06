@@ -122,6 +122,19 @@ export const SETTING_FINISHED = "finished";
 export const isFinished = (m: StoredMatch): boolean => flag(m, SETTING_FINISHED);
 export const withSetting = (m: StoredMatch, key: string, value: string): StoredMatch => ({ ...m, settings: { ...m.settings, [key]: value } });
 
+/**
+ * Suspense : une partie qui vient de se terminer affiche d'abord « Partie terminée » ; l'hôte dévoile ensuite les résultats.
+ * Réglage « pending » (les parties déjà terminées avant cette fonction n'en ont pas : leurs résultats s'affichent directement).
+ */
+export const SETTING_PENDING = "pending";
+export const isPending = (m: StoredMatch): boolean => isFinished(m) && flag(m, SETTING_PENDING);
+/** Termine la partie : écran « Partie terminée », résultats pas encore dévoilés. */
+export const finishMatch = (m: StoredMatch): StoredMatch => withSetting(withSetting(m, SETTING_FINISHED, "true"), SETTING_PENDING, "true");
+/** Dévoile les résultats. */
+export const revealResults = (m: StoredMatch): StoredMatch => withSetting(m, SETTING_PENDING, "false");
+/** Reprend une partie terminée. */
+export const resumeMatch = (m: StoredMatch): StoredMatch => withSetting(withSetting(m, SETTING_FINISHED, "false"), SETTING_PENDING, "false");
+
 export interface RankedPlayer {
   player: Player;
   total: number;

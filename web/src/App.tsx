@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { entriesFromClaims, takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
-import { SETTING_FINISHED, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
+import { SETTING_FINISHED, finishMatch, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
@@ -17,6 +17,17 @@ type Screen =
   | { kind: "round"; matchId: string; index: number | null }
   | { kind: "join" }
   | { kind: "history" };
+
+/**
+ * Après l'ajout d'une manche : si la partie devient terminable (objectif atteint, dernière manche jouée…), elle se termine toute seule
+ * (écran « Partie terminée »). Seul le passage de « pas terminable » à « terminable » compte : après « Reprendre la partie »,
+ * on peut continuer à jouer au-delà de l'objectif sans être arrêté à chaque manche.
+ */
+function endIfReached(before: StoredMatch, after: StoredMatch): StoredMatch {
+  const game = gameById(after.moduleId);
+  if (!game || isFinished(after) || after.rounds.length <= before.rounds.length) return after;
+  return game.canFinish(after) && !game.canFinish(before) ? finishMatch(after) : after;
+}
 
 /** Pile d'écrans reliée à l'historique du navigateur : le bouton « retour » du téléphone fonctionne. */
 function useNav(initial?: Screen) {
@@ -111,7 +122,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     const key = `${m.id}:${round}`;
     if ("raw" in attempt && addedRound.current !== key) {
       addedRound.current = key; // une seule fois par manche, même si l'effet se redéclenche
-      save(matchWithRound(m, attempt.raw));
+      save(endIfReached(m, matchWithRound(m, attempt.raw)));
       setHostEntries(null);
     }
   }, [host?.claims, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -247,6 +258,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
           // Même jeu, mêmes joueurs et réglages ; la partie terminée reste dans l'historique.
           const settings = { ...match.settings };
           delete settings[SETTING_FINISHED];
+          delete settings.pending;
           const m = { ...match, id: newId(), players: match.players.map((p) => ({ ...p, id: newId() })), rounds: [], settings, createdAt: Date.now() };
           save(m);
           nav.replace({ kind: "match", matchId: m.id });
@@ -285,7 +297,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     <game.Editor
       match={match}
       roundIndex={index}
-      onSave={(raw) => { save(index === null ? matchWithRound(match, raw) : matchWithRoundReplaced(match, index, raw)); nav.back(); }}
+      onSave={(raw) => { save(index === null ? endIfReached(match, matchWithRound(match, raw)) : matchWithRoundReplaced(match, index, raw)); nav.back(); }}
       onDelete={index === null ? undefined : () => { save(matchWithoutRound(match, index)); nav.back(); }}
       onCancel={nav.back}
     />

@@ -184,7 +184,7 @@ button.card { text-align: left; width: 100%; }
 .stepper { display: flex; align-items: center; gap: 20px; }
 .stepper .value { font-size: 2rem; font-weight: 600; min-width: 2ch; text-align: center; }
 
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 20; }
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
 .dialog { background: var(--surface); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; }
 .dialog h2 { margin: 0 0 8px; font-size: 1.15rem; }
 .toast {
@@ -434,3 +434,40 @@ button.card { text-align: left; width: 100%; }
   font-size: .64rem; font-weight: 900; line-height: 1.5; transform: rotate(-6deg); box-shadow: 0 2px 0 var(--cast-small, var(--ink)); white-space: nowrap;
 }
 .board .x2 { border-color: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+
+/* ---- Bordures uniformes : même épaisseur de contour pour tous les boutons (les variantes « contour » gardaient 1 px) ---- */
+.btn, .fab, .card.choice, .btn.outline, .btn.small, .btn.danger { border-width: 3px; border-style: solid; }
+.chip, .icon.round { border-width: 2px; border-style: solid; }
+.btn.outline { border-color: var(--ink); }
+/* Cartes cliquables des listes (manches, parties) : même contour et même ombre que les boutons */
+.card.round, .card.row { --sink: 3px; --cast: var(--cast-small); border: 2px solid var(--ink); box-shadow: 0 var(--sink) 0 var(--cast); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out; }
+.card.round:active:not(:disabled), .card.round.pressed { transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 3px 0 rgba(0, 0, 0, .12); }
+
+/* ---- Écran « Partie terminée » (suspense) et résultats ---- */
+.final .center-all { min-height: 90%; justify-content: center; align-items: center; text-align: center; gap: 18px; }
+.final .center-all > * { align-self: center; }
+.drum { font-size: 4.5rem; animation: drum 0.5s ease-in-out infinite alternate; transform-origin: 50% 80%; }
+@keyframes drum { from { transform: rotate(-8deg) scale(1); } to { transform: rotate(8deg) scale(1.1); } }
+.stamp-end.big { font-size: 1.7rem; padding: 8px 24px; border-width: 4px; }
+.big-btn { font-size: 1.15rem; padding: 16px 28px; min-height: 58px; }
+.waiting { display: flex; gap: 8px; }
+.waiting span { width: 12px; height: 12px; border-radius: 50%; background: var(--primary); animation: bounce 1s ease-in-out infinite; }
+.waiting span:nth-child(2) { animation-delay: .15s; } .waiting span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+.final-actions { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; padding-bottom: 12px; }
+/* Étiquette « Vainqueur » : ne plus être coupée par la marge de la ligne */
+.rank-row .who { display: flex; align-items: center; gap: 4px 6px; flex-wrap: wrap; overflow: visible; text-overflow: clip; }
+.rank-row .who-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rank-row .stamp-win { flex: none; margin-left: 4px; margin-right: 4px; }
+
+/* ---- Confettis (victoire) et pluie (défaite) ---- */
+.fx { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 31; }
+.confetti span { position: absolute; top: -16px; opacity: .95; animation: confetti-fall linear infinite; }
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -20px, 0) rotate(0deg); }
+  100% { transform: translate3d(var(--dx, 0), 105vh, 0) rotate(900deg); }
+}
+.rain { background: linear-gradient(180deg, rgba(30, 44, 70, .35), rgba(30, 44, 70, 0) 55%); }
+.rain span { position: absolute; top: -40px; width: 2px; border-radius: 2px; background: linear-gradient(180deg, rgba(150, 190, 255, 0), rgba(150, 190, 255, .9)); transform: rotate(12deg); animation: rain-fall linear infinite; }
+@keyframes rain-fall { from { transform: translate3d(0, -40px, 0) rotate(12deg); } to { transform: translate3d(-30px, 105vh, 0) rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .drum, .waiting span { animation: none; } }

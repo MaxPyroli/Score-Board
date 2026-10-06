@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
-import { isFinished, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, SETTING_FINISHED, validName, withSetting, type Player, type StoredMatch } from "../core";
+import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
@@ -10,7 +10,7 @@ import { IS_BETA, PUBLIC_URL } from "../channel";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
-import { FinalScreen, RenameDialog, WhoAreYou } from "./final";
+import { EndedScreen, FinalScreen, RenameDialog, WhoAreYou } from "./final";
 import { GameArt } from "./GameArt";
 import { gameImage } from "../games/themes";
 import { modeOf } from "../games/counter";
@@ -388,8 +388,9 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const recent = useRecentlyGone(taken ?? []);
   const [pickerOpen, setPickerOpen] = useState(false);
   const finished = isFinished(match);
+  const pending = isPending(match); // « Partie terminée » affiché, résultats pas encore dévoilés
   const [hideFinal, setHideFinal] = useState(false);
-  useEffect(() => setHideFinal(false), [finished]);
+  useEffect(() => setHideFinal(false), [finished, pending]);
   const ranked = ranking(match.players, totals, game.lowestWins(match));
   const showPicker = pickerOpen || (!!askWho && me === undefined);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -424,7 +425,6 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
     else { const renamed = renamePlayer(match, me, name); if (renamed) onChange(renamed); }
     setRenameOpen(false);
   };
-  const reached = !finished && !readOnly && match.rounds.length > 0 && game.canFinish(match);
   const quickSteps = game.quickSteps(match);
 
   return (
@@ -442,7 +442,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             {menu && (
               <div className="menu" onClick={() => setMenu(false)}>
                 <button disabled={match.rounds.length === 0} onClick={undo}>Annuler la dernière manche</button>
-                <button disabled={match.rounds.length === 0 || finished} onClick={() => onChange(withSetting(match, SETTING_FINISHED, "true"))}>Terminer la partie</button>
+                <button disabled={match.rounds.length === 0 || finished} onClick={() => onChange(finishMatch(match))}>Terminer la partie</button>
                 <button onClick={() => setPickerOpen(true)}>Qui suis-je ?</button>
                 <button onClick={() => setConfirmDelete(true)}>Supprimer la partie</button>
               </div>
@@ -482,7 +482,6 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </p>
         )}
         {status && <p className="status">{status}</p>}
-        {reached && <button className="btn small" onClick={() => onChange(withSetting(match, SETTING_FINISHED, "true"))}>Terminer la partie</button>}
         {(me !== undefined && me !== null) && (
           <p className="hint me-note">
             Tu joues : <strong>{pendingName ?? myName}</strong>
@@ -519,7 +518,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             ))}
           </div>
         )}
-        {finished && hideFinal && (
+        {finished && !pending && hideFinal && (
           <div className="buttons">
             <button className="btn small" onClick={() => setHideFinal(false)}>Voir le résultat</button>
             {onReplay && !readOnly && <button className="btn outline small" onClick={onReplay}>Rejouer</button>}
@@ -574,12 +573,18 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           onClose={askWho && me === undefined ? undefined : () => setPickerOpen(false)}
         />
       )}
-      {finished && !hideFinal && (
+      {finished && pending && (
+        <EndedScreen
+          onReveal={readOnly ? undefined : () => onChange(revealResults(match))}
+          onResume={readOnly ? undefined : () => onChange(resumeMatch(match))}
+        />
+      )}
+      {finished && !pending && !hideFinal && (
         <FinalScreen
           ranked={ranked} meId={me ?? null}
           onClose={() => setHideFinal(true)}
-          onChangeMe={() => setPickerOpen(true)}
-          onResume={readOnly ? undefined : () => onChange(withSetting(match, SETTING_FINISHED, "false"))}
+          onChangeMe={readOnly || sharing ? () => setPickerOpen(true) : undefined}
+          onResume={readOnly ? undefined : () => onChange(resumeMatch(match))}
           onReplay={readOnly ? undefined : onReplay}
         />
       )}
