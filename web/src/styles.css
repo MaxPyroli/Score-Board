@@ -377,12 +377,13 @@ button.card { text-align: left; width: 100%; }
 
 /* ---- Effet « bouton » façon dessin animé : gros contour d'encre, ombre pleine décalée (sans flou), reflet et ombre en aplats ;
    à l'appui, le bouton descend sur son ombre (qui disparaît) et rebondit au relâchement. ---- */
-:root { --ink: #2a2118; --cast: var(--ink); }
+:root { --ink: #2a2118; --cast: var(--ink); --cast-small: var(--ink); }
 /* Mode sombre : contour blanc cassé, ombre pleine en gris-bleu pour qu'elle se distingue du contour */
-@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; --cast: #394149; } }
+@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; --cast: #394149; --cast-small: #6a7580; } }
 .btn, .fab, .chip, .card.choice, .icon.round, .game {
   border: 2.5px solid var(--ink); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
 }
+.btn, .fab, .chip, .card.choice, .icon.round { --cast: var(--cast-small); }  /* petits éléments : ombre plus visible en mode sombre */
 .btn { --sink: 4px; } .fab { --sink: 5px; } .chip { --sink: 3px; } .card.choice { --sink: 4px; } .icon.round { --sink: 3px; } .game { --sink: 6px; border-width: 3px; border-radius: 18px; }
 .btn, .fab, .chip, .card.choice, .icon.round, .game {
   box-shadow: 0 var(--sink) 0 var(--cast), inset 0 3px 0 rgba(255, 255, 255, .34), inset 0 -4px 0 rgba(0, 0, 0, .16);
