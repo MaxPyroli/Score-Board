@@ -532,6 +532,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <div className="list">
             {match.rounds.map((_, i) => match.rounds.length - 1 - i).map((index) => {
               const d = game.describeRound(match, index);
+              const badges = game.roundBadges?.(match, index) ?? {};
               return (
                 <button key={index} className="card round" disabled={readOnly} onClick={() => onEditRound(index)}>
                   <strong>{d.headline ? `${index + 1}. ${d.headline}` : `Manche ${index + 1}`}</strong>
@@ -540,7 +541,10 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
                     {(p) => (
                       <>
                         {match.players.length > 6 && <span className="name">{p.name}</span>}
-                        <Score value={roundScores[index][p.id] ?? 0} withSign />
+                        <span className="with-badge">
+                          <Score value={roundScores[index][p.id] ?? 0} withSign />
+                          {badges[p.id] && <span className="x2" title="Points doublés">{badges[p.id]}</span>}
+                        </span>
                       </>
                     )}
                   </PlayerGrid>

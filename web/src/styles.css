@@ -426,3 +426,11 @@ button.card { text-align: left; width: 100%; }
 /* Flèche de retour : bouton rond façon dessin animé, blanc, flèche épaisse */
 .icon.round.back { background: var(--surface); color: var(--text); min-width: 42px; height: 42px; margin: 0 6px 0 4px; }
 .icon.round.back .backarrow { width: 1.35em; height: 1.35em; }
+
+/* Pastille « ×2 » (Skyjo : points du finisseur doublés), à côté du score */
+.with-badge { display: inline-flex; align-items: center; gap: 5px; }
+.x2 {
+  display: inline-block; padding: 0 5px; border: 2px solid var(--ink); border-radius: 7px; background: #ffcf4a; color: #2a2118;
+  font-size: .64rem; font-weight: 900; line-height: 1.5; transform: rotate(-6deg); box-shadow: 0 2px 0 var(--cast-small, var(--ink)); white-space: nowrap;
+}
+.board .x2 { border-color: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }

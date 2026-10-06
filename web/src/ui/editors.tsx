@@ -257,7 +257,10 @@ export function SkyjoEditor(props: EditorProps) {
               {(p) => (
                 <>
                   <span className="name">{p.name}</span>
-                  <Score value={result.points[p.id] ?? 0} withSign />
+                  <span className="with-badge">
+                    <Score value={result.points[p.id] ?? 0} withSign />
+                    {result.finisherDoubled && p.id === draft.finisherId && <span className="x2" title="Points doublés">×2</span>}
+                  </span>
                 </>
               )}
             </PlayerGrid>
@@ -272,6 +275,7 @@ export function SkyjoEditor(props: EditorProps) {
           match={match} texts={draft.texts} negatives={draft.negatives}
           onText={(id, v) => setDraft((d) => ({ ...d, texts: { ...d.texts, [id]: v } }))}
           onNegative={(id, v) => setDraft((d) => ({ ...d, negatives: v ? [...d.negatives, id] : d.negatives.filter((x) => x !== id) }))}
+          extra={(id) => (result?.finisherDoubled && id === draft.finisherId ? <span className="x2" title="Points doublés">×2</span> : null)}
         />
       </Section>
       <Section title="Qui a terminé la manche ?">
