@@ -4,6 +4,7 @@ import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRou
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
+import { MoreIcon, ShareIcon } from "./PlusMinus";
 import { ChangelogSheet } from "./ChangelogSheet";
 import { setAssistantEnabled, useAssistant } from "../assistant";
 import { IS_BETA, PUBLIC_URL } from "../channel";
@@ -436,9 +437,9 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <>
             <button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>
             {readOnly ? null : <>
-            {onShare && <button className="icon" aria-label="Partager la partie" onClick={onShare}>⇪</button>}
+            {onShare && <button className="icon round plain" aria-label="Partager la partie" onClick={onShare}><ShareIcon /></button>}
           <div className="menu-wrap">
-            <button className="icon" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}>⋮</button>
+            <button className="icon round plain" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}><MoreIcon /></button>
             {menu && (
               <div className="menu" onClick={() => setMenu(false)}>
                 <button disabled={match.rounds.length === 0} onClick={undo}>Annuler la dernière manche</button>

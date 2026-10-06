@@ -15,3 +15,26 @@ export function BackArrow() {
     </svg>
   );
 }
+
+/** Partage : trois points reliés (le symbole habituel), trait épais comme les autres icônes. */
+export function ShareIcon() {
+  return (
+    <svg className="glyph" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false">
+      <path d="M8.2 11l7.6-4M8.2 13l7.6 4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="6" cy="12" r="3" fill="currentColor" />
+      <circle cx="18" cy="6" r="3" fill="currentColor" />
+      <circle cx="18" cy="18" r="3" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Menu : trois points alignés, bien centrés. */
+export function MoreIcon() {
+  return (
+    <svg className="glyph" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="5" r="2.4" fill="currentColor" />
+      <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+      <circle cx="12" cy="19" r="2.4" fill="currentColor" />
+    </svg>
+  );
+}

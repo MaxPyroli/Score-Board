@@ -471,3 +471,13 @@ button.card { text-align: left; width: 100%; }
 .rain span { position: absolute; top: -40px; width: 2px; border-radius: 2px; background: linear-gradient(180deg, rgba(150, 190, 255, 0), rgba(150, 190, 255, .9)); transform: rotate(12deg); animation: rain-fall linear infinite; }
 @keyframes rain-fall { from { transform: translate3d(0, -40px, 0) rotate(12deg); } to { transform: translate3d(-30px, 105vh, 0) rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .drum, .waiting span { animation: none; } }
+
+/* Boutons d'action de la barre du haut (partager, menu) : même style que la flèche de retour */
+.icon.round.plain { background: var(--surface); color: var(--text); min-width: 42px; height: 42px; margin-left: 6px; }
+.icon.round.plain .glyph { width: 1.25em; height: 1.25em; }
+
+/* Barre du haut : mêmes boutons ronds de 42 px, espacés régulièrement, avec de la place pour l'ombre */
+.topbar { padding: calc(env(safe-area-inset-top) + 8px) 12px 12px; }
+.topbar .icon.round.back, .topbar .icon.round.plain { margin: 0; width: 42px; min-width: 42px; height: 42px; flex: none; }
+.topbar .actions { display: flex; align-items: center; gap: 8px; }
+.topbar h1 { padding-left: 4px; min-width: 0; }
