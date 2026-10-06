@@ -50,13 +50,14 @@ export function FinalScreen({ ranked, meId, onClose, onResume, onChangeMe }: {
     <div className="final" role="dialog" aria-label="Fin de la partie">
       <div className="final-inner">
         <div className="trophy" aria-hidden="true">{won ? "🏆" : "🎲"}</div>
+        <div className="stamp-end" aria-hidden="true">Partie terminée</div>
         <h2 className={`headline ${won ? "" : "lost"}`}>{headline}</h2>
         {detail && <p className="detail">{detail}</p>}
         {ranked.map((r) => (
           <div key={r.player.id} className={`rank-row ${r.player.id === meId ? "me" : ""}`}>
             <span className="pos">{ordinal(r.rank)}</span>
-            <span className="who">{r.player.name}{r.player.id === meId ? " (toi)" : ""}</span>
-            <strong>{plain(r.total)}</strong>
+            <span className="who">{r.player.name}{r.player.id === meId ? " (toi)" : ""}{r.rank === 1 && <span className="stamp-win">Vainqueur</span>}</span>
+            <strong className="token">{plain(r.total)}</strong>
           </div>
         ))}
         <button className="btn" onClick={onClose}>Voir la partie</button>
