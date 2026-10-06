@@ -1,3 +1,4 @@
+import { PlusMinus } from "./PlusMinus";
 import { useState } from "react";
 import { parseScore, type StoredMatch } from "../core";
 import type { GameDefinition } from "../games/registry";
@@ -19,7 +20,7 @@ function ScoreField({ onSubmit, withFinisher, allowNegative, submitLabel, compac
   return (
     <div className={`entry-field ${compact ? "compact" : ""}`}>
       {allowNegative && (
-        <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Signe du score : ${neg ? "négatif" : "positif"} (toucher pour changer)`} onClick={() => setNeg(!neg)}>{neg ? "−" : "+"}</button>
+        <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Signe du score : ${neg ? "négatif" : "positif"} (toucher pour changer)`} onClick={() => setNeg(!neg)}><PlusMinus plus={!neg} /></button>
       )}
       <input
         className="field" inputMode="decimal" autoComplete="off" placeholder="0" aria-label="Score" value={text}

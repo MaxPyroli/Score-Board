@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { PlusMinus } from "./PlusMinus";
 import { plain, signed, type Player } from "../core";
 
 /** Nombre de colonnes : une seule ligne jusqu'à 6 joueurs, puis des lignes équilibrées de 5 joueurs au plus (7 → 4+3, 12 → 3 × 4). */
@@ -53,9 +54,9 @@ export function TopBar({ title, onBack, actions }: { title: ReactNode; onBack?: 
 export function Stepper({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange(v: number): void; label: string }) {
   return (
     <div className="stepper" role="group" aria-label={label}>
-      <button type="button" className="icon round" aria-label="Moins" disabled={value <= min} onClick={() => onChange(value - 1)}>−</button>
+      <button type="button" className="icon round" aria-label="Moins" disabled={value <= min} onClick={() => onChange(value - 1)}><PlusMinus plus={false} /></button>
       <span className="value">{value}</span>
-      <button type="button" className="icon round" aria-label="Plus" disabled={value >= max} onClick={() => onChange(value + 1)}>+</button>
+      <button type="button" className="icon round" aria-label="Plus" disabled={value >= max} onClick={() => onChange(value + 1)}><PlusMinus plus /></button>
     </div>
   );
 }
