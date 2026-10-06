@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { PlusMinus } from "./PlusMinus";
+import { BackArrow, PlusMinus } from "./PlusMinus";
 import { plain, signed, type Player } from "../core";
 
 /** Nombre de colonnes : une seule ligne jusqu'à 6 joueurs, puis des lignes équilibrées de 5 joueurs au plus (7 → 4+3, 12 → 3 × 4). */
@@ -44,7 +44,7 @@ export const Section = ({ title, children }: { title: string; children: ReactNod
 export function TopBar({ title, onBack, actions }: { title: ReactNode; onBack?: () => void; actions?: ReactNode }) {
   return (
     <header className="topbar">
-      {onBack ? <button className="icon" aria-label="Retour" onClick={onBack}>←</button> : <span className="icon-gap" />}
+      {onBack ? <button className="icon round back" aria-label="Retour" onClick={onBack}><BackArrow /></button> : <span className="icon-gap" />}
       <h1>{title}</h1>
       <div className="actions">{actions}</div>
     </header>

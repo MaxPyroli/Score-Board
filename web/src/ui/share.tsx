@@ -1,3 +1,4 @@
+import { BackArrow } from "./PlusMinus";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Dialog } from "./components";
@@ -76,7 +77,7 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
   return (
     <div className="screen">
       <header className="topbar">
-        <button className="icon" aria-label="Retour" onClick={onBack}>←</button>
+        <button className="icon round back" aria-label="Retour" onClick={onBack}><BackArrow /></button>
         <h1>Rejoindre une partie</h1>
       </header>
       <main className="content">

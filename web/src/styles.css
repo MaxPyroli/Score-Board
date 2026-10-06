@@ -422,3 +422,7 @@ button.card { text-align: left; width: 100%; }
 
 /* Bouton de signe + / − : reste enfoncé tant qu'il est sur « − », et remonte (avec un petit rebond) quand il repasse sur « + » */
 .chip.sign[aria-pressed="true"] { transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .24); }
+
+/* Flèche de retour : bouton rond façon dessin animé, blanc, flèche épaisse */
+.icon.round.back { background: var(--surface); color: var(--text); min-width: 42px; height: 42px; margin: 0 6px 0 4px; }
+.icon.round.back .backarrow { width: 1.35em; height: 1.35em; }
