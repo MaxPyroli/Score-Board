@@ -57,7 +57,8 @@ button:disabled { opacity: 0.4; cursor: default; }
   padding: calc(env(safe-area-inset-top) + 8px) 8px 8px; background: var(--bg);
 }
 .topbar h1 { flex: 1; margin: 0; font-size: 1.25rem; padding-left: 8px; display: flex; align-items: center; gap: 8px; }
-.meeple { color: var(--primary); flex: none; filter: drop-shadow(0 1.5px 0 rgba(0, 0, 0, .22)); transform: rotate(-8deg); }
+.meeple { color: var(--primary); flex: none; filter: drop-shadow(0 1.5px 0 rgba(0, 0, 0, .25)); transform: rotate(-6deg); }
+.credits a { color: var(--primary); }
 .icon-gap { width: 8px; }
 .icon {
   min-width: 44px; height: 44px; border: 0; background: transparent; border-radius: 22px; font-size: 1.3rem;
@@ -183,7 +184,7 @@ button.card { text-align: left; width: 100%; }
 .stepper { display: flex; align-items: center; gap: 20px; }
 .stepper .value { font-size: 2rem; font-weight: 600; min-width: 2ch; text-align: center; }
 
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 20; }
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50; }
 .dialog { background: var(--surface); border-radius: 20px; padding: 20px; width: 100%; max-width: 360px; }
 .dialog h2 { margin: 0 0 8px; font-size: 1.15rem; }
 .toast {
@@ -333,14 +334,7 @@ button.card { text-align: left; width: 100%; }
 .assistant-stamp.on { opacity: 1; background: rgba(255, 255, 255, .22); box-shadow: 0 0 12px rgba(255, 255, 255, .5); }
 
 /* ---- Direction artistique « jeu de société » : cartes de jeux façon boîte, couture, halo des jeux compatibles ---- */
-.game { border-radius: 18px; box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 6px 14px rgba(0, 0, 0, .12); transition: transform .12s, box-shadow .12s; }
-.game:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .22), 0 2px 6px rgba(0, 0, 0, .12); }
 .box-frame { position: absolute; inset: 6px; z-index: 1; border: 1.5px dashed rgba(255, 255, 255, .4); border-radius: 13px; pointer-events: none; }
-.game.assist-on { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); animation: card-halo 2.8s ease-in-out infinite; }
-@keyframes card-halo {
-  0%, 100% { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45); }
-  50% { box-shadow: 0 3px 0 rgba(0, 0, 0, .22), 0 0 0 2px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85); }
-}
 .game .shine {
   position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-130%);
   background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .38) 50%, transparent 62%); animation: card-shine 4.2s ease-in-out infinite;
@@ -353,3 +347,127 @@ button.card { text-align: left; width: 100%; }
   content: "BÊTA"; position: fixed; z-index: 101; bottom: 16px; left: -36px; width: 120px; padding: 3px 0; text-align: center; pointer-events: none;
   transform: rotate(45deg); background: #c2570c; color: #fff; font-size: .68rem; font-weight: 800; letter-spacing: .12em; box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
+
+/* ---- Tampons de fin de partie et jetons de score ---- */
+:root { --stamp: #b3382c; }
+@media (prefers-color-scheme: dark) { :root { --stamp: #f08377; } }
+.stamp-end {
+  display: inline-block; align-self: center; margin: 2px auto 6px; padding: 4px 16px; border: 3px solid var(--stamp); border-radius: 8px; outline: 1.5px solid var(--stamp); outline-offset: 3px;
+  color: var(--stamp); font-weight: 900; font-size: .95rem; letter-spacing: .16em; text-transform: uppercase; transform: rotate(-6deg);
+  animation: stamp-slam .55s cubic-bezier(.2, 1.3, .4, 1) .2s both;
+}
+@keyframes stamp-slam {
+  0% { transform: rotate(-6deg) scale(2.8); opacity: 0; }
+  60% { transform: rotate(-6deg) scale(.93); opacity: 1; }
+  100% { transform: rotate(-6deg) scale(1); opacity: 1; }
+}
+.stamp-win {
+  display: inline-block; margin-left: 8px; padding: 0 6px; border: 2px solid var(--stamp); border-radius: 5px; color: var(--stamp);
+  font-size: .62rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-5deg); vertical-align: middle;
+}
+/* Jetons : les scores sont posés dans des jetons en relief, façon jetons de jeu */
+.token, .board .score.big {
+  display: inline-block; min-width: 2.4em; padding: 3px 12px; border-radius: 999px; text-align: center;
+  background: rgba(255, 255, 255, .16); border: 2px solid rgba(255, 255, 255, .5); outline: 1.5px dashed rgba(255, 255, 255, .4); outline-offset: -6px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .28), inset 0 -3px 0 rgba(0, 0, 0, .16);
+}
+.rank-row .token { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); outline-color: var(--primary); box-shadow: 0 3px 0 color-mix(in srgb, var(--primary) 55%, #000); }
+.board .score.big.leader { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #fff1c2; outline-color: rgba(90, 58, 0, .45); box-shadow: 0 3px 0 #9a6a10, 0 0 14px rgba(255, 214, 102, .55); }
+@media (prefers-reduced-motion: reduce) { .stamp-end { animation: none; } }
+
+/* ---- Effet « bouton » façon dessin animé : gros contour d'encre, ombre pleine décalée (sans flou), reflet et ombre en aplats ;
+   à l'appui, le bouton descend sur son ombre (qui disparaît) et rebondit au relâchement. ---- */
+:root { --ink: #2a2118; --cast: var(--ink); --cast-small: var(--ink); }
+/* Mode sombre : contour blanc cassé, ombre pleine en gris-bleu pour qu'elle se distingue du contour */
+@media (prefers-color-scheme: dark) { :root { --ink: #f3efe6; --cast: #394149; --cast-small: #6a7580; } }
+.btn, .fab, .chip, .card.choice, .icon.round, .game {
+  border: 2.5px solid var(--ink); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
+}
+.btn, .fab, .chip, .card.choice, .icon.round { --cast: var(--cast-small); }  /* petits éléments : ombre plus visible en mode sombre */
+.btn { --sink: 4px; } .fab { --sink: 5px; } .chip { --sink: 3px; } .card.choice { --sink: 4px; } .icon.round { --sink: 3px; } .game { --sink: 6px; border-width: 3px; border-radius: 18px; }
+.btn, .fab, .chip, .card.choice, .icon.round, .game {
+  box-shadow: 0 var(--sink) 0 var(--cast), inset 0 3px 0 rgba(255, 255, 255, .34), inset 0 -4px 0 rgba(0, 0, 0, .16);
+}
+.btn.outline { border-color: var(--ink); box-shadow: 0 var(--sink) 0 var(--cast), inset 0 -4px 0 rgba(0, 0, 0, .06); }
+.btn:active:not(:disabled), .fab:active, .chip:active, .card.choice:active, .icon.round:active:not(:disabled), .game:active {
+  transition-duration: .04s; transform: translateY(var(--sink));
+  box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .24);
+}
+.btn:disabled { box-shadow: 0 2px 0 var(--cast); }
+.game strong { text-shadow: 0 2px 0 rgba(0, 0, 0, .3); }
+
+/* Jeux compatibles avec le mode assistant : halo doré qui pulse autour du contour */
+.game.assist-on { animation: card-halo 2.8s ease-in-out infinite; }
+.game.assist-on:active { animation: none; box-shadow: 0 0 0 var(--cast), 0 0 0 3px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 4px 0 rgba(0, 0, 0, .24); }
+@keyframes card-halo {
+  0%, 100% { box-shadow: 0 var(--sink) 0 var(--cast), 0 0 0 3px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45), inset 0 3px 0 rgba(255, 255, 255, .34); }
+  50% { box-shadow: 0 var(--sink) 0 var(--cast), 0 0 0 3px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85), inset 0 3px 0 rgba(255, 255, 255, .34); }
+}
+.games, .chips, .buttons, .choices { padding-bottom: 10px; }
+.bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 18px); }
+.history-btn { width: 100%; margin-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .game.assist-on { animation: none; } .btn, .fab, .chip, .card.choice, .icon.round, .game { transition: none; } }
+
+/* Signes + / − : centrés dans leur bouton */
+.icon.round, .chip.sign { display: inline-flex; align-items: center; justify-content: center; line-height: 1; padding: 0; }
+.icon.round .plusminus { width: 1.05em; height: 1.05em; }
+.chip.sign .plusminus { width: 1.15em; height: 1.15em; }
+
+/* Clic rapide : l'état « enfoncé » est maintenu un court instant (voir main.tsx) pour qu'on voie toujours l'animation */
+.btn.pressed:not(:disabled), .fab.pressed, .chip.pressed, .card.choice.pressed, .icon.round.pressed:not(:disabled), .game.pressed {
+  transition-duration: .04s; transform: translateY(var(--sink));
+  box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .24);
+}
+.game.assist-on.pressed { animation: none; box-shadow: 0 0 0 var(--cast), 0 0 0 3px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 4px 0 rgba(0, 0, 0, .24); }
+
+/* Bouton de signe + / − : reste enfoncé tant qu'il est sur « − », et remonte (avec un petit rebond) quand il repasse sur « + » */
+.chip.sign[aria-pressed="true"] { transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .24); }
+
+/* Flèche de retour : bouton rond façon dessin animé, blanc, flèche épaisse */
+.icon.round.back { background: var(--surface); color: var(--text); min-width: 42px; height: 42px; margin: 0 6px 0 4px; }
+.icon.round.back .backarrow { width: 1.35em; height: 1.35em; }
+
+/* Pastille « ×2 » (Skyjo : points du finisseur doublés), à côté du score */
+.with-badge { display: inline-flex; align-items: center; gap: 5px; }
+.x2 {
+  display: inline-block; padding: 0 5px; border: 2px solid var(--ink); border-radius: 7px; background: #ffcf4a; color: #2a2118;
+  font-size: .64rem; font-weight: 900; line-height: 1.5; transform: rotate(-6deg); box-shadow: 0 2px 0 var(--cast-small, var(--ink)); white-space: nowrap;
+}
+.board .x2 { border-color: #fff; box-shadow: 0 2px 0 rgba(0, 0, 0, .35); }
+
+/* ---- Bordures uniformes : même épaisseur de contour pour tous les boutons (les variantes « contour » gardaient 1 px) ---- */
+.btn, .fab, .card.choice, .btn.outline, .btn.small, .btn.danger { border-width: 3px; border-style: solid; }
+.chip, .icon.round { border-width: 2px; border-style: solid; }
+.btn.outline { border-color: var(--ink); }
+/* Cartes cliquables des listes (manches, parties) : même contour et même ombre que les boutons */
+.card.round, .card.row { --sink: 3px; --cast: var(--cast-small); border: 2px solid var(--ink); box-shadow: 0 var(--sink) 0 var(--cast); transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out; }
+.card.round:active:not(:disabled), .card.round.pressed { transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 3px 0 rgba(0, 0, 0, .12); }
+
+/* ---- Écran « Partie terminée » (suspense) et résultats ---- */
+.final .center-all { min-height: 90%; justify-content: center; align-items: center; text-align: center; gap: 18px; }
+.final .center-all > * { align-self: center; }
+.drum { font-size: 4.5rem; animation: drum 0.5s ease-in-out infinite alternate; transform-origin: 50% 80%; }
+@keyframes drum { from { transform: rotate(-8deg) scale(1); } to { transform: rotate(8deg) scale(1.1); } }
+.stamp-end.big { font-size: 1.7rem; padding: 8px 24px; border-width: 4px; }
+.big-btn { font-size: 1.15rem; padding: 16px 28px; min-height: 58px; }
+.waiting { display: flex; gap: 8px; }
+.waiting span { width: 12px; height: 12px; border-radius: 50%; background: var(--primary); animation: bounce 1s ease-in-out infinite; }
+.waiting span:nth-child(2) { animation-delay: .15s; } .waiting span:nth-child(3) { animation-delay: .3s; }
+@keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+.final-actions { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; padding-bottom: 12px; }
+/* Étiquette « Vainqueur » : ne plus être coupée par la marge de la ligne */
+.rank-row .who { display: flex; align-items: center; gap: 4px 6px; flex-wrap: wrap; overflow: visible; text-overflow: clip; }
+.rank-row .who-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rank-row .stamp-win { flex: none; margin-left: 4px; margin-right: 4px; }
+
+/* ---- Confettis (victoire) et pluie (défaite) ---- */
+.fx { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 31; }
+.confetti span { position: absolute; top: -16px; opacity: .95; animation: confetti-fall linear infinite; }
+@keyframes confetti-fall {
+  0% { transform: translate3d(0, -20px, 0) rotate(0deg); }
+  100% { transform: translate3d(var(--dx, 0), 105vh, 0) rotate(900deg); }
+}
+.rain { background: linear-gradient(180deg, rgba(30, 44, 70, .35), rgba(30, 44, 70, 0) 55%); }
+.rain span { position: absolute; top: -40px; width: 2px; border-radius: 2px; background: linear-gradient(180deg, rgba(150, 190, 255, 0), rgba(150, 190, 255, .9)); transform: rotate(12deg); animation: rain-fall linear infinite; }
+@keyframes rain-fall { from { transform: translate3d(0, -40px, 0) rotate(12deg); } to { transform: translate3d(-30px, 105vh, 0) rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .drum, .waiting span { animation: none; } }

@@ -5,7 +5,7 @@ import {
 } from "../core";
 import { tarotModule, summarize } from "./tarot";
 import type { Entries } from "../guestEntry";
-import { SKYJO_DEFAULT_TARGET, buildSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
+import { SKYJO_DEFAULT_TARGET, buildSkyjo, calculerSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
 import {
   COUNTER_MODES, FREE, SETTING_MODE, counterModule, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
   negateRound, startOf, type CounterMode, type FreeRound,
@@ -102,6 +102,8 @@ export interface GameDefinition {
   fixedSettings: Record<string, string>;
   totals(m: StoredMatch): Scores;
   roundScores(m: StoredMatch): Scores[];
+  /** Petites pastilles à côté du score d'un joueur dans une manche (ex. « ×2 » au Skyjo) : identifiant du joueur → texte. */
+  roundBadges?(m: StoredMatch, index: number): Record<string, string>;
   describeRound(m: StoredMatch, index: number): { headline: string; detail: string };
   status(m: StoredMatch): string | null;
   /** Le plus petit score gagne-t-il ? */
@@ -428,6 +430,10 @@ function buildGames(): GameDefinition[] {
     fixedSettings: { [SETTING_LOWEST_WINS]: "true" },
     totals: (m) => totals(skyjoModule, m),
     roundScores: (m) => roundScores(skyjoModule, m),
+    roundBadges: (m, i) => {
+      const r = skyjoModule.decodeRound(m.rounds[i]);
+      return calculerSkyjo(r).finisherDoubled ? { [r.finisherId]: "×2" } : {};
+    },
     describeRound: (m, i) => summarizeSkyjo(skyjoModule.decodeRound(m.rounds[i]), nameMap(m)),
     status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true),
     lowestWins: () => true,

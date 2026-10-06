@@ -167,7 +167,8 @@ describe("Skyjo", () => {
   it("formulaire : saisie complète, signe moins, bornes", () => {
     const names = (id: string) => id;
     let d = emptySkyjoDraft(["A", "B"]);
-    expect(buildSkyjo(d, names).error).toMatch(/Saisis le score de A/);
+    expect(buildSkyjo(d, names).error).toMatch(/terminé/); // champs vides = 0, il manque juste qui a fini
+    expect(buildSkyjo({ ...d, finisherId: "A" }, names).round).toEqual({ scores: { A: 0, B: 0 }, finisherId: "A" });
     d = { ...d, texts: { A: "5", B: "3" }, negatives: ["B"] };
     expect(buildSkyjo(d, names).error).toMatch(/terminé/);
     d = { ...d, finisherId: "B" };

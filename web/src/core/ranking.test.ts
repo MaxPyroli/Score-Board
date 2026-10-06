@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finalMessage, isFinished, ranking, withSetting, type Player, type StoredMatch } from "./index";
+import { finalMessage, finishMatch, isFinished, isPending, ranking, resumeMatch, revealResults, withSetting, type Player, type StoredMatch } from "./index";
 
 const players: Player[] = ["Ana", "Bob", "Chloé", "Dan"].map((name) => ({ id: name[0], name }));
 
@@ -58,5 +58,21 @@ describe("noms des joueurs", () => {
   });
   it("joueur inconnu", () => {
     expect(renamePlayer(m, "Z", "Zoé")).toBeNull();
+  });
+});
+
+describe("Fin de partie avec suspense", () => {
+  const m = { id: "m", moduleId: "free", players: [], rounds: [], settings: {}, createdAt: 0 } as StoredMatch;
+  it("terminer : écran « Partie terminée » d'abord, puis résultats dévoilés, ou reprise", () => {
+    const ended = finishMatch(m);
+    expect([isFinished(ended), isPending(ended)]).toEqual([true, true]);
+    const shown = revealResults(ended);
+    expect([isFinished(shown), isPending(shown)]).toEqual([true, false]);
+    const back = resumeMatch(shown);
+    expect([isFinished(back), isPending(back)]).toEqual([false, false]);
+  });
+  it("une partie terminée avant cette fonction (sans réglage) affiche directement ses résultats", () => {
+    const legacy = withSetting(m, "finished", "true");
+    expect([isFinished(legacy), isPending(legacy)]).toEqual([true, false]);
   });
 });

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Chip, Chips, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
+import { PlusMinus } from "./PlusMinus";
 import { RulesSheet } from "./RulesSheet";
 import { plain, type GameModule, type StoredMatch } from "../core";
 import type { EditorProps } from "../games/registry";
@@ -217,7 +218,7 @@ function ScoreInputs({ match, texts, negatives, onText, onNegative, extra, allow
           <div key={p.id} className="input-row">
             <span className="name">{p.name}</span>
             {allowNegativeToggle && (
-              <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Score négatif pour ${p.name}`} onClick={() => onNegative(p.id, !neg)}>−</button>
+              <button type="button" className={`chip sign ${neg ? "on" : ""}`} aria-pressed={neg} aria-label={`Signe du score de ${p.name} : ${neg ? "négatif" : "positif"} (toucher pour changer)`} onClick={() => onNegative(p.id, !neg)}><PlusMinus plus={!neg} /></button>
             )}
             <input
               className="field" inputMode="decimal" autoComplete="off" placeholder="0" aria-label={`Score de ${p.name}`}
@@ -256,7 +257,10 @@ export function SkyjoEditor(props: EditorProps) {
               {(p) => (
                 <>
                   <span className="name">{p.name}</span>
-                  <Score value={result.points[p.id] ?? 0} withSign />
+                  <span className="with-badge">
+                    <Score value={result.points[p.id] ?? 0} withSign />
+                    {result.finisherDoubled && p.id === draft.finisherId && <span className="x2" title="Points doublés">×2</span>}
+                  </span>
                 </>
               )}
             </PlayerGrid>

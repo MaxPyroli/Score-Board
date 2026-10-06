@@ -74,7 +74,7 @@ export function buildSkyjo(d: SkyjoDraft, nameOf: (id: string) => string): { rou
     const scores: Record<string, number> = {};
     for (const id of d.players) {
       const text = d.texts[id] ?? "";
-      if (text.trim() === "") throw new Error(`Saisis le score de ${nameOf(id)}.`);
+      if (text.trim() === "") { scores[id] = 0; continue; } // champ vide = 0
       const v = parseScore(text, d.negatives.includes(id));
       if (v === null) throw new Error(`Nombre invalide pour ${nameOf(id)}.`);
       if (!Number.isInteger(v)) throw new Error(`Le score de ${nameOf(id)} doit être un nombre entier.`);

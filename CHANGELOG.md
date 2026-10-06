@@ -2,6 +2,13 @@
 
 Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnalité (pas pour un correctif).
 
+## v0.014 · 6 oct. 2026
+- Nouveau look « jeu de société » : boutons et cartes façon dessin animé (contour, ombre pleine, enfoncement au toucher), pion, jetons de score, tampons.
+- Fin de partie : quand l'objectif est atteint, écran « Partie terminée » avec suspense, puis « Afficher les résultats » (confettis pour la victoire, pluie pour la défaite).
+- Historique des parties terminées ; « Rejouer » se trouve maintenant dans la partie terminée.
+- Skyjo : pastille ×2 quand les points du joueur qui termine sont doublés.
+- Bouton de signe + / − qui reste enfoncé sur −.
+
 ## v0.013 · 5 oct. 2026
 - L'accueil affiche d'abord les parties en cours.
 - Nouveau jeu : Sushi Go Party ! (2 à 8 joueurs), avec un compteur classique par manche (les invités peuvent saisir leur score).
