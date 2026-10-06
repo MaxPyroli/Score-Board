@@ -348,31 +348,6 @@ button.card { text-align: left; width: 100%; }
   transform: rotate(45deg); background: #c2570c; color: #fff; font-size: .68rem; font-weight: 800; letter-spacing: .12em; box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
 }
 
-/* ---- Effet « bouton » : une vraie tranche sous chaque bouton et chaque carte, qui s'enfonce franchement au toucher ---- */
-.btn, .fab, .chip, .game, .card.choice, .icon.round {
-  transition: transform .07s ease-out, box-shadow .07s ease-out;
-}
-.btn { box-shadow: 0 5px 0 color-mix(in srgb, var(--primary) 58%, #000), 0 8px 12px rgba(0, 0, 0, .12); }
-.btn.outline { box-shadow: 0 4px 0 var(--outline), 0 6px 10px rgba(0, 0, 0, .06); }
-.btn.danger { box-shadow: 0 5px 0 color-mix(in srgb, var(--danger) 58%, #000), 0 8px 12px rgba(0, 0, 0, .12); }
-.btn:disabled { box-shadow: 0 2px 0 color-mix(in srgb, var(--primary) 58%, #000); }
-.fab { box-shadow: 0 6px 0 color-mix(in srgb, var(--primary) 58%, #000), 0 10px 18px rgba(0, 0, 0, .25); }
-.chip { box-shadow: 0 3px 0 var(--outline); }
-.chip.on { box-shadow: 0 3px 0 color-mix(in srgb, var(--primary) 55%, #000); }
-.card.choice { box-shadow: 0 4px 0 var(--outline); }
-.card.choice.on { box-shadow: 0 4px 0 color-mix(in srgb, var(--primary) 60%, #000); }
-.icon.round { box-shadow: 0 3px 0 color-mix(in srgb, var(--primary-soft) 70%, #000); }
-/* Cartes de jeux : grosse tranche de carton, qui s'écrase presque entièrement */
-.game { border-radius: 18px; box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 12px 18px rgba(0, 0, 0, .14); }
-.game.assist-on { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); animation: card-halo 2.8s ease-in-out infinite; }
-@keyframes card-halo {
-  0%, 100% { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45); }
-  50% { box-shadow: 0 7px 0 rgba(0, 0, 0, .32), 0 0 0 2px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85); }
-}
-.games, .chips, .buttons, .choices { padding-bottom: 8px; }
-.bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 18px); }
-@media (prefers-reduced-motion: reduce) { .game.assist-on { animation: none; } .btn, .fab, .chip, .game, .card.choice, .icon.round { transition: none; } }
-
 /* ---- Tampons de fin de partie et jetons de score ---- */
 :root { --stamp: #b3382c; }
 @media (prefers-color-scheme: dark) { :root { --stamp: #f08377; } }
@@ -400,51 +375,40 @@ button.card { text-align: left; width: 100%; }
 .board .score.big.leader { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #fff1c2; outline-color: rgba(90, 58, 0, .45); box-shadow: 0 3px 0 #9a6a10, 0 0 14px rgba(255, 214, 102, .55); }
 @media (prefers-reduced-motion: reduce) { .stamp-end { animation: none; } }
 
-.history-btn { width: 100%; margin-top: 14px; }
+/* ---- Effet « bouton » : tranche épaisse et ombres marquées au repos ; à l'appui, le bouton descend sur sa tranche, la face se creuse
+   et une fente sombre apparaît au-dessus. Contours nets : aucun anneau ni reflet autour des formes, seulement des ombres décalées. ---- */
+.btn, .fab, .chip, .card.choice, .icon.round, .game { transition: transform .06s ease-out, box-shadow .06s ease-out, filter .06s ease-out; }
+.btn { --sink: 5px; --slab: color-mix(in srgb, var(--primary) 52%, #000); }
+.btn.outline { --slab: color-mix(in srgb, var(--outline) 80%, #000); }
+.btn.danger { --slab: color-mix(in srgb, var(--danger) 52%, #000); }
+.fab { --sink: 6px; --slab: color-mix(in srgb, var(--primary) 52%, #000); }
+.chip { --sink: 3px; --slab: color-mix(in srgb, var(--outline) 80%, #000); }
+.chip.on { --slab: color-mix(in srgb, var(--primary) 52%, #000); }
+.card.choice { --sink: 4px; --slab: color-mix(in srgb, var(--outline) 80%, #000); }
+.card.choice.on { --slab: color-mix(in srgb, var(--primary) 52%, #000); }
+.icon.round { --sink: 3px; --slab: color-mix(in srgb, var(--primary-soft) 60%, #000); }
+.game { --sink: 7px; --slab: rgba(0, 0, 0, .42); border-radius: 18px; }
 
-/* ---- Bouton qu'on enfonce pour de vrai : il descend dans un trou (fente sombre au-dessus, rebord éclairé en dessous, face creusée) ---- */
-.btn { --sink: 5px; } .fab { --sink: 6px; } .chip { --sink: 3px; } .card.choice { --sink: 4px; } .icon.round { --sink: 3px; } .game { --sink: 7px; }
+.btn, .fab, .chip, .card.choice, .icon.round, .game {
+  box-shadow: 0 var(--sink) 0 var(--slab), 0 calc(var(--sink) + 3px) 9px rgba(0, 0, 0, .24);
+}
 .btn:active:not(:disabled), .fab:active, .chip:active, .card.choice:active, .icon.round:active:not(:disabled), .game:active {
-  transform: translateY(var(--sink)) scale(.99); filter: brightness(.93);
+  transform: translateY(var(--sink)); filter: brightness(.92);
   box-shadow:
-    0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .45),             /* le trou, visible au-dessus du bouton */
-    0 calc(var(--sink) * -1) 0 2px rgba(0, 0, 0, .2),            /* parois du trou sur les côtés */
-    0 2px 0 2px rgba(255, 255, 255, .4),                         /* rebord du bas, éclairé */
-    inset 0 4px 9px rgba(0, 0, 0, .4), inset 0 -2px 0 rgba(255, 255, 255, .2); /* face creusée */
+    0 calc(var(--sink) * -1) 0 -1px rgba(0, 0, 0, .42),   /* la fente sombre au-dessus : la profondeur du trou */
+    inset 0 4px 9px rgba(0, 0, 0, .38),                    /* face creusée */
+    0 1px 2px rgba(0, 0, 0, .3);
 }
-.game.assist-on:active { animation: none; }
+.btn:disabled { box-shadow: 0 2px 0 var(--slab); }
 
-/* ---- Boutons colorés et cartes de jeux : plus de matière (biseau, rebord éclairé) et un enfoncement plus marqué ---- */
-.btn { --slab: color-mix(in srgb, var(--primary) 58%, #000); }
-.btn.danger { --slab: color-mix(in srgb, var(--danger) 58%, #000); }
-.fab { --slab: color-mix(in srgb, var(--primary) 58%, #000); }
-.game { --slab: rgba(0, 0, 0, .34); }
-.btn:not(.outline), .fab, .game:not(.assist-on) {
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, .32), inset 0 -3px 0 rgba(0, 0, 0, .16),   /* biseau : reflet en haut, ombre en bas */
-    0 var(--sink) 0 var(--slab),                                                   /* tranche */
-    0 0 0 3px rgba(0, 0, 0, .10), 0 0 0 4px rgba(255, 255, 255, .3),              /* logement creusé autour, rebord éclairé */
-    0 calc(var(--sink) + 8px) 14px rgba(0, 0, 0, .16);                             /* ombre sur le support */
-  transition: transform .3s cubic-bezier(.3, 1.9, .5, 1), box-shadow .22s ease-out, filter .2s;                /* ressort au relâchement */
+/* Jeux compatibles avec le mode assistant : halo doré qui pulse */
+.game.assist-on { box-shadow: 0 var(--sink) 0 var(--slab), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); animation: card-halo 2.8s ease-in-out infinite; }
+.game.assist-on:active { animation: none; box-shadow: 0 calc(var(--sink) * -1) 0 -1px rgba(0, 0, 0, .42), inset 0 4px 9px rgba(0, 0, 0, .38), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); }
+@keyframes card-halo {
+  0%, 100% { box-shadow: 0 var(--sink) 0 var(--slab), 0 0 0 2px rgba(255, 214, 102, .8), 0 0 12px rgba(255, 214, 102, .45); }
+  50% { box-shadow: 0 var(--sink) 0 var(--slab), 0 0 0 2px rgba(255, 224, 140, 1), 0 0 26px rgba(255, 214, 102, .85); }
 }
-.btn:not(.outline):active:not(:disabled), .fab:active {
-  transition-duration: .04s;
-  transform: translateY(var(--sink)) scale(.985); filter: brightness(.86) saturate(1.1);
-  box-shadow:
-    0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62),                               /* fente sombre au-dessus : la profondeur du trou */
-    0 calc(var(--sink) * -1) 0 3px rgba(0, 0, 0, .28),                             /* parois */
-    0 3px 0 3px rgba(255, 255, 255, .55),                                          /* rebord du bas, bien éclairé */
-    inset 0 6px 12px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(255, 255, 255, .25);   /* face creusée */
-}
-/* Cartes de jeux : la carte s'incline du côté où on appuie, comme une vraie touche qu'on enfonce d'un coin */
-.game:active, .game.assist-on:active {
-  transition-duration: .05s;
-  transform: perspective(560px) translateY(var(--sink)) rotateX(calc(var(--py, 0) * -6deg)) rotateY(calc(var(--px, 0) * 6deg)) scale(.982);
-  filter: brightness(.88) saturate(1.1);
-  box-shadow:
-    0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62), 0 calc(var(--sink) * -1) 0 3px rgba(0, 0, 0, .28),
-    0 3px 0 3px rgba(255, 255, 255, .55),
-    inset 0 8px 16px rgba(0, 0, 0, .5), inset 0 -2px 0 rgba(255, 255, 255, .25);
-}
-.game.assist-on:active { box-shadow: 0 calc(var(--sink) * -1) 0 0 rgba(0, 0, 0, .62), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65), inset 0 8px 16px rgba(0, 0, 0, .5); }
-@media (prefers-reduced-motion: reduce) { .btn, .fab, .game { transition: none; } }
+.games, .chips, .buttons, .choices { padding-bottom: 10px; }
+.bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 18px); }
+.history-btn { width: 100%; margin-top: 14px; }
+@media (prefers-reduced-motion: reduce) { .game.assist-on { animation: none; } .btn, .fab, .chip, .card.choice, .icon.round, .game { transition: none; } }

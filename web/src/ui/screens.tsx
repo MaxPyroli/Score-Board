@@ -23,14 +23,6 @@ import type { Entries, Entry } from "../guestEntry";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-/** Mémorise où l'on appuie sur la carte (de −1 à 1) : la carte s'incline de ce côté (voir styles.css). */
-function tilt(e: React.PointerEvent<HTMLElement>) {
-  const el = e.currentTarget;
-  const r = el.getBoundingClientRect();
-  el.style.setProperty("--px", String(Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - 0.5) * 2))));
-  el.style.setProperty("--py", String(Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - 0.5) * 2))));
-}
-
 export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory }: {
   matches: StoredMatch[];
   onNew(game: GameDefinition): void;
@@ -88,7 +80,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               const logo = gameImage(g.id, "logo");
               return (
                 <button
-                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)} onPointerDown={tilt}
+                  key={g.id} className={`card game ${bg ? "has-bg" : ""} ${g.assistant && assistant ? "assist-on" : ""}`} data-game={g.id} onClick={() => onNew(g)}
                   style={bg ? ({ "--bg-url": `url("${bg}")` } as React.CSSProperties) : undefined}
                 >
                   <span className="box-frame" aria-hidden="true" />
