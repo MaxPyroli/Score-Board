@@ -414,18 +414,17 @@ button.card { text-align: left; width: 100%; }
 }
 .game.assist-on:active { animation: none; }
 
-/* ---- Cartes de jeux : un vrai bouton dans son logement. Le logement (creux sombre) reste fixe ; la carte, surélevée au repos avec sa tranche,
-   descend au fond du creux quand on appuie, et la face se creuse. ---- */
+/* ---- Cartes de jeux : un vrai bouton dans son logement. Le logement épouse exactement la carte (on ne le voit pas au repos) ; la carte,
+   surélevée avec sa tranche, descend au fond quand on appuie et laisse apparaître le creux sombre au-dessus. ---- */
 .game-socket {
-  display: flex; padding: 6px 3px 2px; border-radius: 21px;
-  background: color-mix(in srgb, var(--bg) 78%, #000);
-  box-shadow: inset 0 3px 6px rgba(0, 0, 0, .42), inset 0 -1px 0 rgba(255, 255, 255, .6), 0 1px 0 rgba(255, 255, 255, .7);
+  --sink: 5px; display: flex; padding-top: var(--sink); border-radius: 18px;
+  background: color-mix(in srgb, var(--bg) 55%, #000); box-shadow: inset 0 5px 10px rgba(0, 0, 0, .5);
 }
 .game-socket > .game {
-  --sink: 5px; flex: 1; transform: translateY(calc(var(--sink) * -1));
+  flex: 1; transform: translateY(calc(var(--sink) * -1));
   box-shadow: 0 var(--sink) 0 rgba(0, 0, 0, .45); transition: transform .08s ease-out, box-shadow .08s ease-out, filter .08s ease-out;
 }
 .game-socket > .game:active { transform: translateY(0); filter: brightness(.9); box-shadow: 0 0 0 rgba(0, 0, 0, .45), inset 0 5px 12px rgba(0, 0, 0, .5); }
 .game-socket > .game.assist-on { box-shadow: 0 var(--sink) 0 rgba(0, 0, 0, .45), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); }
 .game-socket > .game.assist-on:active { animation: none; box-shadow: inset 0 5px 12px rgba(0, 0, 0, .5), 0 0 0 2px rgba(255, 214, 102, .95), 0 0 20px rgba(255, 214, 102, .65); }
-@media (prefers-color-scheme: dark) { .game-socket { background: color-mix(in srgb, var(--bg) 70%, #000); box-shadow: inset 0 4px 8px rgba(0, 0, 0, .6), inset 0 -2px 0 rgba(255, 255, 255, .12), 0 1px 0 rgba(255, 255, 255, .08); } }
+@media (prefers-color-scheme: dark) { .game-socket { background: color-mix(in srgb, var(--bg) 40%, #000); } }
