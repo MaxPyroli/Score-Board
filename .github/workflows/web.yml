@@ -74,15 +74,17 @@ jobs:
           destination_dir: beta
           keep_files: true
       # Bêta aussi sur l'hébergement OVH (adresse à part, installable séparément) : seulement si les secrets existent.
-      # Secrets du dépôt : OVH_FTP_HOST, OVH_FTP_USER, OVH_FTP_PASSWORD, et OVH_FTP_DIR (dossier du sous-domaine, ex. beta/).
-      - name: Publier la bêta sur OVH
+      # Secrets du dépôt : OVH_FTP_HOST, OVH_FTP_USER, OVH_FTP_PASSWORD, et OVH_FTP_DIR (dossier du site, ex. app/).
+      # Envoi par SFTP (port 22) : le FTPS de l'hébergement OVH n'est pas accepté.
+      - name: Publier la bêta sur OVH (SFTP)
         if: github.ref != 'refs/heads/main' && env.OVH_FTP_HOST != ''
         continue-on-error: true
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.OVH_FTP_HOST }}
-          username: ${{ secrets.OVH_FTP_USER }}
-          password: ${{ secrets.OVH_FTP_PASSWORD }}
-          protocol: ftps
-          local-dir: dist/
-          server-dir: ${{ secrets.OVH_FTP_DIR || 'beta/' }}
+        env:
+          OVH_FTP_USER: ${{ secrets.OVH_FTP_USER }}
+          OVH_FTP_PASSWORD: ${{ secrets.OVH_FTP_PASSWORD }}
+          OVH_FTP_DIR: ${{ secrets.OVH_FTP_DIR }}
+        run: |
+          # Le dossier est vidé puis remplacé : on refuse les dossiers « larges » par sécurité.
+          case "$OVH_FTP_DIR" in ""|"."|"./"|"/"|"www"|"www/"|"~"|"~/") echo "OVH_FTP_DIR invalide : $OVH_FTP_DIR"; exit 1;; esac
+          sudo apt-get install -y -qq lftp > /dev/null
+          lftp -u "$OVH_FTP_USER","$OVH_FTP_PASSWORD" "sftp://$OVH_FTP_HOST:22" -e "set sftp:auto-confirm yes; set net:max-retries 2; mirror -R --delete --verbose=1 dist/ $OVH_FTP_DIR; bye"
