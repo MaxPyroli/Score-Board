@@ -6,6 +6,7 @@ import { loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
 import { ChangelogSheet } from "./ChangelogSheet";
 import { setAssistantEnabled, useAssistant } from "../assistant";
+import { IS_BETA } from "../channel";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
@@ -98,6 +99,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onReplay 
           <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
           <span>Mode assistant</span>
         </label>
+        {IS_BETA && <span>Version de test · <a href="../">Version publique</a></span>}
         <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
       </footer>
       {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
