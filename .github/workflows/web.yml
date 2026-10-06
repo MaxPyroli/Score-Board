@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_CHANNEL: ${{ github.ref == 'refs/heads/main' && 'public' || 'beta' }}
+      VITE_PUBLIC_URL: https://maxpyroli.github.io/Score-Board/
     defaults:
       run:
         working-directory: web

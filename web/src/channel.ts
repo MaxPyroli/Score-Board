@@ -2,6 +2,9 @@
 // branche de travail, dans le dossier /beta/). La bêta sert à tester avant de publier.
 export const IS_BETA = import.meta.env.VITE_CHANNEL === "beta";
 
+/** Adresse de la version publique (la bêta peut être sur un autre site). */
+export const PUBLIC_URL: string = import.meta.env.VITE_PUBLIC_URL ?? "../";
+
 const PREFIX = "beta:";
 
 // Les deux versions sont sur le même site, donc partagent le stockage du navigateur : en bêta, chaque clé est préfixée
