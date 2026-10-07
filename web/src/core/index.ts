@@ -200,3 +200,61 @@ export function renamePlayer(m: StoredMatch, playerId: string, raw: string): Sto
   if (name === null || !current || current.name === name) return null;
   return { ...m, players: m.players.map((p) => (p.id === playerId ? { ...p, name } : p)) };
 }
+
+// ---------- Salle d'attente : les invités rejoignent avant le début de la partie et ajoutent eux-mêmes leur pseudo ----------
+
+/** Réglage de partie : « true » tant que la partie est en salle d'attente (pas encore commencée). */
+export const SETTING_LOBBY = "lobby";
+export const isLobby = (m: StoredMatch): boolean => flag(m, SETTING_LOBBY);
+/** Identifiant du joueur d'un invité : calculé depuis l'identifiant de son appareil, donc connu des deux côtés sans échange. */
+export const guestPlayerId = (uid: string): string => `g-${uid}`.slice(0, 64);
+/** Demande d'un invité qui n'a pas encore de joueur : signature « + » avec son pseudo dans le champ nom. */
+export const JOIN_REQUEST = "+";
+
+const PLACEHOLDER = /^Joueur \d+$/;
+
+/** Premier nom libre : « Léo », puis « Léo 2 », « Léo 3 »… (comparaison sans tenir compte des majuscules). */
+function uniqueName(m: StoredMatch, ownId: string, raw: string): string | null {
+  const base = raw.trim().replace(/\s+/g, " ");
+  if (base.length < 1) return null;
+  const taken = (n: string) => m.players.some((p) => p.id !== ownId && p.name.toLowerCase() === n.toLowerCase());
+  for (let i = 1; i < 100; i++) {
+    const suffix = i === 1 ? "" : ` ${i}`;
+    const n = base.slice(0, MAX_NAME_LENGTH - suffix.length).trimEnd() + suffix;
+    if (!taken(n)) return n;
+  }
+  return null;
+}
+
+/**
+ * Un invité rejoint la salle d'attente (ou y change de pseudo). Il prend la place d'un joueur « Joueur N » resté vide
+ * (jamais celle du premier, qui est l'hôte), sinon une nouvelle place s'ajoute. `null` : rien à changer, ou partie complète.
+ */
+export function lobbyJoin(m: StoredMatch, uid: string, pseudo: string, maxPlayers: number): StoredMatch | null {
+  const id = guestPlayerId(uid);
+  const name = uniqueName(m, id, pseudo);
+  if (name === null) return null;
+  const existing = m.players.find((p) => p.id === id);
+  if (existing) return existing.name === name ? null : { ...m, players: m.players.map((p) => (p.id === id ? { ...p, name } : p)) };
+  const slot = m.players.findIndex((p, i) => i > 0 && PLACEHOLDER.test(p.name) && !p.id.startsWith("g-"));
+  if (slot >= 0) return { ...m, players: m.players.map((p, i) => (i === slot ? { id, name } : p)) };
+  if (m.players.length >= maxPlayers) return null;
+  return { ...m, players: [...m.players, { id, name }] };
+}
+
+/** La partie peut commencer : assez de joueurs, des noms remplis et tous différents. */
+export function lobbyProblem(m: StoredMatch, min: number, max: number): string | null {
+  const names = m.players.map((p) => p.name.trim().toLowerCase());
+  if (m.players.length < min) return `Il faut au moins ${min} joueurs (${m.players.length} pour l'instant).`;
+  if (m.players.length > max) return `${max} joueurs au maximum.`;
+  if (names.some((n) => n === "")) return "Un joueur n'a pas de nom.";
+  if (new Set(names).size !== names.length) return "Deux joueurs ont le même nom.";
+  return null;
+}
+
+/** La partie commence : la salle d'attente se ferme et les noms sont nettoyés. */
+export function startLobby(m: StoredMatch): StoredMatch {
+  const settings = { ...m.settings };
+  delete settings[SETTING_LOBBY];
+  return { ...m, settings, players: m.players.map((p) => ({ ...p, name: p.name.trim().replace(/\s+/g, " ") })) };
+}

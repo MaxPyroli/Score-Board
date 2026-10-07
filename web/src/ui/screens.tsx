@@ -49,8 +49,7 @@ function MatchTicket({ match, game, status, scores, onOpen, onDelete }: {
           </span>
         </span>
       </button>
-      <span className="ticket-perf" aria-hidden="true" />
-      <button className="icon" aria-label="Supprimer la partie" onClick={onDelete}>🗑</button>
+      <button className="ticket-trash" aria-label="Supprimer la partie" onClick={onDelete}>🗑</button>
     </div>
   );
 }

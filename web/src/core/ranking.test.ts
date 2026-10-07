@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { finalMessage, finishMatch, isFinished, isPending, ranking, resumeMatch, revealResults, withSetting, type Player, type StoredMatch } from "./index";
+import { finalMessage, finishMatch, guestPlayerId, isLobby, lobbyJoin, lobbyProblem, startLobby, isFinished, isPending, ranking, resumeMatch, revealResults, withSetting, type Player, type StoredMatch } from "./index";
 
 const players: Player[] = ["Ana", "Bob", "Chloé", "Dan"].map((name) => ({ id: name[0], name }));
 
@@ -74,5 +74,34 @@ describe("Fin de partie avec suspense", () => {
   it("une partie terminée avant cette fonction (sans réglage) affiche directement ses résultats", () => {
     const legacy = withSetting(m, "finished", "true");
     expect([isFinished(legacy), isPending(legacy)]).toEqual([true, false]);
+  });
+});
+
+describe("salle d'attente", () => {
+  const lobby = (names: string[]): StoredMatch => ({ id: "m", moduleId: "skyjo", createdAt: 0, rounds: [], settings: { lobby: "true" }, players: names.map((n, i) => ({ id: "p" + i, name: n })) });
+  it("l'invité prend la première place vide (pas celle de l'hôte), sinon une nouvelle place s'ajoute", () => {
+    const m1 = lobbyJoin(lobby(["Léo", "Joueur 2", "Joueur 3"]), "u1", "Marie", 8)!;
+    expect(m1.players.map((p) => p.name)).toEqual(["Léo", "Marie", "Joueur 3"]);
+    expect(m1.players[1].id).toBe(guestPlayerId("u1"));
+    expect(lobbyJoin(lobby(["Joueur 1", "Léo"]), "u2", "Zoé", 8)!.players.map((p) => p.name)).toEqual(["Joueur 1", "Léo", "Zoé"]);
+  });
+  it("même appareil : un second envoi renomme, sans doublon ; mêmes valeurs : rien à changer", () => {
+    const m1 = lobbyJoin(lobby(["Léo", "Joueur 2"]), "u1", "Marie", 8)!;
+    expect(lobbyJoin(m1, "u1", "Marie", 8)).toBeNull();
+    expect(lobbyJoin(m1, "u1", "Mia", 8)!.players.map((p) => p.name)).toEqual(["Léo", "Mia"]);
+  });
+  it("nom déjà pris : numéroté ; partie complète : refusé", () => {
+    expect(lobbyJoin(lobby(["Léo", "Joueur 2"]), "u1", "léo", 8)!.players[1].name).toBe("léo 2");
+    expect(lobbyJoin(lobby(["A", "B"]), "u1", "C", 2)).toBeNull();
+    expect(lobbyJoin(lobby(["A", "B"]), "u1", "   ", 8)).toBeNull();
+  });
+  it("on ne peut commencer qu'avec assez de joueurs, des noms remplis et différents ; le démarrage ferme la salle", () => {
+    expect(lobbyProblem(lobby(["Léo"]), 2, 8)).toMatch(/au moins 2/);
+    expect(lobbyProblem(lobby(["Léo", " "]), 2, 8)).toMatch(/pas de nom/);
+    expect(lobbyProblem(lobby(["Léo", "léo"]), 2, 8)).toMatch(/même nom/);
+    expect(lobbyProblem(lobby(["Léo", "Marie"]), 2, 8)).toBeNull();
+    const started = startLobby(lobby([" Léo ", "Marie"]));
+    expect(isLobby(started)).toBe(false);
+    expect(started.players[0].name).toBe("Léo");
   });
 });

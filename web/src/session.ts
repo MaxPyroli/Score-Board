@@ -39,7 +39,9 @@ export function validateReceived(data: unknown): StoredMatch | null {
     if (typeof m.id !== "string" || typeof m.moduleId !== "string" || typeof m.createdAt !== "number") return null;
     const game = gameById(m.moduleId);
     if (!game) return null;
-    if (!Array.isArray(m.players) || m.players.length < game.minPlayers || m.players.length > game.maxPlayers) return null;
+    // En salle d'attente, il peut manquer des joueurs : les invités arrivent peu à peu.
+    const lobby = (m.settings as Record<string, unknown> | undefined)?.lobby === "true";
+    if (!Array.isArray(m.players) || m.players.length < (lobby ? 1 : game.minPlayers) || m.players.length > game.maxPlayers) return null;
     const players = m.players.map((p: { id?: unknown; name?: unknown }) => {
       if (typeof p?.id !== "string" || typeof p?.name !== "string" || p.id.length > 64 || p.name.length > 40) throw new Error();
       return { id: p.id, name: p.name };

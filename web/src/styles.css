@@ -486,13 +486,18 @@ button.card { text-align: left; width: 100%; }
 .icon.round.back:not(:active):not(.pressed), .icon.round.plain:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
 
 /* ---- Fiche de partie (parties en cours et historique) : « billet » avec tranche colorée, jetons de score et pointillé ---- */
-.card.ticket {
-  display: flex; align-items: stretch; padding: 0; overflow: hidden; --sink: 3px; --cast: var(--cast-small);
-  border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 var(--sink) 0 var(--cast);
+/* Le billet est fait de deux boutons indépendants collés l'un à l'autre : la partie (tranche + scores) et la corbeille. Chacun s'enfonce tout seul. */
+.card.ticket { display: flex; align-items: stretch; padding: 0; background: none; border: 0; box-shadow: none; border-radius: 0; --sink: 3px; --cast: var(--cast-small); }
+.ticket-main, .ticket-trash {
+  display: flex; padding: 0; border: 2.5px solid var(--ink); background: var(--surface); color: inherit; box-shadow: 0 var(--sink) 0 var(--cast);
   transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
 }
-.card.ticket:has(.ticket-main:active), .card.ticket:has(.ticket-main.pressed) { transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast); }
-.ticket-main { flex: 1; display: flex; min-width: 0; padding: 0; background: none; border: 0; text-align: left; color: inherit; }
+.ticket-main { flex: 1; min-width: 0; text-align: left; border-radius: 14px 0 0 14px; border-right-width: 0; overflow: hidden; }
+.ticket-trash { flex: none; width: 54px; align-items: center; justify-content: center; font-size: 1.25rem; border-radius: 0 14px 14px 0; border-left: 2.5px dashed color-mix(in srgb, var(--ink) 55%, transparent); }
+.ticket-main:active, .ticket-main.pressed, .ticket-trash:active, .ticket-trash.pressed {
+  transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast);
+}
+.ticket-trash:active, .ticket-trash.pressed { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
   background: linear-gradient(180deg, var(--g1, #1f6f5c), var(--g2, #0f4c3f)); color: #fff;
@@ -507,8 +512,6 @@ button.card { text-align: left; width: 100%; }
 }
 .ticket-score b { font-weight: 800; }
 .ticket-score.lead { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #7a5410; box-shadow: 0 2px 0 #9a6a10; }
-.ticket-perf { flex: none; position: relative; width: 0; border-left: 2.5px dashed color-mix(in srgb, var(--ink) 45%, transparent); margin: 8px 0; }
-.card.ticket > .icon { align-self: center; margin: 0 4px 0 2px; }
 
 /* Saisie de l'hôte : lignes compactes (un seul bouton « Valider les scores ») */
 .entry-card .entry-row { padding: 2px 0; min-height: 0; }
