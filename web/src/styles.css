@@ -652,3 +652,9 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .final-row { margin: 0; padding: 0; }
 .final-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 22px; }
 .final-links .link { margin: 0; padding: 8px 0; font-size: .92rem; }
+
+/* Titre de l'accueil : plus grand, aligné sur le bord du contenu */
+.icon-gap { display: none; }
+.topbar h1:has(.meeple) { white-space: nowrap; font-size: 1.6rem; font-weight: 800; letter-spacing: -.01em; padding-left: 4px; gap: 10px; }
+.topbar h1 .meeple { width: 34px; height: 34px; }
+@media (max-width: 360px) { .topbar h1:has(.meeple) { font-size: 1.3rem; gap: 6px; } .topbar h1 .meeple { width: 28px; height: 28px; } }
