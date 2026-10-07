@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ClaimsGrace } from "./claimsGrace";
-import { codeFromScanned } from "./ui/QrScanner";
+import { buildLenses, codeFromScanned } from "./ui/QrScanner";
 
 describe("lissage des signatures (anti-clignotement)", () => {
   it("une signature disparue reste affichée pendant le délai, puis s'efface", () => {
@@ -31,5 +31,19 @@ describe("QR code lu", () => {
     expect(codeFromScanned("k7f2")).toBe("K7F2");
     expect(codeFromScanned("https://exemple.fr/")).toBeNull();
     expect(codeFromScanned("bonjour")).toBeNull();
+  });
+});
+
+describe("objectifs de l'appareil photo", () => {
+  const dev = (label: string) => ({ deviceId: label, label, kind: "videoinput" }) as MediaDeviceInfo;
+  it("repère grand-angle, principal et télé d'après leurs noms, du plus large au plus long", () => {
+    const l = buildLenses([dev("Back Triple Camera"), dev("Back Ultra Wide Camera"), dev("Back Telephoto Camera"), dev("Front Camera")]);
+    expect(l.map((x) => [x.device.label, x.nominal])).toEqual([["Back Ultra Wide Camera", 0.5], ["Back Triple Camera", 1], ["Back Telephoto Camera", 2]]);
+    expect(l.some((x) => x.hint)).toBe(true);
+  });
+  it("écarte les objectifs inutiles (macro, profondeur) et la caméra avant", () => {
+    const l = buildLenses([dev("camera2 0, facing back"), dev("camera2 1, facing front"), dev("camera2 2, facing back macro"), dev("camera2 3, facing back")]);
+    expect(l.map((x) => x.device.label)).toEqual(["camera2 0, facing back", "camera2 3, facing back"]);
+    expect(l.some((x) => x.hint)).toBe(false); // aucun indice : les grossissements ne seront pas affichés
   });
 });
