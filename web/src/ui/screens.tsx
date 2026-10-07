@@ -650,7 +650,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       {finished && !pending && !hideFinal && (
         <FinalScreen
           ranked={ranked} meId={me ?? null}
-          onClose={() => setHideFinal(true)}
+          onClose={() => setHideFinal(true)} onHome={onBack}
           onChangeMe={readOnly || sharing ? () => setPickerOpen(true) : undefined}
           onResume={readOnly ? undefined : () => onChange(resumeMatch(match))}
           onReplay={readOnly ? undefined : onReplay}

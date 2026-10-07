@@ -648,3 +648,7 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .chip-group { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
 .chip-group .chip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip-group .icon.forget { min-width: 32px; height: 32px; font-size: 1rem; color: var(--muted); }
+.final-actions { gap: 12px; }
+.final-row { margin: 0; padding: 0; }
+.final-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 22px; }
+.final-links .link { margin: 0; padding: 8px 0; font-size: .92rem; }
