@@ -658,3 +658,10 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .topbar h1:has(.meeple) { white-space: nowrap; font-size: 1.6rem; font-weight: 800; letter-spacing: -.01em; padding-left: 4px; gap: 10px; }
 .topbar h1 .meeple { width: 34px; height: 34px; }
 @media (max-width: 360px) { .topbar h1:has(.meeple) { font-size: 1.3rem; gap: 6px; } .topbar h1 .meeple { width: 28px; height: 28px; } }
+
+/* Boutons à fond clair (chips, +/−, contours, choix) : pas de reflet ni d'ombre à l'intérieur, sinon ils paraissent creux.
+   Le reflet intérieur est gardé pour les boutons pleins et colorés (principal, fab, cartes de jeux). */
+.chip:not(:active):not(.pressed):not(.sign[aria-pressed="true"]),
+.icon.round:not(:active):not(.pressed),
+.btn.outline:not(:active):not(.pressed),
+.card.choice:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
