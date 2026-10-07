@@ -5,6 +5,7 @@ import {
 } from "../core";
 import { tarotModule, summarize } from "./tarot";
 import type { Entries } from "../guestEntry";
+import { IS_BETA } from "../channel";
 import { SKYJO_DEFAULT_TARGET, buildSkyjo, calculerSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
 import {
   COUNTER_MODES, FREE, SETTING_MODE, counterModule, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
@@ -386,7 +387,7 @@ function sushiGame(): GameDefinition {
   const pick = (m: StoredMatch) => (isAssistantMatch(m) ? assistant : classic);
   return {
     ...classic,
-    tagline: "2 à 8 joueurs · points de chaque manche ; en mode assistant, menus et décompte carte par carte",
+    tagline: IS_BETA ? "2 à 8 joueurs · points de chaque manche ; en mode assistant, menus et décompte carte par carte" : "2 à 8 joueurs · les points de chaque manche",
     assistant: true,
     setup: {
       defaults: () => ({ ...SETUP_DEFAULTS, [SETTING_ASSISTANT]: String(assistantEnabled()) }),

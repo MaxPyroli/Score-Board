@@ -2,6 +2,7 @@ import { BackArrow } from "./PlusMinus";
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { Dialog } from "./components";
+import { QrScanner } from "./QrScanner";
 import { CODE_LENGTH, joinUrl, normalizeCode, type HostStatus, type JoinState } from "../session";
 import { sharingConfigured } from "../backend";
 
@@ -72,6 +73,7 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
   initialCode?: string;
 }) {
   const [text, setText] = useState(initialCode ?? "");
+  const [scanning, setScanning] = useState(false);
   const code = normalizeCode(text);
   const busy = state.kind === "connecting";
   return (
@@ -81,7 +83,11 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
         <h1>Rejoindre une partie</h1>
       </header>
       <main className="content">
-        <p className="hint">Saisis le code à {CODE_LENGTH} caractères affiché sur le téléphone de l'hôte.</p>
+        <p className="hint">Scanne le QR code de l'hôte, ou saisis le code à {CODE_LENGTH} caractères affiché sur son téléphone.</p>
+        <button className="btn outline full" disabled={!sharingConfigured || busy} onClick={() => setScanning(true)}>
+          <span aria-hidden="true">📷</span> Scanner le QR code
+        </button>
+        <p className="hint center">ou saisis le code à la main :</p>
         <input
           className="field wide code-input" autoFocus autoCapitalize="characters" autoComplete="off" spellCheck={false}
           maxLength={CODE_LENGTH + 1} placeholder="K7F2" aria-label="Code de la partie"
@@ -93,6 +99,7 @@ export function JoinScreen({ state, onJoin, onBack, initialCode }: {
           {busy ? "Connexion…" : "Rejoindre"}
         </button>
       </main>
+      {scanning && <QrScanner onClose={() => setScanning(false)} onCode={(c) => { setScanning(false); setText(c); onJoin(c); }} />}
     </div>
   );
 }

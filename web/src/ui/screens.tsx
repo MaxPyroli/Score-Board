@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
+import { Dialog, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
 import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
@@ -24,6 +24,8 @@ import type { Entries, Entry } from "../guestEntry";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+const MAX_TICKET_SCORES = 8;
+
 /** Fiche de partie : une « tranche » colorée aux couleurs du jeu, les scores en jetons, un pointillé avant la corbeille. */
 function MatchTicket({ match, game, status, scores, onOpen, onDelete }: {
   match: StoredMatch; game: GameDefinition; status: string;
@@ -38,11 +40,12 @@ function MatchTicket({ match, game, status, scores, onOpen, onDelete }: {
           <strong>{game.displayName}</strong>
           <span className="hint">{dateFormat.format(match.createdAt)} · {match.rounds.length} manche{match.rounds.length > 1 ? "s" : ""}</span>
           <span className="ticket-scores">
-            {scores.map((sc, i) => (
+            {scores.slice(0, MAX_TICKET_SCORES).map((sc, i) => (
               <span key={i} className={`ticket-score ${sc.lead ? "lead" : ""}`}>
-                {sc.lead && <span aria-label="en tête">★</span>}{sc.name} <b>{sc.total}</b>
+                {sc.lead && <span aria-label="en tête">★</span>}<span className="ticket-name">{sc.name}</span> <b>{sc.total}</b>
               </span>
             ))}
+            {scores.length > MAX_TICKET_SCORES && <span className="ticket-score more">+{scores.length - MAX_TICKET_SCORES}</span>}
           </span>
         </span>
       </button>
@@ -267,7 +270,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       <TopBar
         title={game.displayName}
         onBack={onBack}
-        actions={<button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>}
+        actions={<RulesButton onClick={() => setRulesOpen(true)} />}
       />
       {rulesOpen && <RulesSheet gameId={game.id} onClose={() => setRulesOpen(false)} />}
       <main className="content">
@@ -463,7 +466,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         onBack={onBack}
         actions={(
           <>
-            <button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>
+            <RulesButton onClick={() => setRulesOpen(true)} />
             {readOnly ? null : <>
             {onShare && <button className="icon round plain" aria-label="Partager la partie" onClick={onShare}><ShareIcon /></button>}
           <div className="menu-wrap">

@@ -43,14 +43,33 @@ export function takenPlayers(claims: Claim[], myUid: string): string[] {
   return [...new Set(claims.filter((c) => c.p && c.uid !== myUid).map((c) => c.p))];
 }
 
+/** Saisies conservées, et pour chacune l'appareil qui l'a envoyée (pour l'oublier si cet appareil change de joueur). */
+export interface StickyEntries {
+  entries: Entries;
+  owner: Record<string, string>;
+}
+export const NO_STICKY: StickyEntries = { entries: {}, owner: {} };
+
 /**
  * Saisies « collantes » : une saisie déjà reçue n'est oubliée que si son auteur la retire (sa signature est là,
- * mais sans saisie pour cette manche). Si l'appareil se déconnecte, sa signature disparaît du serveur : on garde
- * alors la saisie, qui revient telle quelle à la reconnexion. Sans cela, un score validé « disparaissait » le temps d'une coupure.
+ * mais sans saisie pour cette manche) ou s'il passe à un autre joueur. Si l'appareil se déconnecte, sa signature
+ * disparaît du serveur : on garde alors la saisie, qui revient telle quelle à la reconnexion. Sans cela, un score
+ * validé « disparaissait » le temps d'une coupure.
  */
-export function mergeStickyEntries(prev: Entries, claims: Claim[], match: StoredMatch, roundIndex: number): Entries {
+export function mergeStickyEntries(prev: StickyEntries, claims: Claim[], match: StoredMatch, roundIndex: number): StickyEntries {
   const fresh = entriesFromClaims(claims, match, roundIndex);
-  const out: Entries = { ...prev };
-  for (const c of claims) if (c.p && !(c.p in fresh)) delete out[c.p];
-  return { ...out, ...fresh };
+  const entries: Entries = { ...prev.entries };
+  const owner = { ...prev.owner };
+  const drop = (p: string) => { delete entries[p]; delete owner[p]; };
+  for (const c of claims) {
+    if (!c.p) continue;
+    for (const [p, u] of Object.entries(owner)) if (u === c.uid && p !== c.p) drop(p); // cet appareil a changé de joueur
+    if (!(c.p in fresh)) drop(c.p); // saisie retirée (« Modifier »)
+  }
+  for (const [p, e] of Object.entries(fresh)) {
+    entries[p] = e;
+    const mine = [...claims].filter((c) => c.p === p && c.r === roundIndex).sort((a, b) => a.uid.localeCompare(b.uid)).pop();
+    if (mine) owner[p] = mine.uid;
+  }
+  return { entries, owner };
 }
