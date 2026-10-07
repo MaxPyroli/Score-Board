@@ -497,15 +497,10 @@ button.card { text-align: left; width: 100%; }
 .ticket-main:active, .ticket-main.pressed, .ticket-trash:active, .ticket-trash.pressed {
   transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast);
 }
-/* Corbeille : même forme qu'avant ; l'ombre portée par le bouton voisin tombe sur son côté gauche (elle disparaît quand ce bouton est enfoncé) */
-.ticket-trash { box-shadow: 0 var(--sink) 0 var(--cast), inset 5px 0 0 rgba(0, 0, 0, .17); }
-.card.ticket:has(.ticket-main:active, .ticket-main.pressed) .ticket-trash:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
-.ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 rgba(0, 0, 0, .17); }
-@media (prefers-color-scheme: dark) {
-  .ticket-trash, .ticket-trash:active, .ticket-trash.pressed { --edge: rgba(0, 0, 0, .5); }
-  .ticket-trash { box-shadow: 0 var(--sink) 0 var(--cast), inset 5px 0 0 var(--edge); }
-  .ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 var(--edge); }
-}
+/* Les deux boutons sont au même niveau au repos : pas d'ombre entre eux. Quand l'un s'enfonce, son voisin (resté en haut) projette une ombre sur son bord. */
+.ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 var(--edge, rgba(0, 0, 0, .17)); }
+.ticket-main:active, .ticket-main.pressed { box-shadow: 0 0 0 var(--cast), inset -5px 0 0 var(--edge, rgba(0, 0, 0, .17)); }
+@media (prefers-color-scheme: dark) { .ticket-trash, .ticket-main { --edge: rgba(0, 0, 0, .5); } }
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
   background: linear-gradient(180deg, var(--g1, #1f6f5c), var(--g2, #0f4c3f)); color: #fff;
