@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { IS_BETA } from "./channel";
 
 // « Mode assistant » : réglage de l'appareil, activé en bas de l'accueil. Il ajoute aux jeux compatibles (repérés par un tampon)
 // des aides plus poussées (par exemple les menus et le choix par catégories de Sushi Go Party !).
@@ -7,9 +6,14 @@ import { IS_BETA } from "./channel";
 const KEY = "scoreboard.assistant";
 const EVENT = "scoreboard:assistant";
 
-/** Le mode assistant n'existe qu'en version bêta : la version publique ne le propose pas encore. */
+/**
+ * Mode assistant : chantier mis de côté. Le code reste en place mais il est invisible partout (publique comme bêta) tant que
+ * le site n'est pas construit avec `VITE_ASSISTANT=1`. Toute mention (réglage, tampon, texte, notes de version) passe par cet interrupteur.
+ */
+export const ASSISTANT_FEATURE: boolean = import.meta.env.VITE_ASSISTANT === "1";
+
 export function assistantEnabled(): boolean {
-  if (!IS_BETA) return false;
+  if (!ASSISTANT_FEATURE) return false;
   try {
     return localStorage.getItem(KEY) === "1";
   } catch {
