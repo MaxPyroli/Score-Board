@@ -15,10 +15,14 @@ import {
   type RailDraftSheet,
 } from "../games/rail";
 import { buildSushi, draftFromSheet as sushiDraftFrom, fieldsFor, ROUNDS_BEFORE_DESSERT, scoreSushi, sushiConfig, sushiModule, type SushiDraftSheet } from "../games/sushi";
+import {
+  breakdown as wonderBreakdown, buildWonders, draftFromSheet as wonderDraftFrom, emptyDraft as emptyWonderDraft, sevenWondersModule,
+  type WonderDraft,
+} from "../games/sevenwonders";
 import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winnerRound, type FreeDraft, type FreeRound } from "../games/counter";
 
 const title = (match: StoredMatch, index: number | null) =>
-  match.moduleId === "rail"
+  match.moduleId === "rail" || match.moduleId === "sevenwonders"
     ? (index !== null ? "Modifier le décompte final" : "Décompte final")
     : match.moduleId === "sushi" && match.settings.assistant === "true"
     ? (() => {
@@ -542,6 +546,85 @@ export function SushiEditor(props: EditorProps) {
           ))}
         </div>
       ))}
+    </Frame>
+  );
+}
+
+// ---------------------------------------------------------------- 7 Wonders
+
+const WONDER_FIELDS: { key: keyof WonderDraft; label: string; hint?: string }[] = [
+  { key: "victories", label: "Victoires" },
+  { key: "defeats", label: "Défaites" },
+  { key: "coins", label: "Pièces" },
+  { key: "wonder", label: "Merveille" },
+  { key: "civil", label: "Civils" },
+  { key: "commercial", label: "Commerce" },
+  { key: "guilds", label: "Guildes" },
+];
+const SCIENCE_FIELDS: { key: keyof WonderDraft; label: string }[] = [
+  { key: "compass", label: "Compas" }, { key: "gears", label: "Roues" }, { key: "tablets", label: "Tablettes" }, { key: "wild", label: "Jokers" },
+];
+
+export function SevenWondersEditor(props: EditorProps) {
+  const { match, roundIndex, onSave } = props;
+  const ids = match.players.map((p) => p.id);
+  const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
+  const [drafts, setDrafts] = useState<Record<string, WonderDraft>>(() => {
+    const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
+    const round = existing !== undefined ? sevenWondersModule.decodeRound(existing) : null;
+    return Object.fromEntries(ids.map((id) => [id, round?.sheets[id] ? wonderDraftFrom(round.sheets[id]) : emptyWonderDraft()]));
+  });
+  const set = (id: string, key: keyof WonderDraft, value: string) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value } }));
+  const built = useMemo(() => buildWonders(drafts, ids, nameOf), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
+  const parts = (id: string) => { const sh = built.round?.sheets[id]; return sh ? wonderBreakdown(sh) : null; };
+
+  return (
+    <Frame
+      {...props}
+      canSave={!!built.round}
+      rulesFocus="decompte"
+      onValidate={() => built.round && onSave(sevenWondersModule.encodeRound(built.round))}
+      footer={
+        built.round ? (
+          <PlayerGrid players={match.players}>
+            {(p) => (<><span className="name">{p.name}</span><Score value={parts(p.id)?.total ?? 0} /></>)}
+          </PlayerGrid>
+        ) : (
+          <div className="error">{built.error}</div>
+        )
+      }
+    >
+      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons (−1 chacun) ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les sciences sont calculées pour toi.</p>
+      {match.players.map((p) => {
+        const d = drafts[p.id];
+        const b = parts(p.id);
+        const field = (f: { key: keyof WonderDraft; label: string; hint?: string }) => (
+          <label key={f.key}>
+            <span>{f.label}{f.hint && <span className="field-hint"> · {f.hint}</span>}</span>
+            <input className="field" inputMode="numeric" placeholder="0" aria-label={`${f.label} de ${p.name}`} value={d[f.key]} onChange={(e) => set(p.id, f.key, e.target.value)} />
+          </label>
+        );
+        return (
+          <div key={p.id} className="card rail-card">
+            <div className="rail-head">
+              <strong>{p.name}</strong>
+              <span className="rail-total">{b?.total ?? 0}</span>
+            </div>
+            <div className="rail-fields">{WONDER_FIELDS.map(field)}</div>
+            <div className="wonder-science">
+              <span className="label">Sciences</span>
+              <div className="rail-fields four">{SCIENCE_FIELDS.map(field)}</div>
+            </div>
+            {b && (
+              <div className="wonder-parts">
+                <span>Militaire <b>{b.military > 0 ? `+${b.military}` : b.military}</b></span>
+                <span>Pièces <b>{b.coins}</b></span>
+                <span>Sciences <b>{b.science}</b></span>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </Frame>
   );
 }

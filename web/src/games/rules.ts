@@ -218,6 +218,55 @@ const modeDetails: Record<string, string[]> = {
   ],
 };
 
+const sevenwonders = (): RulesDoc => ({
+  title: "7 Wonders",
+  summary:
+    "Jeu de cartes de 2 à 7 joueurs (jeu de base) : chacun dirige une cité et sa merveille, et construit des bâtiments pendant trois âges. " +
+    "À la fin du troisième âge, on additionne les points de sept catégories ; le plus gros total gagne.",
+  sections: [
+    {
+      id: "decompte",
+      title: "Le décompte final",
+      table: {
+        head: ["Catégorie", "Points"],
+        rows: [
+          ["Conflits militaires", "Jetons de victoire : 1 (âge I), 3 (âge II), 5 (âge III) ; jeton de défaite : −1"],
+          ["Pièces", "1 point pour 3 pièces (le reste ne compte pas)"],
+          ["Merveille", "Points des étapes construites"],
+          ["Bâtiments civils (bleus)", "Points inscrits sur les cartes"],
+          ["Bâtiments commerciaux (jaunes)", "Points inscrits sur les cartes (selon les cartes)"],
+          ["Guildes (violettes)", "Points selon la carte, d'après tes cartes et celles de tes voisins"],
+          ["Sciences (vertes)", "Voir ci-dessous"],
+        ],
+      },
+    },
+    {
+      id: "sciences",
+      title: "Les sciences",
+      paragraphs: [
+        "Trois symboles : compas, roue dentée et tablette. Pour chaque sorte, les points valent le nombre de symboles au carré (3 compas = 9 points). " +
+        "Chaque série de trois symboles différents rapporte 7 points de plus.",
+        "Un joker (guilde des scientifiques, certaines merveilles) compte comme le symbole de ton choix : l'appli le place là où il rapporte le plus.",
+      ],
+    },
+    {
+      id: "egalite",
+      title: "En cas d'égalité",
+      paragraphs: ["D'après la règle du jeu de base, celui qui a le plus de pièces l'emporte. L'appli montre simplement l'égalité : départage à la main si besoin (à vérifier dans ton livret)."],
+    },
+    {
+      id: "appli",
+      title: "Dans l'appli",
+      bullets: [
+        "Un seul décompte, à la fin du troisième âge : une fiche par joueur.",
+        "Victoires : additionne la valeur de tes jetons de victoire. Défaites : le nombre de jetons de défaite (chacun retire 1 point).",
+        "Pièces : le nombre de pièces restantes ; l'appli en déduit les points. Sciences : le nombre de symboles de chaque sorte, plus les jokers.",
+        "Les extensions (Cities, Leaders, Armada…) ne sont pas encore gérées.",
+      ],
+    },
+  ],
+});
+
 const rail = (): RulesDoc => ({
   title: "Les Aventuriers du Rail",
   summary:
@@ -342,7 +391,7 @@ const sushi = (): RulesDoc => ({
   ],
 });
 
-const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sushi, sixquiprend: sixQuiPrend, free };
+const DOCS: Record<string, () => RulesDoc> = { tarot, skyjo, rail, sevenwonders, sushi, sixquiprend: sixQuiPrend, free };
 
 /** Règles d'un jeu (par identifiant), ou `undefined` si le jeu n'en a pas. */
 export const rulesFor = (gameId: string): RulesDoc | undefined => DOCS[gameId]?.();

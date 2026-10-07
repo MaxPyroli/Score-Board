@@ -5,6 +5,7 @@ import {
 } from "../core";
 import { tarotModule, summarize } from "./tarot";
 import type { Entries } from "../guestEntry";
+import { sevenWondersModule } from "./sevenwonders";
 import { ASSISTANT_FEATURE } from "../assistant";
 import { SKYJO_DEFAULT_TARGET, buildSkyjo, calculerSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
 import {
@@ -12,7 +13,7 @@ import {
   negateRound, startOf, type CounterMode, type FreeRound,
 } from "./counter";
 import { SushiSetup } from "../ui/SushiSetup";
-import { CounterEditor, RailEditor, SkyjoEditor, SushiEditor, TarotEditor, WinnerEditor } from "../ui/editors";
+import { CounterEditor, RailEditor, SevenWondersEditor, SkyjoEditor, SushiEditor, TarotEditor, WinnerEditor } from "../ui/editors";
 import {
   SETTING_EDITION, SETTING_GLOBETROTTER, SETTING_LONGEST, SETTING_STATIONS, editionDefaults, editionOf, railModule,
 } from "./rail";
@@ -307,6 +308,27 @@ function freeCounterGame(): GameDefinition {
   };
 }
 
+/** 7 Wonders : un seul décompte, à la fin de la partie, avec une fiche par joueur. */
+function sevenWondersGame(): GameDefinition {
+  const t = (m: StoredMatch) => totals(sevenWondersModule, m);
+  return {
+    id: sevenWondersModule.id, displayName: sevenWondersModule.displayName,
+    tagline: "2 à 7 joueurs · conflits, pièces, merveille, bâtiments, guildes et sciences",
+    minPlayers: sevenWondersModule.minPlayers, maxPlayers: sevenWondersModule.maxPlayers,
+    options: [], numberOptions: [], fixedSettings: {},
+    totals: t,
+    roundScores: (m) => roundScores(sevenWondersModule, m),
+    describeRound: () => ({ headline: "Décompte final", detail: "" }),
+    status: (m) => (m.rounds.length === 0 ? "Fais le décompte final après le troisième âge." : null),
+    lowestWins: () => false,
+    canFinish: (m) => m.rounds.length > 0,
+    canAddRound: (m) => m.rounds.length === 0,
+    quickSteps: () => null,
+    leaderId: (m) => leader(m.players, t(m), false)?.id ?? null,
+    Editor: SevenWondersEditor,
+  };
+}
+
 /** Les Aventuriers du Rail : un décompte final (une fiche par joueur) ; les bonus en jeu dépendent de l'édition. */
 function railGame(): GameDefinition {
   const t = (m: StoredMatch) => totals(railModule, m);
@@ -460,7 +482,7 @@ function buildGames(): GameDefinition[] {
     Editor: SkyjoEditor,
   };
   return [
-    tarot, skyjo, railGame(), sushiGame(),
+    tarot, skyjo, railGame(), sevenWondersGame(), sushiGame(),
     counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false, true),
     freeCounterGame(),
   ];
