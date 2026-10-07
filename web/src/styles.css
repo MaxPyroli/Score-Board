@@ -497,14 +497,14 @@ button.card { text-align: left; width: 100%; }
 .ticket-main:active, .ticket-main.pressed, .ticket-trash:active, .ticket-trash.pressed {
   transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast);
 }
-/* Corbeille : bouton en relief à part, teinté, avec reflet et une ombre pleine en bas et sur le côté */
-.ticket-trash {
-  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
-  box-shadow: 4px var(--sink) 0 var(--cast), inset 0 3px 0 rgba(255, 255, 255, .45), inset 0 -4px 0 rgba(0, 0, 0, .10);
-}
-.ticket-trash:active, .ticket-trash.pressed {
-  transform: translate(4px, var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .16);
-  background: color-mix(in srgb, var(--danger) 22%, var(--surface));
+/* Corbeille : même forme qu'avant ; l'ombre portée par le bouton voisin tombe sur son côté gauche (elle disparaît quand ce bouton est enfoncé) */
+.ticket-trash { box-shadow: 0 var(--sink) 0 var(--cast), inset 5px 0 0 rgba(0, 0, 0, .17); }
+.card.ticket:has(.ticket-main:active, .ticket-main.pressed) .ticket-trash:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
+.ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 rgba(0, 0, 0, .17); }
+@media (prefers-color-scheme: dark) {
+  .ticket-trash, .ticket-trash:active, .ticket-trash.pressed { --edge: rgba(0, 0, 0, .5); }
+  .ticket-trash { box-shadow: 0 var(--sink) 0 var(--cast), inset 5px 0 0 var(--edge); }
+  .ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 var(--edge); }
 }
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
