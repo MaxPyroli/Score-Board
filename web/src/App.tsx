@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
 import { useStickyEntries } from "./stickyEntries";
-import { SETTING_FINISHED, finishMatch, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
+import { SETTING_FINISHED, finishMatch, isLobby, lobbyJoin, JOIN_REQUEST, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
 import { UpdateBanner, useAppUpdate } from "./pwa";
 import { HistoryScreen, HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
+import { GuestLobby, LobbyScreen } from "./ui/lobby";
+import { rememberGroup } from "./store";
 import type { ClaimData } from "./backend";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
 
@@ -85,8 +87,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const [shareOpen, setShareOpen] = useState(false);
   // Joueur que l'hôte dit être : gardé ici car il peut être annoncé avant que le partage (re)démarre.
   const hostClaim = useRef<{ matchId: string; data: ClaimData } | null>(null);
-  const startSharing = (matchId: string, resumeCode?: string) => {
-    const m = matches.find((x) => x.id === matchId);
+  const startSharing = (matchId: string, resumeCode?: string, created?: StoredMatch) => {
+    const m = created ?? matches.find((x) => x.id === matchId);
     if (!m) return;
     hostRef.current?.stop();
     hostRef.current = new HostSession(m, (st) => {
@@ -135,7 +137,14 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     const original = matches.find((x) => x.id === host.matchId);
     if (!original) return;
     let current = original;
+    const game = gameById(original.moduleId);
     for (const c of host.claims) {
+      // Salle d'attente : un invité arrive avec son pseudo, l'hôte lui crée sa place.
+      if (c.p === JOIN_REQUEST && c.n && game && isLobby(current)) {
+        const joined = lobbyJoin(current, c.uid, c.n, game.maxPlayers);
+        if (joined) current = joined;
+        continue;
+      }
       const renamed = c.n && c.p ? renamePlayer(current, c.p, c.n) : null;
       if (renamed) current = renamed;
     }
@@ -216,6 +225,13 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   if (screen.kind === "join") {
     const live = join.kind === "live" ? join : null;
     const liveGame = live && gameById(live.match.moduleId);
+    if (live && liveGame && isLobby(live.match))
+      return (
+        <GuestLobby
+          match={live.match} game={liveGame} myUid={live.myUid} online={live.online} connected={live.connected} ended={live.ended}
+          onClaim={(d) => spectatorRef.current?.claim(d)} onBack={nav.back}
+        />
+      );
     if (live && liveGame)
       return (
         <MatchScreen
@@ -240,6 +256,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         game={game}
         onBack={nav.back}
         onStart={(m) => { save(m); nav.replace({ kind: "match", matchId: m.id }); }}
+        onInvite={(m) => { save(m); nav.replace({ kind: "match", matchId: m.id }); startSharing(m.id, undefined, m); }}
       />
     );
   }
@@ -247,6 +264,20 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const match = matches.find((m) => m.id === screen.matchId);
   const game = match && gameById(match.moduleId);
   if (!match || !game) return <Missing onBack={nav.back} />;
+
+  if (screen.kind === "match" && isLobby(match)) {
+    const hosting = host?.matchId === match.id ? host : null;
+    return (
+      <LobbyScreen
+        match={match} game={game} host={hosting} online={hosting?.status === "sharing" ? hosting.online : []}
+        onChange={save}
+        onStart={(m) => { rememberGroup(m.players.map((p) => p.name)); save(m); }}
+        onBack={nav.back}
+        onDelete={() => { nav.back(); if (hosting) stopSharing(); remove(match.id); }}
+        onRetry={() => startSharing(match.id)}
+      />
+    );
+  }
 
   if (screen.kind === "match")
     return (

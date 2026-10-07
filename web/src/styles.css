@@ -620,3 +620,27 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 }
 @keyframes focus-ping { from { transform: scale(1.6); opacity: .2; } 40% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .focus-ring { animation: none; opacity: 0; } }
+
+/* Salle d'attente */
+.lobby-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.lobby-row { display: flex; align-items: center; gap: 8px; }
+.lobby-row.me strong { color: var(--primary); }
+.lobby-row .btn { flex: none; }
+.lobby-dot { flex: none; width: 1.1em; display: inline-flex; justify-content: center; }
+.lobby-dot .dot { margin: 0; }
+.lobby-tag { flex: none; }
+
+/* Carte « d'autres jeux arrivent » : même gabarit que les jeux, en pointillés, sans bouton */
+.card.game.soon {
+  background: transparent; color: var(--text); border: 2.5px dashed color-mix(in srgb, var(--ink) 40%, transparent); box-shadow: none;
+  cursor: default; gap: 4px; min-height: 92px;
+}
+.game.soon strong { text-shadow: none; }
+.game.soon .hint { color: var(--muted); }
+.game.soon a { color: var(--primary); font-weight: 700; margin-top: 4px; align-self: flex-start; }
+.card.game.soon:active { transform: none; box-shadow: none; }
+.game.soon .hint, .game.soon strong { max-width: none !important; }
+.share-compact { display: flex; align-items: center; gap: 14px; }
+.share-compact .qr { flex: none; width: 150px; height: 150px; margin: 0; }
+.share-compact .code { font-size: 1.9rem; margin: 2px 0; text-align: left; }
+.share-compact .hint { margin: 0; }

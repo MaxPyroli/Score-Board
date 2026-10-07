@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
-import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
+import { finishMatch, isFinished, isLobby, SETTING_LOBBY, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
+import { sharingConfigured } from "../backend";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
@@ -83,7 +84,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               const lead = m.rounds.length > 0 ? game.leaderId(m) : null;
               return (
                 <MatchTicket
-                  key={m.id} match={m} game={game} status="En cours" onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
+                  key={m.id} match={m} game={game} status={isLobby(m) ? "En attente" : "En cours"} onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
                   scores={m.players.map((p) => ({ name: p.name, total: plain(totals[p.id] ?? 0), lead: p.id === lead }))}
                 />
               );
@@ -120,6 +121,11 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
                 </button>
               );
             })}
+            <div className="card game soon">
+              <strong>D'autres jeux arrivent…</strong>
+              <span className="hint">L'appli grandit petit à petit : de nouveaux jeux et de nouvelles fonctions arrivent à chaque version.</span>
+              <a href={`${CONTACT_URL}/new?title=${encodeURIComponent("Idée de jeu : ")}`} target="_blank" rel="noreferrer">Proposer un jeu</a>
+            </div>
           </div>
         </Section>
       </main>
@@ -203,10 +209,12 @@ const loadNames = (): string[] => {
   }
 };
 
-export function NewMatchScreen({ game, onBack, onStart }: {
+export function NewMatchScreen({ game, onBack, onStart, onInvite }: {
   game: GameDefinition;
   onBack(): void;
   onStart(m: StoredMatch): void;
+  /** Crée la partie en salle d'attente et la partage tout de suite : les invités ajoutent eux-mêmes leur pseudo. */
+  onInvite(m: StoredMatch): void;
 }) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [count, setCount] = useState(Math.max(game.minPlayers, Math.min(4, game.maxPlayers)));
@@ -247,7 +255,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     return t !== "" && !(Number(t.replace(",", ".")) > 0);
   });
 
-  const start = () => {
+  const build = (): StoredMatch => {
     const players: Player[] = Array.from({ length: count }, (_, i) => ({ id: newId(), name: effective(i) }));
     try {
       localStorage.setItem(NAMES_KEY, JSON.stringify(players.map((p) => p.name)));
@@ -261,7 +269,12 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       const t = (values[o.key] ?? "").trim();
       if (isVisible(o) && t !== "") settings[o.key] = t.replace(",", ".");
     }
-    onStart({ id: newId(), moduleId: game.id, players, rounds: [], settings, createdAt: Date.now() });
+    return { id: newId(), moduleId: game.id, players, rounds: [], settings, createdAt: Date.now() };
+  };
+  const start = () => onStart(build());
+  const invite = () => {
+    const m = build();
+    onInvite({ ...m, settings: { ...m.settings, [SETTING_LOBBY]: "true" } });
   };
 
   return (
@@ -296,6 +309,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
             ))}
           </div>
           {duplicates && <p className="error">Deux joueurs ont le même nom.</p>}
+          {sharingConfigured && <p className="hint">Chacun veut jouer sur son téléphone ? Touche « Inviter » : tu partages un code et chaque invité tape son pseudo lui-même.</p>}
         </Section>
         {game.setup && <game.setup.Component values={values} setMany={(patch) => setValues((prev) => ({ ...prev, ...patch }))} players={count} />}
         {(game.choiceOptions?.length ?? 0) > 0 && game.choiceOptions!.map((c) => (
@@ -342,7 +356,14 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       </main>
       <footer className="bottom">
         {setupProblem && <p className="error bottom-info">{setupProblem}</p>}
-        <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
+        {sharingConfigured ? (
+          <div className="buttons">
+            <button className="btn outline" disabled={duplicates || badNumber || !!setupProblem} onClick={invite}>Inviter</button>
+            <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer</button>
+          </div>
+        ) : (
+          <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
+        )}
       </footer>
     </div>
   );

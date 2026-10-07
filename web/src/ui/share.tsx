@@ -6,19 +6,41 @@ import { QrScanner } from "./QrScanner";
 import { CODE_LENGTH, joinUrl, normalizeCode, type HostStatus, type JoinState } from "../session";
 import { sharingConfigured } from "../backend";
 
+/** Code, QR code et nombre d'appareils connectés : ce que l'hôte montre aux autres joueurs. */
+export function SharePanel({ host, compact }: { host: { status: HostStatus; code: string; viewers: number }; compact?: boolean }) {
+  const [qr, setQr] = useState<string | null>(null);
+  const code = host.code;
+  useEffect(() => {
+    QRCode.toDataURL(joinUrl(code), { margin: 1, width: 220 }).then(setQr, () => setQr(null));
+  }, [code]);
+  const count = host.status === "starting" ? "Connexion…" : `${host.viewers} appareil${host.viewers > 1 ? "s" : ""} connecté${host.viewers > 1 ? "s" : ""}`;
+  if (compact)
+    return (
+      <div className="share-compact">
+        {qr && <img className="qr" src={qr} alt={`QR code de la partie ${host.code}`} width={150} height={150} />}
+        <div>
+          <p className="hint">Sur l'autre téléphone : « Rejoindre », puis ce code ou le QR code.</p>
+          <div className="code">{host.code}</div>
+          <p className="hint">{count}</p>
+        </div>
+      </div>
+    );
+  return (
+    <>
+      <p className="hint">Sur l'autre téléphone : « Rejoindre » puis ce code, ou scanner le QR code avec l'appareil photo.</p>
+      <div className="code">{host.code}</div>
+      {qr && <img className="qr" src={qr} alt={`QR code de la partie ${host.code}`} width={220} height={220} />}
+      <p className="hint center">{count}</p>
+    </>
+  );
+}
+
 export function ShareDialog({ host, onStart, onStop, onClose }: {
   host: { status: HostStatus; code: string; viewers: number } | null;
   onStart(): void;
   onStop(): void;
   onClose(): void;
 }) {
-  const [qr, setQr] = useState<string | null>(null);
-  const code = host?.code;
-  useEffect(() => {
-    if (!code) { setQr(null); return; }
-    QRCode.toDataURL(joinUrl(code), { margin: 1, width: 220 }).then(setQr, () => setQr(null));
-  }, [code]);
-
   return (
     <Dialog title="Partager la partie" onClose={onClose}>
       {!sharingConfigured ? (
@@ -44,12 +66,7 @@ export function ShareDialog({ host, onStart, onStop, onClose }: {
         </>
       ) : (
         <>
-          <p className="hint">Sur l'autre téléphone : « Rejoindre » puis ce code, ou scanner le QR code avec l'appareil photo.</p>
-          <div className="code">{host.code}</div>
-          {qr && <img className="qr" src={qr} alt={`QR code de la partie ${host.code}`} width={220} height={220} />}
-          <p className="hint center">
-            {host.status === "starting" ? "Connexion…" : `${host.viewers} appareil${host.viewers > 1 ? "s" : ""} connecté${host.viewers > 1 ? "s" : ""}`}
-          </p>
+          <SharePanel host={host} />
           <div className="buttons">
             <button className="btn outline" onClick={onClose}>Fermer</button>
             <button className="btn danger" onClick={onStop}>Arrêter le partage</button>

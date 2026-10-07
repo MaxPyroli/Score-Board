@@ -3,7 +3,9 @@
 Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnalité (pas pour un correctif).
 
 ## v0.015 · 7 oct. 2026
-- Rejoindre : bouton pour scanner le QR code de l'hôte avec l'appareil photo.
+- Salle d'attente : à la création d'une partie, « Inviter » partage un code / QR code tout de suite ; chaque invité tape son pseudo sur son téléphone et apparaît tout seul chez l'hôte, qui lance ensuite la partie.
+- Rejoindre : bouton pour scanner le QR code de l'hôte avec l'appareil photo (zoom et mise au point).
+- Accueil : carte « D'autres jeux arrivent » avec un lien pour proposer un jeu ; la corbeille d'une partie est un bouton à part.
 - Parties en ligne plus fluides : les pastilles « connecté » ne clignotent plus à chaque micro-coupure, et un score déjà envoyé n'est plus perdu si l'appareil se déconnecte.
 - Parties en cours et historique en fiches façon billet ; couronne sur le joueur en tête ; point vert qui respire pour les joueurs connectés.
 - Skyjo et 6 qui prend : « Le premier à X a perdu » ; un champ de score vide compte 0.
