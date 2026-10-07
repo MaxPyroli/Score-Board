@@ -121,16 +121,12 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
                 </button>
               );
             })}
-            <div className="card game soon">
-              <span className="box-frame" aria-hidden="true" />
-              <span className="soon-art" aria-hidden="true">
-                <Meeple /><Meeple /><Meeple /><span className="soon-q">?</span>
-              </span>
-              <span className="soon-stamp" aria-hidden="true">Bientôt</span>
-              <strong>D'autres jeux arrivent…</strong>
-              <span className="hint">L'appli grandit petit à petit : de nouveaux jeux et de nouvelles fonctions arrivent à chaque version.</span>
-              <a href={`${CONTACT_URL}/new?title=${encodeURIComponent("Idée de jeu : ")}`} target="_blank" rel="noreferrer">Proposer un jeu →</a>
-            </div>
+          </div>
+          {/* Emplacement réservé : comme s'il manquait une carte. Hors de la grille des jeux, pour ne pas en changer la hauteur. */}
+          <div className="slot-soon">
+            <strong>D'autres jeux arrivent</strong>
+            <span className="hint">L'appli grandit à chaque version : nouveaux jeux et nouvelles fonctions.</span>
+            <a href={`${CONTACT_URL}/new?title=${encodeURIComponent("Idée de jeu : ")}`} target="_blank" rel="noreferrer">Proposer un jeu</a>
           </div>
         </Section>
       </main>
