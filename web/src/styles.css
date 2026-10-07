@@ -497,7 +497,15 @@ button.card { text-align: left; width: 100%; }
 .ticket-main:active, .ticket-main.pressed, .ticket-trash:active, .ticket-trash.pressed {
   transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast);
 }
-.ticket-trash:active, .ticket-trash.pressed { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+/* Corbeille : bouton en relief à part, teinté, avec reflet et une ombre pleine en bas et sur le côté */
+.ticket-trash {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  box-shadow: 4px var(--sink) 0 var(--cast), inset 0 3px 0 rgba(255, 255, 255, .45), inset 0 -4px 0 rgba(0, 0, 0, .10);
+}
+.ticket-trash:active, .ticket-trash.pressed {
+  transform: translate(4px, var(--sink)); box-shadow: 0 0 0 var(--cast), inset 0 4px 0 rgba(0, 0, 0, .16);
+  background: color-mix(in srgb, var(--danger) 22%, var(--surface));
+}
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
   background: linear-gradient(180deg, var(--g1, #1f6f5c), var(--g2, #0f4c3f)); color: #fff;
@@ -630,16 +638,36 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .lobby-dot .dot { margin: 0; }
 .lobby-tag { flex: none; }
 
-/* Carte « d'autres jeux arrivent » : même gabarit que les jeux, en pointillés, sans bouton */
+/* Carte « d'autres jeux arrivent » : une boîte de jeu en carton brut (kraft), même gabarit que les jeux mais à plat (pas d'ombre ni d'enfoncement : ce n'est pas un bouton) */
 .card.game.soon {
-  background: transparent; color: var(--text); border: 2.5px dashed color-mix(in srgb, var(--ink) 40%, transparent); box-shadow: none;
-  cursor: default; gap: 4px; min-height: 92px;
+  background: linear-gradient(135deg, #ecd3a8, #cfa56d); color: #3b2a17; border-color: #3b2a17; box-shadow: none; cursor: default; min-height: 104px; gap: 3px;
+  --sink: 0px;
 }
-.game.soon strong { text-shadow: none; }
-.game.soon .hint { color: var(--muted); }
-.game.soon a { color: var(--primary); font-weight: 700; margin-top: 4px; align-self: flex-start; }
+.game.soon .box-frame { border-color: rgba(59, 42, 23, .5); }
+.game.soon strong { text-shadow: none; font-size: 1.05rem; }
+.game.soon .hint { color: #5a4528; }
+.game.soon a { position: relative; z-index: 2; color: #3b2a17; font-weight: 800; margin-top: 4px; align-self: flex-start; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.soon-art { position: absolute; right: 8px; bottom: 6px; display: flex; align-items: flex-end; gap: 0; opacity: .3; z-index: 0; pointer-events: none; }
+.soon-art .meeple { color: #3b2a17; filter: none; width: 34px; height: 34px; }
+.soon-art .meeple:nth-child(1) { transform: rotate(-14deg); width: 28px; height: 28px; }
+.soon-art .meeple:nth-child(2) { transform: rotate(8deg); }
+.soon-art .meeple:nth-child(3) { transform: rotate(-4deg); width: 24px; height: 24px; }
+.soon-q { font-size: 3.6rem; font-weight: 900; line-height: .8; margin-left: 4px; color: #3b2a17; }
+.soon-stamp {
+  position: absolute; z-index: 2; top: 10px; right: 12px; padding: 2px 9px; border: 2.5px solid #8a3b24; border-radius: 6px; outline: 1.2px solid #8a3b24; outline-offset: 2px;
+  color: #8a3b24; font-size: .66rem; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; transform: rotate(-6deg); background: rgba(255, 255, 255, .25);
+}
+@media (prefers-color-scheme: dark) {
+  .card.game.soon { background: linear-gradient(135deg, #5f4d38, #3f3224); color: #f3e6d0; border-color: #f3efe6; }
+  .game.soon .box-frame { border-color: rgba(243, 230, 208, .4); }
+  .game.soon .hint { color: #d9c7a8; }
+  .game.soon a { color: #f3e6d0; }
+  .soon-art .meeple, .soon-q { color: #f3e6d0; }
+  .soon-stamp { color: #ff9c85; border-color: #ff9c85; outline-color: #ff9c85; background: rgba(0, 0, 0, .18); }
+}
 .card.game.soon:active { transform: none; box-shadow: none; }
-.game.soon .hint, .game.soon strong { max-width: none !important; }
+.game.soon .hint { max-width: 74%; }
+.game.soon strong { max-width: 62%; }
 .share-compact { display: flex; align-items: center; gap: 14px; }
 .share-compact .qr { flex: none; width: 150px; height: 150px; margin: 0; }
 .share-compact .code { font-size: 1.9rem; margin: 2px 0; text-align: left; }
