@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ClaimsGrace } from "./claimsGrace";
-import { buildLenses, codeFromScanned } from "./ui/QrScanner";
+import { codeFromScanned, pickMainCamera } from "./ui/QrScanner";
 
 describe("lissage des signatures (anti-clignotement)", () => {
   it("une signature disparue reste affichée pendant le délai, puis s'efface", () => {
@@ -34,16 +34,15 @@ describe("QR code lu", () => {
   });
 });
 
-describe("objectifs de l'appareil photo", () => {
+describe("objectif de l'appareil photo", () => {
   const dev = (label: string) => ({ deviceId: label, label, kind: "videoinput" }) as MediaDeviceInfo;
-  it("repère grand-angle, principal et télé d'après leurs noms, du plus large au plus long", () => {
-    const l = buildLenses([dev("Back Triple Camera"), dev("Back Ultra Wide Camera"), dev("Back Telephoto Camera"), dev("Front Camera")]);
-    expect(l.map((x) => [x.device.label, x.nominal])).toEqual([["Back Ultra Wide Camera", 0.5], ["Back Triple Camera", 1], ["Back Telephoto Camera", 2]]);
-    expect(l.some((x) => x.hint)).toBe(true);
+  it("prend l'objectif principal arrière, pas le grand-angle ni la caméra avant", () => {
+    expect(pickMainCamera([dev("Back Ultra Wide Camera"), dev("Front Camera"), dev("Back Triple Camera")])?.label).toBe("Back Triple Camera");
+    expect(pickMainCamera([dev("camera2 1, facing front"), dev("camera2 0, facing back"), dev("camera2 2, facing back")])?.label).toBe("camera2 0, facing back");
   });
-  it("écarte les objectifs inutiles (macro, profondeur) et la caméra avant", () => {
-    const l = buildLenses([dev("camera2 0, facing back"), dev("camera2 1, facing front"), dev("camera2 2, facing back macro"), dev("camera2 3, facing back")]);
-    expect(l.map((x) => x.device.label)).toEqual(["camera2 0, facing back", "camera2 3, facing back"]);
-    expect(l.some((x) => x.hint)).toBe(false); // aucun indice : les grossissements ne seront pas affichés
+  it("écarte macro et profondeur ; sans indice, prend ce qu'il y a", () => {
+    expect(pickMainCamera([dev("camera2 2, facing back macro"), dev("camera2 0, facing back")])?.label).toBe("camera2 0, facing back");
+    expect(pickMainCamera([dev("camera")])?.label).toBe("camera");
+    expect(pickMainCamera([])).toBeUndefined();
   });
 });

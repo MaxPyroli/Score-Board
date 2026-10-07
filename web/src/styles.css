@@ -617,5 +617,3 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 }
 @keyframes focus-ping { from { transform: scale(1.6); opacity: .2; } 40% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .focus-ring { animation: none; opacity: 0; } }
-.lens-chips { display: flex; gap: 8px; justify-content: center; }
-.scanner-lens { text-align: center; color: var(--muted); font-size: .72rem; }
