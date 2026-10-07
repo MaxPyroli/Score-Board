@@ -668,9 +668,23 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .btn.outline:not(:active):not(.pressed),
 .card.choice:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
 
-/* 7 Wonders */
+/* 7 Wonders : une couleur et un symbole par type de points */
 .rail-fields.four { grid-template-columns: repeat(4, 1fr); }
-.wonder-science { display: flex; flex-direction: column; gap: 6px; }
-.field-hint { font-weight: 400; opacity: .8; }
-.wonder-parts { display: flex; justify-content: space-between; gap: 8px; font-size: .82rem; color: var(--muted); }
-.wonder-parts b { color: var(--text); }
+.wonder-science { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px; background: color-mix(in srgb, #2e8b57 10%, transparent); border: 2px solid color-mix(in srgb, #2e8b57 45%, transparent); }
+.wonder-science .label { color: #2e8b57; font-weight: 700; text-transform: none; font-size: .85rem; }
+@media (prefers-color-scheme: dark) { .wonder-science .label { color: #6fd29a; } }
+.wf { padding: 6px 6px 8px; border-radius: 10px; background: color-mix(in srgb, var(--c) 14%, transparent); border: 2px solid color-mix(in srgb, var(--c) 55%, transparent); border-top: 5px solid var(--c); }
+.rail-fields .wf { color: var(--text); }
+.wf-label { font-size: .74rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wf .field { min-height: 38px; padding: 6px 8px; }
+.wonder-parts { display: flex; justify-content: space-around; gap: 8px; font-size: .9rem; }
+.wonder-parts > span { padding: 2px 10px; border-radius: 999px; border: 2px solid color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); }
+.wonder-parts b { font-weight: 800; }
+
+/* Boutons ronds de la barre du haut (retour, partager, menu) : même épaisseur de trait que les autres boutons */
+.topbar .icon.round.back, .topbar .icon.round.plain { border-width: 3px; }
+.rail-fields > *, .wf .field { min-width: 0; }
+.rail-fields.four { gap: 6px; }
+.wonder-science .wf { padding: 5px 4px 6px; }
+.rail-fields.four { grid-template-columns: repeat(2, 1fr); }
+.wonder-science .wf { padding: 6px 6px 8px; }

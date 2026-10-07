@@ -552,17 +552,22 @@ export function SushiEditor(props: EditorProps) {
 
 // ---------------------------------------------------------------- 7 Wonders
 
-const WONDER_FIELDS: { key: keyof WonderDraft; label: string; hint?: string }[] = [
-  { key: "victories", label: "Victoires" },
-  { key: "defeats", label: "Défaites" },
-  { key: "coins", label: "Pièces" },
-  { key: "wonder", label: "Merveille" },
-  { key: "civil", label: "Civils" },
-  { key: "commercial", label: "Commerce" },
-  { key: "guilds", label: "Guildes" },
+/** Une couleur et un symbole par type de points, comme les cartes du jeu : rouge militaire, bleu civil, jaune commerce, violet guildes, vert sciences. */
+interface WonderField { key: keyof WonderDraft; label: string; icon: string; color: string }
+const WONDER_FIELDS: WonderField[] = [
+  { key: "victories", label: "Victoires", icon: "⚔️", color: "#c0392b" },
+  { key: "defeats", label: "Défaites", icon: "🩸", color: "#8e2a22" },
+  { key: "coins", label: "Pièces", icon: "🪙", color: "#c47f17" },
+  { key: "wonder", label: "Merveille", icon: "🏛️", color: "#a08556" },
+  { key: "civil", label: "Civils", icon: "🏺", color: "#2f6fb5" },
+  { key: "commercial", label: "Commerce", icon: "⚖️", color: "#d4a70a" },
+  { key: "guilds", label: "Guildes", icon: "👑", color: "#7b4aa8" },
 ];
-const SCIENCE_FIELDS: { key: keyof WonderDraft; label: string }[] = [
-  { key: "compass", label: "Compas" }, { key: "gears", label: "Roues" }, { key: "tablets", label: "Tablettes" }, { key: "wild", label: "Jokers" },
+const SCIENCE_FIELDS: WonderField[] = [
+  { key: "compass", label: "Compas", icon: "🧭", color: "#2e8b57" },
+  { key: "gears", label: "Roues", icon: "⚙️", color: "#2e8b57" },
+  { key: "tablets", label: "Tablettes", icon: "📜", color: "#2e8b57" },
+  { key: "wild", label: "Jokers", icon: "✨", color: "#2e8b57" },
 ];
 
 export function SevenWondersEditor(props: EditorProps) {
@@ -594,13 +599,13 @@ export function SevenWondersEditor(props: EditorProps) {
         )
       }
     >
-      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons (−1 chacun) ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les sciences sont calculées pour toi.</p>
+      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les sciences sont calculées pour toi.</p>
       {match.players.map((p) => {
         const d = drafts[p.id];
         const b = parts(p.id);
-        const field = (f: { key: keyof WonderDraft; label: string; hint?: string }) => (
-          <label key={f.key}>
-            <span>{f.label}{f.hint && <span className="field-hint"> · {f.hint}</span>}</span>
+        const field = (f: WonderField) => (
+          <label key={f.key} className="wf" style={{ "--c": f.color } as React.CSSProperties}>
+            <span className="wf-label"><span aria-hidden="true">{f.icon}</span> {f.label}</span>
             <input className="field" inputMode="numeric" placeholder="0" aria-label={`${f.label} de ${p.name}`} value={d[f.key]} onChange={(e) => set(p.id, f.key, e.target.value)} />
           </label>
         );
@@ -612,14 +617,14 @@ export function SevenWondersEditor(props: EditorProps) {
             </div>
             <div className="rail-fields">{WONDER_FIELDS.map(field)}</div>
             <div className="wonder-science">
-              <span className="label">Sciences</span>
+              <span className="label">🧪 Sciences (cartes vertes)</span>
               <div className="rail-fields four">{SCIENCE_FIELDS.map(field)}</div>
             </div>
             {b && (
               <div className="wonder-parts">
-                <span>Militaire <b>{b.military > 0 ? `+${b.military}` : b.military}</b></span>
-                <span>Pièces <b>{b.coins}</b></span>
-                <span>Sciences <b>{b.science}</b></span>
+                <span style={{ "--c": "#c0392b" } as React.CSSProperties}>⚔️ <b>{b.military > 0 ? `+${b.military}` : b.military}</b></span>
+                <span style={{ "--c": "#c47f17" } as React.CSSProperties}>🪙 <b>{b.coins}</b></span>
+                <span style={{ "--c": "#2e8b57" } as React.CSSProperties}>🧪 <b>{b.science}</b></span>
               </div>
             )}
           </div>

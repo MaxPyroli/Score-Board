@@ -489,6 +489,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
     setRenameOpen(false);
   };
   const quickSteps = game.quickSteps(match);
+  // Jeux qui n'ont qu'un décompte en fin de partie (pas de manches successives).
+  const singleCount = game.id === "rail" || game.id === "sevenwonders";
   // Partage actif : les scores se saisissent dans le panneau « scores » (un seul bouton Valider), pas besoin du bouton « Nouvelle manche ».
   const hostEntryShown = !readOnly && !!game.guestEntry?.(match) && !!sharing && !finished && !!onHostEntries;
 
@@ -594,7 +596,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         )}
 
         {match.rounds.length === 0 ? (
-          <p className="hint empty">{game.id === "rail" ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && !hostEntryShown && <><br />Appuie sur « {game.id === "rail" ? "Nouveau décompte" : "Nouvelle manche"} » pour commencer.</>}</p>
+          <p className="hint empty">{singleCount ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && !hostEntryShown && <><br />Appuie sur « {singleCount ? "Décompte final" : "Nouvelle manche"} » pour commencer.</>}</p>
         ) : (
           <div className="list">
             {match.rounds.map((_, i) => match.rounds.length - 1 - i).map((index) => {
@@ -623,7 +625,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         <div className="spacer big" />
       </main>
 
-      {!readOnly && !quickSteps && !hostEntryShown && (game.canAddRound?.(match) ?? true) && <button className="fab" onClick={onNewRound}>{game.id === "rail" ? "+ Décompte final" : "+ Nouvelle manche"}</button>}
+      {!readOnly && !quickSteps && !hostEntryShown && (game.canAddRound?.(match) ?? true) && <button className="fab" onClick={onNewRound}>{singleCount ? "+ Décompte final" : "+ Nouvelle manche"}</button>}
 
       {undone && (
         <div className="toast" role="status">
