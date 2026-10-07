@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { entriesFromClaims, takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
-import { SETTING_FINISHED, finishMatch, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
+import { takenPlayers, tryBuildRound, type Entry } from "./guestEntry";
+import { useStickyEntries } from "./stickyEntries";
+import { SETTING_FINISHED, finishMatch, isLobby, lobbyJoin, JOIN_REQUEST, type StoredMatch, isFinished, matchWithRound, matchWithRoundReplaced, matchWithoutRound, renamePlayer } from "./core";
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
 import { UpdateBanner, useAppUpdate } from "./pwa";
 import { HistoryScreen, HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
+import { GuestLobby, LobbyScreen } from "./ui/lobby";
+import { rememberGroup } from "./store";
 import type { ClaimData } from "./backend";
 import { codeFromHash, HostSession, SpectatorSession, type HostInfo, type JoinState } from "./session";
 
@@ -84,8 +87,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const [shareOpen, setShareOpen] = useState(false);
   // Joueur que l'hôte dit être : gardé ici car il peut être annoncé avant que le partage (re)démarre.
   const hostClaim = useRef<{ matchId: string; data: ClaimData } | null>(null);
-  const startSharing = (matchId: string, resumeCode?: string) => {
-    const m = matches.find((x) => x.id === matchId);
+  const startSharing = (matchId: string, resumeCode?: string, created?: StoredMatch) => {
+    const m = created ?? matches.find((x) => x.id === matchId);
     if (!m) return;
     hostRef.current?.stop();
     hostRef.current = new HostSession(m, (st) => {
@@ -107,6 +110,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   // Saisies tapées par l'hôte pour des joueurs sans l'appli (valables pour une seule manche).
   const [hostEntries, setHostEntries] = useState<{ matchId: string; round: number; entries: Record<string, Entry> } | null>(null);
   const addedRound = useRef<string>("");
+  const hostMatch = host ? matches.find((x) => x.id === host.matchId) : undefined;
+  const hostClaimed = useStickyEntries(host?.claims ?? [], hostMatch);
   // Le garde-fou « une seule fois par manche » retombe dès que le nombre de manches change (ajout, annulation).
   const hostRounds = host ? matches.find((x) => x.id === host.matchId)?.rounds.length : undefined;
   useEffect(() => { addedRound.current = ""; }, [hostRounds]);
@@ -118,21 +123,28 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     if (!m || !g?.guestEntry?.(m) || m.settings[SETTING_FINISHED] === "true") return;
     const round = m.rounds.length;
     const mine = hostEntries && hostEntries.matchId === m.id && hostEntries.round === round ? hostEntries.entries : {};
-    const attempt = tryBuildRound(g, m, { ...mine, ...entriesFromClaims(host.claims, m, round) });
+    const attempt = tryBuildRound(g, m, { ...mine, ...hostClaimed });
     const key = `${m.id}:${round}`;
     if ("raw" in attempt && addedRound.current !== key) {
       addedRound.current = key; // une seule fois par manche, même si l'effet se redéclenche
       save(endIfReached(m, matchWithRound(m, attempt.raw)));
       setHostEntries(null);
     }
-  }, [host?.claims, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hostClaimed, hostEntries, matches]); // eslint-disable-line react-hooks/exhaustive-deps
   // Un invité a changé de nom : l'hôte (version de référence) l'applique si le nom est valide.
   useEffect(() => {
     if (!host) return;
     const original = matches.find((x) => x.id === host.matchId);
     if (!original) return;
     let current = original;
+    const game = gameById(original.moduleId);
     for (const c of host.claims) {
+      // Salle d'attente : un invité arrive avec son pseudo, l'hôte lui crée sa place.
+      if (c.p === JOIN_REQUEST && c.n && game && isLobby(current)) {
+        const joined = lobbyJoin(current, c.uid, c.n, game.maxPlayers);
+        if (joined) current = joined;
+        continue;
+      }
       const renamed = c.n && c.p ? renamePlayer(current, c.p, c.n) : null;
       if (renamed) current = renamed;
     }
@@ -142,6 +154,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   // --- Rejoindre (spectateur) ---
   const spectatorRef = useRef<SpectatorSession | null>(null);
   const [join, setJoin] = useState<JoinState>({ kind: "idle" });
+  const liveEntries = useStickyEntries(join.kind === "live" ? join.claims : [], join.kind === "live" ? join.match : null);
   const [initialCode, setInitialCode] = useState<string | undefined>();
   const startJoin = (code: string) => {
     spectatorRef.current?.stop();
@@ -212,12 +225,19 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   if (screen.kind === "join") {
     const live = join.kind === "live" ? join : null;
     const liveGame = live && gameById(live.match.moduleId);
+    if (live && liveGame && isLobby(live.match))
+      return (
+        <GuestLobby
+          match={live.match} game={liveGame} myUid={live.myUid} online={live.online} connected={live.connected} ended={live.ended}
+          onClaim={(d) => spectatorRef.current?.claim(d)} onBack={nav.back}
+        />
+      );
     if (live && liveGame)
       return (
         <MatchScreen
           match={live.match} game={liveGame} readOnly askWho title={`${liveGame.displayName} · lecture seule`}
           online={live.online} onClaim={(d) => spectatorRef.current?.claim(d)} ended={live.ended}
-          entries={entriesFromClaims(live.claims, live.match, live.match.rounds.length)}
+          entries={liveEntries}
           taken={takenPlayers(live.claims, live.myUid)}
           onBack={nav.back} onNewRound={() => {}} onEditRound={() => {}} onChange={() => {}} onDelete={() => {}}
           note={live.ended
@@ -236,6 +256,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         game={game}
         onBack={nav.back}
         onStart={(m) => { save(m); nav.replace({ kind: "match", matchId: m.id }); }}
+        onInvite={(m) => { save(m); nav.replace({ kind: "match", matchId: m.id }); startSharing(m.id, undefined, m); }}
       />
     );
   }
@@ -243,6 +264,20 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   const match = matches.find((m) => m.id === screen.matchId);
   const game = match && gameById(match.moduleId);
   if (!match || !game) return <Missing onBack={nav.back} />;
+
+  if (screen.kind === "match" && isLobby(match)) {
+    const hosting = host?.matchId === match.id ? host : null;
+    return (
+      <LobbyScreen
+        match={match} game={game} host={hosting} online={hosting?.status === "sharing" ? hosting.online : []}
+        onChange={save}
+        onStart={(m) => { rememberGroup(m.players.map((p) => p.name)); save(m); }}
+        onBack={nav.back}
+        onDelete={() => { nav.back(); if (hosting) stopSharing(); remove(match.id); }}
+        onRetry={() => startSharing(match.id)}
+      />
+    );
+  }
 
   if (screen.kind === "match")
     return (
@@ -271,14 +306,14 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
         entries={(() => {
           const round = match.rounds.length;
           const mine = hostEntries && hostEntries.matchId === match.id && hostEntries.round === round ? hostEntries.entries : {};
-          return { ...mine, ...entriesFromClaims(host?.matchId === match.id ? host.claims : [], match, round) };
+          return { ...mine, ...(host?.matchId === match.id ? hostClaimed : {}) };
         })()}
         taken={host?.matchId === match.id ? takenPlayers(host.claims, host.ownUid) : []}
-        onHostEntry={(playerId, entry) =>
+        onHostEntries={(added) =>
           setHostEntries((prev) => {
             const round = match.rounds.length;
             const base = prev && prev.matchId === match.id && prev.round === round ? prev.entries : {};
-            return { matchId: match.id, round, entries: { ...base, [playerId]: entry } };
+            return { matchId: match.id, round, entries: { ...base, ...added } };
           })}
       />
       {shareOpen && (

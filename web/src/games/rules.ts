@@ -1,4 +1,4 @@
-import { IS_BETA } from "../channel";
+import { ASSISTANT_FEATURE } from "../assistant";
 import { CONTRACTS, POIGNEES, atoutsRequis, seuilRequis } from "./tarot";
 import { COUNTER_MODES } from "./counter";
 import { GLOBETROTTER_BONUS, LONGEST_BONUS, ROUTE_POINTS, STATION_VALUE } from "./rail";
@@ -103,7 +103,7 @@ const skyjo = (): RulesDoc => ({
   title: "Skyjo",
   summary:
     "Jeu de cartes à 2 à 8 joueurs : on cherche à avoir le moins de points possible. Chacun a douze cartes face cachée, qu'il révèle peu à peu. " +
-    "La partie s'arrête quand un joueur atteint ou dépasse l'objectif (100 points par défaut) : le score le plus bas gagne.",
+    "La partie s'arrête quand un joueur atteint ou dépasse 100 points (réglable) : il a perdu, et le score le plus bas gagne.",
   sections: [
     {
       id: "manche",
@@ -125,7 +125,7 @@ const skyjo = (): RulesDoc => ({
       id: "fin",
       title: "Fin de partie",
       paragraphs: [
-        `Quand un joueur atteint ou dépasse ${SKYJO_DEFAULT_TARGET} points (objectif réglable à la création), la partie s'arrête et le plus petit total l'emporte.`,
+        `Quand un joueur atteint ou dépasse ${SKYJO_DEFAULT_TARGET} points (score réglable à la création), la partie s'arrête et le plus petit total l'emporte.`,
       ],
     },
     {
@@ -166,7 +166,7 @@ const sixQuiPrend = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "À chaque manche, tape le nombre de têtes de bœuf ramassées par chaque joueur (un champ vide compte 0).",
-        "Un message s'affiche quand l'objectif de 66 est atteint ; l'appli te propose alors de terminer la partie.",
+        "Le premier joueur qui atteint 66 têtes de bœuf a perdu (score réglable à la création) : l'appli termine alors la partie toute seule.",
         "Chaque invité peut saisir lui-même son score depuis son téléphone.",
       ],
     },
@@ -330,8 +330,8 @@ const sushi = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "Par défaut, un compteur classique : à chaque manche, tu saisis les points de chaque joueur (tu peux ajouter les desserts à la dernière manche).",
-        // Le mode assistant n'existe qu'en bêta pour l'instant.
-        ...(IS_BETA ? [
+        // Mode assistant : chantier mis de côté (voir assistant.ts).
+        ...(ASSISTANT_FEATURE ? [
           "Mode assistant (à activer en bas de l'accueil, jeux avec le tampon « compatible mode assistant ») : l'appli fait le décompte carte par carte, en suivant les règles ci-dessus.",
           "Avec l'assistant, tu choisis le menu à la création : les huit menus du règlement (enfant, classique, découverte, gourmet, à volonté, surprise du chef, de groupe, d'amour) ou un menu à la carte par catégories, avec les limites selon le nombre de joueurs.",
           "Une saisie par manche (3), puis une dernière pour les desserts de toute la partie. Pour chaque joueur, indique le nombre de cartes de chaque sorte : les points s'affichent en direct et les comparaisons se font entre tous les joueurs, pense donc à saisir tout le monde avant de valider.",

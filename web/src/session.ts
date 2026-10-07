@@ -2,6 +2,7 @@
 // en lecture seule (Firebase Realtime Database, voir backend.ts et docs/firebase.md).
 import type { StoredMatch } from "./core";
 import { gameById } from "./games/registry";
+import { ClaimsGrace, CONNECTION_GRACE_MS } from "./claimsGrace";
 import { getBackend, type Backend, type Claim, type ClaimData } from "./backend";
 
 export const CODE_LENGTH = 4;
@@ -38,7 +39,9 @@ export function validateReceived(data: unknown): StoredMatch | null {
     if (typeof m.id !== "string" || typeof m.moduleId !== "string" || typeof m.createdAt !== "number") return null;
     const game = gameById(m.moduleId);
     if (!game) return null;
-    if (!Array.isArray(m.players) || m.players.length < game.minPlayers || m.players.length > game.maxPlayers) return null;
+    // En salle d'attente, il peut manquer des joueurs : les invités arrivent peu à peu.
+    const lobby = (m.settings as Record<string, unknown> | undefined)?.lobby === "true";
+    if (!Array.isArray(m.players) || m.players.length < (lobby ? 1 : game.minPlayers) || m.players.length > game.maxPlayers) return null;
     const players = m.players.map((p: { id?: unknown; name?: unknown }) => {
       if (typeof p?.id !== "string" || typeof p?.name !== "string" || p.id.length > 64 || p.name.length > 40) throw new Error();
       return { id: p.id, name: p.name };
@@ -95,6 +98,8 @@ export class HostSession {
   private latest: StoredMatch;
   private stopped = false;
   private claims: Claim[] = [];
+  private grace = new ClaimsGrace();
+  private graceTimer: ReturnType<typeof setTimeout> | undefined;
   private ownUid = "";
   private offClaims: (() => void) | null = null;
   private announcer: ReturnType<Backend["announce"]> | null = null;
@@ -146,7 +151,14 @@ export class HostSession {
           this.ownUid = await backend.uid();
           this.announcer = backend.announce(this.code);
           if (this.identity) this.announcer.set(this.identity);
-          this.offClaims = backend.watchClaims(this.code, (claims) => { this.claims = claims; this.emit("sharing"); });
+          this.offClaims = backend.watchClaims(this.code, (claims) => {
+            this.claims = this.grace.update(claims);
+            this.emit("sharing");
+            // Les signatures en sursis (appareil coupé il y a peu) sont retirées à l'échéance, sans attendre un autre événement.
+            clearTimeout(this.graceTimer);
+            const left = this.grace.nextExpiryIn(new Set(claims.map((c) => c.uid)));
+            if (left !== null) this.graceTimer = setTimeout(() => { if (!this.stopped) { this.claims = this.grace.current(); this.emit("sharing"); } }, left + 50);
+          });
           return this.emit("sharing");
         }
         this.code = generateCode(); // code déjà pris : on en tire un autre
@@ -173,6 +185,7 @@ export class HostSession {
     this.stopped = true;
     document.removeEventListener("visibilitychange", this.onVisible);
     void this.wakeLock?.release().catch(() => {});
+    clearTimeout(this.graceTimer);
     this.offClaims?.();
     this.announcer?.stop();
     void this.backend?.remove(this.code).catch(() => {});
@@ -201,6 +214,9 @@ export class SpectatorSession {
   private identity: ClaimData | null = null;
   private online: string[] = [];
   private claims: Claim[] = [];
+  private grace = new ClaimsGrace();
+  private graceTimer: ReturnType<typeof setTimeout> | undefined;
+  private downTimer: ReturnType<typeof setTimeout> | undefined;
   private myUid = "";
 
   constructor(private code: string, private onChange: (s: JoinState) => void) {
@@ -244,14 +260,27 @@ export class SpectatorSession {
             this.stopFns.push(() => this.announcer?.stop());
             if (this.identity) this.announcer.set(this.identity);
             this.stopFns.push(backend.watchClaims(this.code, (claims) => {
-              this.claims = claims;
-              this.online = claims.filter((c) => c.p).map((c) => c.p);
+              this.claims = this.grace.update(claims);
+              this.online = this.claims.filter((c) => c.p).map((c) => c.p);
               this.emitLive();
+              clearTimeout(this.graceTimer);
+              const left = this.grace.nextExpiryIn(new Set(claims.map((c) => c.uid)));
+              if (left !== null) this.graceTimer = setTimeout(() => {
+                if (this.stopped) return;
+                this.claims = this.grace.current();
+                this.online = this.claims.filter((c) => c.p).map((c) => c.p);
+                this.emitLive();
+              }, left + 50);
             }));
           }
           this.emitLive();
         },
-        (up) => { this.connected = up; this.emitLive(); },
+        (up) => {
+          // Retour de la connexion : tout de suite. Perte : seulement si elle dure, pour ne pas faire clignoter le bandeau.
+          clearTimeout(this.downTimer);
+          if (up) { this.connected = true; this.emitLive(); }
+          else this.downTimer = setTimeout(() => { if (!this.stopped) { this.connected = false; this.emitLive(); } }, CONNECTION_GRACE_MS);
+        },
         () => this.fail("unreachable"),
       ),
     );
@@ -266,6 +295,8 @@ export class SpectatorSession {
   stop() {
     this.stopped = true;
     clearTimeout(this.timer);
+    clearTimeout(this.graceTimer);
+    clearTimeout(this.downTimer);
     for (const f of this.stopFns) f();
     this.stopFns = [];
   }

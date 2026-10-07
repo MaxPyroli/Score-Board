@@ -93,10 +93,12 @@ export function EndedScreen({ onReveal, onResume }: { onReveal?: () => void; onR
 }
 
 /** Résultats : classement, résultat personnel (si on a choisi son joueur) ; confettis pour une victoire, pluie pour une défaite. */
-export function FinalScreen({ ranked, meId, onClose, onResume, onReplay, onChangeMe }: {
+export function FinalScreen({ ranked, meId, onClose, onHome, onResume, onReplay, onChangeMe }: {
   ranked: RankedPlayer[];
   meId: string | null;
   onClose(): void;
+  /** Quitter la partie terminée (retour à l'accueil). */
+  onHome(): void;
   onResume?: () => void;
   /** Nouvelle partie avec les mêmes joueurs et réglages (hôte). */
   onReplay?: () => void;
@@ -125,10 +127,17 @@ export function FinalScreen({ ranked, meId, onClose, onResume, onReplay, onChang
           </div>
         ))}
         <div className="final-actions">
-          {onReplay && <button className="btn" onClick={onReplay}>Rejouer avec les mêmes joueurs</button>}
-          <button className={`btn ${onReplay ? "outline" : ""}`} onClick={onClose}>Voir le détail de la partie</button>
-          {onChangeMe && <button className="btn outline" onClick={onChangeMe}>{meId ? "Ce n'est pas moi" : "Qui suis-je ?"}</button>}
-          {onResume && <button className="link" onClick={onResume}>Ce n'est pas fini : reprendre la partie</button>}
+          {onReplay && <button className="btn big-btn" onClick={onReplay}>Rejouer avec les mêmes joueurs</button>}
+          <div className="buttons final-row">
+            <button className="btn outline" onClick={onClose}>Voir le détail</button>
+            <button className="btn outline" onClick={onHome}>Quitter</button>
+          </div>
+          {(onChangeMe || onResume) && (
+            <div className="final-links">
+              {onChangeMe && <button className="link" onClick={onChangeMe}>{meId ? "Ce n'est pas moi" : "Qui suis-je ?"}</button>}
+              {onResume && <button className="link" onClick={onResume}>Pas fini ? Reprendre la partie</button>}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -21,8 +21,11 @@ export function PlayerGrid({ players, children, className = "" }: { players: Pla
 }
 
 export function Score({ value, withSign, big, leader }: { value: number; withSign?: boolean; big?: boolean; leader?: boolean }) {
-  const cls = ["score", big ? "big" : "", leader ? "leader" : "", withSign ? (value > 0 ? "pos" : value < 0 ? "neg" : "") : ""];
-  return <span className={cls.join(" ")}>{withSign ? signed(value) : plain(value)}</span>;
+  const text = withSign ? signed(value) : plain(value);
+  // Très grands nombres (compteurs libres) : on réduit la taille plutôt que de déborder.
+  const size = text.length > 9 ? "vlong" : text.length > 6 ? "long" : "";
+  const cls = ["score", big ? "big" : "", leader ? "leader" : "", size, withSign ? (value > 0 ? "pos" : value < 0 ? "neg" : "") : ""];
+  return <span className={cls.join(" ")}>{text}</span>;
 }
 
 export function Chip({ label, selected, onClick, disabled }: { label: string; selected: boolean; onClick(): void; disabled?: boolean }) {
@@ -45,9 +48,18 @@ export function TopBar({ title, onBack, actions }: { title: ReactNode; onBack?: 
   return (
     <header className="topbar">
       {onBack ? <button className="icon round back" aria-label="Retour" onClick={onBack}><BackArrow /></button> : <span className="icon-gap" />}
-      <h1>{title}</h1>
+      <h1>{typeof title === "string" ? <span className="title-text">{title}</span> : title}</h1>
       <div className="actions">{actions}</div>
     </header>
+  );
+}
+
+/** Bouton « Règles » : sur écran étroit il devient un simple « ? » pour laisser de la place au titre. */
+export function RulesButton({ onClick }: { onClick(): void }) {
+  return (
+    <button className="btn outline small rules-btn" aria-label="Règles" onClick={onClick}>
+      <span className="rules-label">Règles</span><span className="rules-q" aria-hidden="true">?</span>
+    </button>
   );
 }
 

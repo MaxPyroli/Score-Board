@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Chip, Chips, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
+import { Chip, Chips, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
 import { PlusMinus } from "./PlusMinus";
 import { RulesSheet } from "./RulesSheet";
 import { plain, type GameModule, type StoredMatch } from "../core";
@@ -35,7 +35,7 @@ function Frame(props: EditorProps & { children: React.ReactNode; footer: React.R
       <TopBar
         title={title(match, roundIndex)}
         onBack={onCancel}
-        actions={<button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>}
+        actions={<RulesButton onClick={() => setRulesOpen(true)} />}
       />
       {rulesOpen && <RulesSheet gameId={match.moduleId} focus={rulesFocus} onClose={() => setRulesOpen(false)} />}
       <main className="content">
@@ -44,7 +44,7 @@ function Frame(props: EditorProps & { children: React.ReactNode; footer: React.R
         <div className="spacer" />
       </main>
       <footer className="bottom">
-        {footer}
+        <div className="bottom-info">{footer}</div>
         <div className="buttons">
           <button className="btn outline" onClick={onCancel}>Annuler</button>
           <button className="btn" disabled={!canSave} onClick={onValidate}>Valider</button>

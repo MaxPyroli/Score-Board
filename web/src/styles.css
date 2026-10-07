@@ -47,8 +47,8 @@ body {
 button { font: inherit; color: inherit; cursor: pointer; }
 button:disabled { opacity: 0.4; cursor: default; }
 
-.screen { display: flex; flex-direction: column; min-height: 100%; max-width: 640px; margin: 0 auto; position: relative; }
-.content { flex: 1; padding: 4px 16px 16px; }
+.screen { display: flex; flex-direction: column; min-height: 100%; max-width: var(--maxw, 640px); margin: 0 auto; position: relative; }
+.content { flex: 1; padding: 4px var(--gutter, 12px) 16px; }
 .spacer { height: 24px; }
 .spacer.big { height: 96px; }
 
@@ -130,7 +130,7 @@ button.card { text-align: left; width: 100%; }
 .divided { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--outline); }
 
 .fab {
-  position: fixed; right: max(16px, calc(50% - 304px)); bottom: calc(env(safe-area-inset-bottom) + 16px);
+  position: fixed; right: max(var(--gutter, 12px), calc(50% - var(--maxw, 640px) / 2 + var(--gutter, 12px))); bottom: calc(env(safe-area-inset-bottom) + 16px);
   background: var(--primary); color: var(--on-primary); border: 0; border-radius: 28px; padding: 16px 22px;
   font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.25);
 }
@@ -155,7 +155,7 @@ button.card { text-align: left; width: 100%; }
 
 .bottom {
   position: sticky; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--outline);
-  padding: 10px 16px calc(env(safe-area-inset-bottom) + 12px); box-shadow: 0 -4px 12px rgba(0,0,0,.06);
+  padding: 10px var(--gutter, 12px) calc(env(safe-area-inset-bottom) + 12px); box-shadow: 0 -4px 12px rgba(0,0,0,.06);
 }
 .bottom > .btn { width: 100%; }
 .verdict { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
@@ -203,7 +203,7 @@ button.card { text-align: left; width: 100%; }
 
 .footer {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 16px calc(env(safe-area-inset-bottom) + 20px);
-  font-size: .75rem; color: var(--muted); border-top: 1px solid var(--outline); margin: 0 16px;
+  font-size: .75rem; color: var(--muted); border-top: 1px solid var(--outline); margin: 0 var(--gutter, 12px);
 }
 .footer a, .link-small { color: var(--primary); }
 .link-small { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
@@ -471,3 +471,190 @@ button.card { text-align: left; width: 100%; }
 .rain span { position: absolute; top: -40px; width: 2px; border-radius: 2px; background: linear-gradient(180deg, rgba(150, 190, 255, 0), rgba(150, 190, 255, .9)); transform: rotate(12deg); animation: rain-fall linear infinite; }
 @keyframes rain-fall { from { transform: translate3d(0, -40px, 0) rotate(12deg); } to { transform: translate3d(-30px, 105vh, 0) rotate(12deg); } }
 @media (prefers-reduced-motion: reduce) { .drum, .waiting span { animation: none; } }
+
+/* Boutons d'action de la barre du haut (partager, menu) : même style que la flèche de retour */
+.icon.round.plain { background: var(--surface); color: var(--text); min-width: 42px; height: 42px; margin-left: 6px; }
+.icon.round.plain .glyph { width: 1.25em; height: 1.25em; }
+
+/* Barre du haut : mêmes boutons ronds de 42 px, espacés régulièrement, avec de la place pour l'ombre */
+.topbar { padding: calc(env(safe-area-inset-top) + 8px) var(--gutter, 12px) 12px; }
+.topbar .icon.round.back, .topbar .icon.round.plain { margin: 0; width: 42px; min-width: 42px; height: 42px; flex: none; }
+.topbar .actions { display: flex; align-items: center; gap: 8px; }
+.topbar h1 { padding-left: 4px; min-width: 0; }
+
+/* Boutons ronds clairs (retour, partager, menu) : pas de reflet intérieur en haut, sinon ils ont l'air creux */
+.icon.round.back:not(:active):not(.pressed), .icon.round.plain:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
+
+/* ---- Fiche de partie (parties en cours et historique) : « billet » avec tranche colorée, jetons de score et pointillé ---- */
+/* Le billet est fait de deux boutons indépendants collés l'un à l'autre : la partie (tranche + scores) et la corbeille. Chacun s'enfonce tout seul. */
+.card.ticket { display: flex; align-items: stretch; padding: 0; background: none; border: 0; box-shadow: none; border-radius: 0; --sink: 3px; --cast: var(--cast-small); }
+.ticket-main, .ticket-trash {
+  display: flex; padding: 0; border: 2.5px solid var(--ink); background: var(--surface); color: inherit; box-shadow: 0 var(--sink) 0 var(--cast);
+  transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
+}
+.ticket-main { flex: 1; min-width: 0; text-align: left; border-radius: 14px 0 0 14px; border-right-width: 0; overflow: hidden; }
+.ticket-trash { flex: none; width: 54px; align-items: center; justify-content: center; font-size: 1.25rem; border-radius: 0 14px 14px 0; border-left: 2.5px dashed color-mix(in srgb, var(--ink) 55%, transparent); }
+.ticket-main:active, .ticket-main.pressed, .ticket-trash:active, .ticket-trash.pressed {
+  transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast);
+}
+/* Les deux boutons sont au même niveau au repos : pas d'ombre entre eux. Quand l'un s'enfonce, son voisin (resté en haut) projette une ombre sur son bord. */
+.ticket-trash:active, .ticket-trash.pressed { box-shadow: 0 0 0 var(--cast), inset 5px 0 0 var(--edge, rgba(0, 0, 0, .17)); }
+.ticket-main:active, .ticket-main.pressed { box-shadow: 0 0 0 var(--cast), inset -5px 0 0 var(--edge, rgba(0, 0, 0, .17)); }
+@media (prefers-color-scheme: dark) { .ticket-trash, .ticket-main { --edge: rgba(0, 0, 0, .5); } }
+.ticket-spine {
+  flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
+  background: linear-gradient(180deg, var(--g1, #1f6f5c), var(--g2, #0f4c3f)); color: #fff;
+}
+.ticket-spine span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .92; white-space: nowrap; }
+.ticket-body { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; min-width: 0; }
+.ticket-body strong { font-size: 1.05rem; }
+.ticket-scores { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 3px; }
+.ticket-score {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; font-size: .82rem; font-weight: 600;
+  background: var(--primary-soft, var(--surface-2)); color: var(--text); border: 1.5px solid var(--ink); box-shadow: 0 2px 0 var(--cast-small);
+}
+.ticket-score b { font-weight: 800; }
+.ticket-score.lead { background: linear-gradient(180deg, #ffe18a, #f2b84b); color: #5a3a00; border-color: #7a5410; box-shadow: 0 2px 0 #9a6a10; }
+
+/* Saisie de l'hôte : lignes compactes (un seul bouton « Valider les scores ») */
+.entry-card .entry-row { padding: 2px 0; min-height: 0; }
+.entry-card .entry-row .field { height: 38px; width: 76px; padding: 0 8px; font-size: 1rem; }
+.entry-card { gap: 6px; }
+
+/* Points de connexion : vert qui « respire » (halo qui pulse) = connecté en direct ; point vide = déconnecté depuis peu ; rien = personne sur ce joueur */
+.dot.on { background: #34d17c; box-shadow: 0 0 0 0 rgba(52, 209, 124, .7); animation: live-pulse 1.8s ease-out infinite; }
+.dot.recent, .board .dot.recent { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; opacity: .8; }
+.board .dot.recent { color: #fff; }
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 209, 124, .75); transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { box-shadow: 0 0 0 .55em rgba(52, 209, 124, 0); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .dot.on { animation: none; box-shadow: 0 0 0 2px rgba(52, 209, 124, .35); } }
+
+/* Nom du joueur : le point de connexion et son halo ne sont plus rognés (seul le texte du nom est tronqué) */
+.board .name { display: flex; align-items: center; justify-content: center; overflow: visible; max-width: 100%; }
+.board .name .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.board .name .dot { flex: none; }
+.crown-slot { height: 18px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 1px; }
+.crown { filter: drop-shadow(0 1.5px 0 rgba(0, 0, 0, .3)); }
+
+/* Lignes sous le tableau (partage, état de la partie, « tu joues ») : même marge, même taille, même alignement */
+.board-info { display: flex; flex-direction: column; gap: 4px; margin: 8px 4px 6px; }
+.board-info > p { margin: 0; font-size: .9rem; line-height: 1.35; text-align: left; }
+.board-info .status { font-weight: 600; }
+.board-info .me-note { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.board-info .me-note button { padding: 2px 0; }
+
+/* ---- Finitions ---- */
+/* Champs de saisie : bord net et léger creux (le contraire d'un bouton en relief), bien visibles aussi en mode sombre */
+.field {
+  border: 2px solid color-mix(in srgb, var(--ink) 40%, var(--surface));
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, .07);
+}
+.field:focus { border-color: var(--primary); outline: 2px solid var(--primary); outline-offset: 0; }
+.field::placeholder { color: var(--muted); opacity: .75; }
+/* Boutons-liens (« Compter les routes »…) : visibles comme des actions */
+.link { color: var(--primary); font-weight: 600; }
+.link.danger { color: var(--danger); }
+/* Navigation au clavier : contour net sur l'élément ciblé */
+button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+/* Lecteur de QR code (écran « rejoindre ») */
+.scanner { position: fixed; inset: 0; z-index: 60; background: #000; display: flex; flex-direction: column; }
+.scanner-video { flex: 1; width: 100%; min-height: 0; object-fit: cover; }
+.scanner-frame {
+  position: absolute; left: 50%; top: 38%; width: min(64vw, 280px); aspect-ratio: 1; transform: translate(-50%, -50%);
+  border: 4px solid #fff; border-radius: 22px; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .45);
+}
+.scanner-bar { padding: 14px 16px calc(env(safe-area-inset-bottom) + 16px); background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
+.scanner-bar p { margin: 0; text-align: center; font-weight: 600; }
+
+/* Cas extrêmes : titres longs, très grands nombres, beaucoup de joueurs, écrans étroits (320 px) */
+.topbar h1 { min-width: 0; line-height: 1.15; }
+.title-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.topbar .actions { flex: none; }
+.btn.small { padding-left: 12px; padding-right: 12px; }
+.score.long { font-size: .8rem; }
+.score.vlong { font-size: .62rem; }
+.score.big.long { font-size: 1.15rem; }
+.score.big.vlong { font-size: .85rem; }
+.cell .score { max-width: 100%; }
+.ticket-score { max-width: 100%; min-width: 0; }
+.ticket-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 9em; }
+.ticket-score.more { opacity: .8; }
+.rules-q { display: none; font-weight: 800; font-size: 1.1rem; }
+@media (max-width: 400px) {
+  .rules-label { display: none; }
+  .rules-q { display: inline; }
+  .btn.small.rules-btn { min-width: 42px; width: 42px; height: 42px; min-height: 42px; padding: 0; border-radius: 50%; }
+}
+.title-text { overflow-wrap: break-word; }
+.score.big.long, .score.big.vlong { padding-left: 6px; padding-right: 6px; min-width: 0; }
+
+/* ---- Téléphone en mode paysage : peu de hauteur, on compacte les barres et on met les éléments côte à côte ---- */
+.dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.screen { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+@media (orientation: landscape) and (max-height: 520px) {
+  :root { --maxw: 880px; --gutter: 10px; }
+  .topbar { padding-top: calc(env(safe-area-inset-top) + 4px); padding-bottom: 8px; }
+  .scrim { padding: 10px; }
+  .dialog { max-height: calc(100dvh - 20px); padding: 14px 18px; }
+  .games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* barre du bas : le résumé à gauche, les boutons à droite, sur une seule ligne */
+  .bottom { display: flex; align-items: center; gap: 14px; padding-top: 6px; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+  .bottom-info { flex: 1; min-width: 0; }
+  .bottom-info > * { margin-top: 0; margin-bottom: 0; }
+  .bottom .buttons { margin: 0; padding: 0; flex: none; width: min(46%, 340px); }
+  .bottom > .btn { flex: 1; width: auto; }
+  .fab { padding: 12px 20px; bottom: calc(env(safe-area-inset-bottom) + 10px); right: max(var(--gutter), calc(50% - var(--maxw) / 2 + var(--gutter))); }
+  .final .trophy { font-size: 2.4rem; }
+  .final .headline { font-size: 1.6rem; margin-top: 4px; }
+  .final .center-all { gap: 10px; min-height: 80%; }
+}
+@media (orientation: landscape) and (max-height: 520px) { .game strong, .game .hint { max-width: 64%; } }
+.scanner-zoom { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.scanner-zoom input { flex: 1; accent-color: var(--primary); height: 32px; }
+.scanner-bar .buttons { margin: 0; }
+.scanner-video { touch-action: manipulation; }
+.focus-ring {
+  position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 3px solid #fff; border-radius: 50%; pointer-events: none;
+  animation: focus-ping .7s ease-out forwards;
+}
+@keyframes focus-ping { from { transform: scale(1.6); opacity: .2; } 40% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .focus-ring { animation: none; opacity: 0; } }
+
+/* Salle d'attente */
+.lobby-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.lobby-row { display: flex; align-items: center; gap: 8px; }
+.lobby-row.me strong { color: var(--primary); }
+.lobby-row .btn { flex: none; }
+.lobby-dot { flex: none; width: 1.1em; display: inline-flex; justify-content: center; }
+.lobby-dot .dot { margin: 0; }
+.lobby-tag { flex: none; }
+
+/* Emplacement « d'autres jeux arrivent » : un cadre en pointillés, sobre, sans bouton */
+.slot-soon {
+  margin-top: 8px; padding: 16px; min-height: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center;
+  border: 2.5px dashed color-mix(in srgb, var(--ink) 32%, transparent); border-radius: 18px; color: var(--muted);
+}
+.slot-soon strong { color: var(--text); font-size: 1rem; }
+.slot-soon .hint { margin: 0; }
+.slot-soon a { color: var(--primary); font-weight: 700; margin-top: 4px; }
+.share-compact { display: flex; align-items: center; gap: 14px; }
+.share-compact .qr { flex: none; width: 150px; height: 150px; margin: 0; }
+.share-compact .code { font-size: 1.9rem; margin: 2px 0; text-align: left; }
+.share-compact .hint { margin: 0; }
+.chip-group { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
+.chip-group .chip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-group .icon.forget { min-width: 32px; height: 32px; font-size: 1rem; color: var(--muted); }
+.final-actions { gap: 12px; }
+.final-row { margin: 0; padding: 0; }
+.final-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 22px; }
+.final-links .link { margin: 0; padding: 8px 0; font-size: .92rem; }
+
+/* Titre de l'accueil : plus grand, aligné sur le bord du contenu */
+.icon-gap { display: none; }
+.topbar h1:has(.meeple) { white-space: nowrap; font-size: 1.6rem; font-weight: 800; letter-spacing: -.01em; padding-left: 4px; gap: 10px; }
+.topbar h1 .meeple { width: 34px; height: 34px; }
+@media (max-width: 360px) { .topbar h1:has(.meeple) { font-size: 1.3rem; gap: 6px; } .topbar h1 .meeple { width: 28px; height: 28px; } }

@@ -5,6 +5,7 @@ import {
 } from "../core";
 import { tarotModule, summarize } from "./tarot";
 import type { Entries } from "../guestEntry";
+import { ASSISTANT_FEATURE } from "../assistant";
 import { SKYJO_DEFAULT_TARGET, buildSkyjo, calculerSkyjo, skyjoModule, summarizeSkyjo } from "./skyjo";
 import {
   COUNTER_MODES, FREE, SETTING_MODE, counterModule, adjustRound, SETTING_ROUNDS, SETTING_START, SIX_QUI_PREND, buildFree, changesOf, lowestWinsFor, modeOf,
@@ -123,10 +124,10 @@ export interface GameDefinition {
   Editor: ComponentType<EditorProps>;
 }
 
-const targetOption = (def: string | null): NumberOption => ({
+const targetOption = (def: string | null, endAt = false): NumberOption => ({
   key: SETTING_TARGET,
-  label: "Objectif de points (facultatif)",
-  description: "Un message s'affiche quand un joueur l'atteint.",
+  label: endAt ? "Le premier qui atteint ce score a perdu" : "Objectif de points (facultatif)",
+  description: endAt ? "Quand un joueur atteint ou dépasse ce total, la partie est terminée." : "Un message s'affiche quand un joueur l'atteint.",
   default: def,
 });
 
@@ -134,7 +135,7 @@ const nameMap = (m: StoredMatch) => (id: string) => m.players.find((p) => p.id =
 
 function counterGame(
   module: GameModule<any>, tagline: string, lowestWins: boolean | null, defaultTarget: string | null,
-  allowNegative: boolean,
+  allowNegative: boolean, endAt = false,
 ): GameDefinition {
   const lowest = (m: StoredMatch) => flag(m, SETTING_LOWEST_WINS);
   return {
@@ -142,12 +143,12 @@ function counterGame(
     options: lowestWins === null
       ? [{ key: SETTING_LOWEST_WINS, label: "Le plus petit score gagne", description: "À activer pour les jeux où il faut marquer le moins de points.", default: false }]
       : [],
-    numberOptions: [targetOption(defaultTarget)],
+    numberOptions: [targetOption(defaultTarget, endAt)],
     fixedSettings: lowestWins === null ? {} : { [SETTING_LOWEST_WINS]: String(lowestWins) },
     totals: (m) => totals(module, m),
     roundScores: (m) => roundScores(module, m),
     describeRound: () => ({ headline: "", detail: "" }),
-    status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m)),
+    status: (m) => describeTarget(m.players, totals(module, m), targetOf(m), lowest(m), endAt),
     lowestWins: lowest,
     canFinish: (m) => targetReached(m, totals(module, m)),
     quickSteps: () => null,
@@ -386,7 +387,7 @@ function sushiGame(): GameDefinition {
   const pick = (m: StoredMatch) => (isAssistantMatch(m) ? assistant : classic);
   return {
     ...classic,
-    tagline: "2 à 8 joueurs · points de chaque manche ; en mode assistant, menus et décompte carte par carte",
+    tagline: ASSISTANT_FEATURE ? "2 à 8 joueurs · points de chaque manche ; en mode assistant, menus et décompte carte par carte" : "2 à 8 joueurs · les points de chaque manche",
     assistant: true,
     setup: {
       defaults: () => ({ ...SETUP_DEFAULTS, [SETTING_ASSISTANT]: String(assistantEnabled()) }),
@@ -426,7 +427,7 @@ function buildGames(): GameDefinition[] {
   const skyjo: GameDefinition = {
     id: skyjoModule.id, displayName: "Skyjo",
     tagline: "2 à 8 joueurs · le plus petit score gagne, points doublés si on termine sans être le plus bas",
-    minPlayers: 2, maxPlayers: 8, options: [], numberOptions: [targetOption(String(SKYJO_DEFAULT_TARGET))],
+    minPlayers: 2, maxPlayers: 8, options: [], numberOptions: [targetOption(String(SKYJO_DEFAULT_TARGET), true)],
     fixedSettings: { [SETTING_LOWEST_WINS]: "true" },
     totals: (m) => totals(skyjoModule, m),
     roundScores: (m) => roundScores(skyjoModule, m),
@@ -435,7 +436,7 @@ function buildGames(): GameDefinition[] {
       return calculerSkyjo(r).finisherDoubled ? { [r.finisherId]: "×2" } : {};
     },
     describeRound: (m, i) => summarizeSkyjo(skyjoModule.decodeRound(m.rounds[i]), nameMap(m)),
-    status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true),
+    status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true, true),
     lowestWins: () => true,
     canFinish: (m) => targetReached(m, totals(skyjoModule, m)),
     quickSteps: () => null,
@@ -460,7 +461,7 @@ function buildGames(): GameDefinition[] {
   };
   return [
     tarot, skyjo, railGame(), sushiGame(),
-    counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false),
+    counterGame(SIX_QUI_PREND, "2 à 10 joueurs · têtes de bœuf additionnées, fin à 66, le plus petit score gagne", true, "66", false, true),
     freeCounterGame(),
   ];
 }

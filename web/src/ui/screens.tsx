@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Dialog, PlayerGrid, Score, Section, Stepper, TopBar } from "./components";
-import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
+import { Dialog, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
+import { finishMatch, isFinished, isLobby, SETTING_LOBBY, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
+import { sharingConfigured } from "../backend";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
-import { loadGroups, newId, rememberGroup } from "../store";
+import { forgetGroup, loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
+import { Crown, MoreIcon, ShareIcon } from "./PlusMinus";
 import { ChangelogSheet } from "./ChangelogSheet";
-import { setAssistantEnabled, useAssistant } from "../assistant";
+import { ASSISTANT_FEATURE, setAssistantEnabled, useAssistant } from "../assistant";
 import { IS_BETA, PUBLIC_URL } from "../channel";
 import { CONTACT_URL, versionLabel } from "../version";
 import { useMe } from "../me";
@@ -22,6 +24,36 @@ import type { Entries, Entry } from "../guestEntry";
 // ---------------------------------------------------------------- Accueil
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+const MAX_TICKET_SCORES = 8;
+
+/** Fiche de partie : une « tranche » colorée aux couleurs du jeu, les scores en jetons, un pointillé avant la corbeille. */
+function MatchTicket({ match, game, status, scores, onOpen, onDelete }: {
+  match: StoredMatch; game: GameDefinition; status: string;
+  scores: { name: string; total: string; lead: boolean }[];
+  onOpen(): void; onDelete(): void;
+}) {
+  return (
+    <div className="card ticket" data-game={match.moduleId}>
+      <button className="ticket-main" onClick={onOpen}>
+        <span className="ticket-spine" aria-hidden="true"><span>{status}</span></span>
+        <span className="ticket-body">
+          <strong>{game.displayName}</strong>
+          <span className="hint">{dateFormat.format(match.createdAt)} · {match.rounds.length} manche{match.rounds.length > 1 ? "s" : ""}</span>
+          <span className="ticket-scores">
+            {scores.slice(0, MAX_TICKET_SCORES).map((sc, i) => (
+              <span key={i} className={`ticket-score ${sc.lead ? "lead" : ""}`}>
+                {sc.lead && <span aria-label="en tête">★</span>}<span className="ticket-name">{sc.name}</span> <b>{sc.total}</b>
+              </span>
+            ))}
+            {scores.length > MAX_TICKET_SCORES && <span className="ticket-score more">+{scores.length - MAX_TICKET_SCORES}</span>}
+          </span>
+        </span>
+      </button>
+      <button className="ticket-trash" aria-label="Supprimer la partie" onClick={onDelete}>🗑</button>
+    </div>
+  );
+}
 
 export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory }: {
   matches: StoredMatch[];
@@ -51,18 +83,10 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               const totals = game.totals(m);
               const lead = m.rounds.length > 0 ? game.leaderId(m) : null;
               return (
-                <div key={m.id} className="card row">
-                  <button className="row-main" onClick={() => onOpen(m)}>
-                    <strong>{game.displayName}</strong>
-                    <span className="hint">
-                      {dateFormat.format(m.createdAt)} · {m.rounds.length} manche{m.rounds.length > 1 ? "s" : ""}
-                    </span>
-                    <span className="hint">
-                      {m.players.map((p) => `${p.name} ${plain(totals[p.id] ?? 0)}${p.id === lead ? " ★" : ""}`).join(" · ")}
-                    </span>
-                  </button>
-                  <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
-                </div>
+                <MatchTicket
+                  key={m.id} match={m} game={game} status={isLobby(m) ? "En attente" : "En cours"} onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
+                  scores={m.players.map((p) => ({ name: p.name, total: plain(totals[p.id] ?? 0), lead: p.id === lead }))}
+                />
               );
             })}
           </div>
@@ -98,11 +122,17 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
               );
             })}
           </div>
+          {/* Emplacement réservé : comme s'il manquait une carte. Hors de la grille des jeux, pour ne pas en changer la hauteur. */}
+          <div className="slot-soon">
+            <strong>D'autres jeux arrivent</strong>
+            <span className="hint">L'appli grandit à chaque version : nouveaux jeux et nouvelles fonctions.</span>
+            <a href={`${CONTACT_URL}/new?title=${encodeURIComponent("Idée de jeu : ")}`} target="_blank" rel="noreferrer">Proposer un jeu</a>
+          </div>
         </Section>
       </main>
       <footer className="footer">
         <span>{versionLabel} · <button className="link-small" onClick={() => setChangelogOpen(true)}>Notes de version</button></span>
-        {IS_BETA && (
+        {ASSISTANT_FEATURE && (
           <label className="assistant-toggle" title="Ajoute des aides aux jeux compatibles, marqués d'un tampon (menus, choix par catégories…)">
             <input type="checkbox" checked={assistant} onChange={(e) => setAssistantEnabled(e.target.checked)} />
             <span>Mode assistant</span>
@@ -146,16 +176,11 @@ export function HistoryScreen({ matches, onOpen, onDelete, onBack }: {
             const game = GAMES.find((g) => g.id === m.moduleId);
             if (!game) return null;
             const ranked = ranking(m.players, game.totals(m), game.lowestWins(m));
-            const winners = ranked.filter((r) => r.rank === 1).map((r) => r.player.name);
             return (
-              <div key={m.id} className="card row" data-game={m.moduleId}>
-                <button className="row-main" onClick={() => onOpen(m)}>
-                  <strong>{game.displayName}</strong>
-                  <span className="hint">{dateFormat.format(m.createdAt)} · {m.rounds.length} manche{m.rounds.length > 1 ? "s" : ""}</span>
-                  <span className="hint">🏆 {winners.join(" et ") || "—"} · {ranked.map((r) => `${r.player.name} ${plain(r.total)}`).join(" · ")}</span>
-                </button>
-                <button className="icon" aria-label="Supprimer la partie" onClick={() => setToDelete(m)}>🗑</button>
-              </div>
+              <MatchTicket
+                key={m.id} match={m} game={game} status="Terminée" onOpen={() => onOpen(m)} onDelete={() => setToDelete(m)}
+                scores={ranked.map((r) => ({ name: r.player.name, total: plain(r.total), lead: r.rank === 1 }))}
+              />
             );
           })}
         </div>
@@ -185,10 +210,12 @@ const loadNames = (): string[] => {
   }
 };
 
-export function NewMatchScreen({ game, onBack, onStart }: {
+export function NewMatchScreen({ game, onBack, onStart, onInvite }: {
   game: GameDefinition;
   onBack(): void;
   onStart(m: StoredMatch): void;
+  /** Crée la partie en salle d'attente et la partage tout de suite : les invités ajoutent eux-mêmes leur pseudo. */
+  onInvite(m: StoredMatch): void;
 }) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [count, setCount] = useState(Math.max(game.minPlayers, Math.min(4, game.maxPlayers)));
@@ -215,7 +242,16 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       return next;
     });
 
-  const groups = loadGroups();
+  const [groups, setGroups] = useState<string[][]>(loadGroups);
+  const removeGroup = (g: string[]) => {
+    forgetGroup(g);
+    setGroups(loadGroups());
+    // Les noms pré-remplis de la prochaine partie sont ceux de la dernière : s'ils viennent de ce groupe, on les oublie aussi.
+    try {
+      const last = JSON.parse(localStorage.getItem(NAMES_KEY) ?? "[]");
+      if (Array.isArray(last) && last.length === g.length && last.every((n: unknown, i: number) => typeof n === "string" && n.toLowerCase() === g[i].toLowerCase())) localStorage.removeItem(NAMES_KEY);
+    } catch { /* sans importance */ }
+  };
   const useGroup = (group: string[]) => {
     setCount(Math.min(game.maxPlayers, Math.max(game.minPlayers, group.length)));
     setNames(group.slice(0, game.maxPlayers));
@@ -229,7 +265,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
     return t !== "" && !(Number(t.replace(",", ".")) > 0);
   });
 
-  const start = () => {
+  const build = (): StoredMatch => {
     const players: Player[] = Array.from({ length: count }, (_, i) => ({ id: newId(), name: effective(i) }));
     try {
       localStorage.setItem(NAMES_KEY, JSON.stringify(players.map((p) => p.name)));
@@ -243,7 +279,12 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       const t = (values[o.key] ?? "").trim();
       if (isVisible(o) && t !== "") settings[o.key] = t.replace(",", ".");
     }
-    onStart({ id: newId(), moduleId: game.id, players, rounds: [], settings, createdAt: Date.now() });
+    return { id: newId(), moduleId: game.id, players, rounds: [], settings, createdAt: Date.now() };
+  };
+  const start = () => onStart(build());
+  const invite = () => {
+    const m = build();
+    onInvite({ ...m, settings: { ...m.settings, [SETTING_LOBBY]: "true" } });
   };
 
   return (
@@ -251,7 +292,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
       <TopBar
         title={game.displayName}
         onBack={onBack}
-        actions={<button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>}
+        actions={<RulesButton onClick={() => setRulesOpen(true)} />}
       />
       {rulesOpen && <RulesSheet gameId={game.id} onClose={() => setRulesOpen(false)} />}
       <main className="content">
@@ -262,7 +303,10 @@ export function NewMatchScreen({ game, onBack, onStart }: {
           <Section title="Joueurs récents">
             <div className="chips">
               {groups.map((g) => (
-                <button key={g.join("|")} type="button" className="chip" onClick={() => useGroup(g)}>{g.join(", ")}</button>
+                <span key={g.join("|")} className="chip-group">
+                  <button type="button" className="chip" onClick={() => useGroup(g)}>{g.join(", ")}</button>
+                  <button type="button" className="icon forget" aria-label={`Oublier ${g.join(", ")}`} onClick={() => removeGroup(g)}>✕</button>
+                </span>
               ))}
             </div>
           </Section>
@@ -278,6 +322,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
             ))}
           </div>
           {duplicates && <p className="error">Deux joueurs ont le même nom.</p>}
+          {sharingConfigured && <p className="hint">Chacun veut jouer sur son téléphone ? Touche « Inviter » : tu partages un code et chaque invité tape son pseudo lui-même.</p>}
         </Section>
         {game.setup && <game.setup.Component values={values} setMany={(patch) => setValues((prev) => ({ ...prev, ...patch }))} players={count} />}
         {(game.choiceOptions?.length ?? 0) > 0 && game.choiceOptions!.map((c) => (
@@ -323,8 +368,15 @@ export function NewMatchScreen({ game, onBack, onStart }: {
         )}
       </main>
       <footer className="bottom">
-        {setupProblem && <p className="error">{setupProblem}</p>}
-        <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
+        {setupProblem && <p className="error bottom-info">{setupProblem}</p>}
+        {sharingConfigured ? (
+          <div className="buttons">
+            <button className="btn outline" disabled={duplicates || badNumber || !!setupProblem} onClick={invite}>Inviter</button>
+            <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer</button>
+          </div>
+        ) : (
+          <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
+        )}
       </footer>
     </div>
   );
@@ -332,7 +384,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
 
 // ---------------------------------------------------------------- Partie
 
-export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, onReplay, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntry, taken, ended }: {
+export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onChange, onDelete, onReplay, readOnly, title, note, sharing, onShare, askWho, online, onClaim, entries, onHostEntries, taken, ended }: {
   match: StoredMatch;
   game: GameDefinition;
   onBack(): void;
@@ -355,7 +407,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   /** Saisies des joueurs pour la manche en cours (invités et hôte réunis). */
   entries?: Entries;
   /** Hôte : saisie faite par l'hôte pour un joueur sans l'appli. */
-  onHostEntry?: (playerId: string, entry: Entry) => void;
+  onHostEntries?: (entries: Record<string, Entry>) => void;
   /** Joueurs déjà pris par un autre appareil connecté. */
   taken?: string[];
   /** Invité : l'hôte a arrêté le partage (plus de saisie possible). */
@@ -398,8 +450,19 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
   const myName = match.players.find((p) => p.id === me)?.name;
   // Signature de cet appareil dans la session (qui je suis, nom demandé s'il y en a un).
   // Ma saisie de la manche en cours (invité) ; elle est abandonnée dès qu'une manche est ajoutée.
-  const [myEntry, setMyEntry] = useState<{ r: number; entry: Entry } | null>(null);
-  useEffect(() => { if (myEntry && myEntry.r !== match.rounds.length) setMyEntry(null); }, [match.rounds.length, myEntry]);
+  // Elle est aussi gardée dans le téléphone : si la page se recharge ou se ferme, la saisie déjà envoyée n'est pas perdue.
+  const entryKey = `entry:${match.id}:${me ?? ""}`;
+  const [myEntry, setMyEntryState] = useState<{ r: number; entry: Entry } | null>(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(entryKey) ?? "null");
+      return v && typeof v.r === "number" && typeof v.entry?.score === "string" ? v : null;
+    } catch { return null; }
+  });
+  const setMyEntry = (v: { r: number; entry: Entry } | null) => {
+    setMyEntryState(v);
+    try { v ? localStorage.setItem(entryKey, JSON.stringify(v)) : localStorage.removeItem(entryKey); } catch { /* stockage indisponible */ }
+  };
+  useEffect(() => { if (myEntry && myEntry.r !== match.rounds.length) setMyEntry(null); }, [match.rounds.length, myEntry]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (me === undefined) return;
     onClaim?.({
@@ -426,6 +489,8 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
     setRenameOpen(false);
   };
   const quickSteps = game.quickSteps(match);
+  // Partage actif : les scores se saisissent dans le panneau « scores » (un seul bouton Valider), pas besoin du bouton « Nouvelle manche ».
+  const hostEntryShown = !readOnly && !!game.guestEntry?.(match) && !!sharing && !finished && !!onHostEntries;
 
   return (
     <div className="screen" data-game={game.id}>
@@ -434,11 +499,11 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         onBack={onBack}
         actions={(
           <>
-            <button className="btn outline small" onClick={() => setRulesOpen(true)}>Règles</button>
+            <RulesButton onClick={() => setRulesOpen(true)} />
             {readOnly ? null : <>
-            {onShare && <button className="icon" aria-label="Partager la partie" onClick={onShare}>⇪</button>}
+            {onShare && <button className="icon round plain" aria-label="Partager la partie" onClick={onShare}><ShareIcon /></button>}
           <div className="menu-wrap">
-            <button className="icon" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}>⋮</button>
+            <button className="icon round plain" aria-label="Plus d'actions" onClick={() => setMenu((v) => !v)}><MoreIcon /></button>
             {menu && (
               <div className="menu" onClick={() => setMenu(false)}>
                 <button disabled={match.rounds.length === 0} onClick={undo}>Annuler la dernière manche</button>
@@ -463,12 +528,14 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <PlayerGrid players={match.players} className={match.players.length > 6 ? "many" : ""}>
             {(p) => (
               <>
+                {lead && <span className="crown-slot" aria-hidden={p.id !== lead}>{p.id === lead && <Crown />}</span>}
                 <span className="name">
                   {online && (() => {
-                    const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : "off";
-                    return <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : state === "recent" ? "déconnecté depuis peu" : "hors ligne"} />;
+                    // Point vert qui respire = connecté ; point vide = déconnecté depuis peu ; rien = personne n'est associé à ce joueur.
+                    const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : null;
+                    return state && <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : "déconnecté depuis peu"} />;
                   })()}
-                  {p.name}
+                  <span className="name-text">{p.name}</span>
                 </span>
                 <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />
               </>
@@ -476,6 +543,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </PlayerGrid>
         </div>
         {note}
+        <div className="board-info">
         {sharing && (
           <p className="hint share-note">
             Partage actif · code {sharing.code} · {sharing.viewers} appareil{sharing.viewers > 1 ? "s" : ""} connecté{sharing.viewers > 1 ? "s" : ""}
@@ -484,20 +552,20 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         {status && <p className="status">{status}</p>}
         {(me !== undefined && me !== null) && (
           <p className="hint me-note">
-            Tu joues : <strong>{pendingName ?? myName}</strong>
+            <span>Tu joues : <strong>{pendingName ?? myName}</strong></span>
             <button onClick={() => setRenameOpen(true)}>changer mon nom</button>
             <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
-        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot recent" /> déconnecté depuis peu · <span className="dot off" /> hors ligne</p>}
+        </div>
         {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}
             onSubmit={(entry) => setMyEntry({ r: match.rounds.length, entry })} onWithdraw={() => setMyEntry(null)}
           />
         )}
-        {!readOnly && game.guestEntry?.(match) && sharing && !finished && onHostEntry && (
-          <HostEntryPanel match={match} game={game} entries={entries ?? {}} onEntry={onHostEntry} />
+        {hostEntryShown && (
+          <HostEntryPanel match={match} game={game} entries={entries ?? {}} online={online ?? null} onEntries={onHostEntries} />
         )}
         {quickSteps && !readOnly && !finished && (
           <div className="card entry-card">
@@ -526,7 +594,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         )}
 
         {match.rounds.length === 0 ? (
-          <p className="hint empty">{game.id === "rail" ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && <><br />Appuie sur « {game.id === "rail" ? "Nouveau décompte" : "Nouvelle manche"} » pour commencer.</>}</p>
+          <p className="hint empty">{game.id === "rail" ? "Pas encore de décompte." : "Aucune manche pour l'instant."}{!readOnly && !hostEntryShown && <><br />Appuie sur « {game.id === "rail" ? "Nouveau décompte" : "Nouvelle manche"} » pour commencer.</>}</p>
         ) : (
           <div className="list">
             {match.rounds.map((_, i) => match.rounds.length - 1 - i).map((index) => {
@@ -555,7 +623,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         <div className="spacer big" />
       </main>
 
-      {!readOnly && !quickSteps && (game.canAddRound?.(match) ?? true) && <button className="fab" onClick={onNewRound}>{game.id === "rail" ? "+ Décompte final" : "+ Nouvelle manche"}</button>}
+      {!readOnly && !quickSteps && !hostEntryShown && (game.canAddRound?.(match) ?? true) && <button className="fab" onClick={onNewRound}>{game.id === "rail" ? "+ Décompte final" : "+ Nouvelle manche"}</button>}
 
       {undone && (
         <div className="toast" role="status">
@@ -582,7 +650,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
       {finished && !pending && !hideFinal && (
         <FinalScreen
           ranked={ranked} meId={me ?? null}
-          onClose={() => setHideFinal(true)}
+          onClose={() => setHideFinal(true)} onHome={onBack}
           onChangeMe={readOnly || sharing ? () => setPickerOpen(true) : undefined}
           onResume={readOnly ? undefined : () => onChange(resumeMatch(match))}
           onReplay={readOnly ? undefined : onReplay}

@@ -33,10 +33,9 @@ export function freeDraftFrom(r: FreeRound, players: string[]): FreeDraft {
   };
 }
 
-/** Un champ vide compte 0 ; au moins un champ doit être rempli. */
+/** Un champ vide compte 0 (une manche où tout le monde fait 0 est valable, au 6 qui prend par exemple). */
 export function buildFree(d: FreeDraft, nameOf: (id: string) => string, allowNegative = true): { round?: FreeRound; error?: string } {
   try {
-    if (!d.players.some((p) => (d.texts[p] ?? "").trim() !== "")) throw new Error("Saisis au moins un score.");
     const points: Record<string, number> = {};
     for (const id of d.players) {
       const text = d.texts[id] ?? "";

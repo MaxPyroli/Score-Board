@@ -184,9 +184,9 @@ describe("Skyjo", () => {
 });
 
 describe("Compteur libre et cœur", () => {
-  it("champ vide = 0, au moins un score, négatif refusé si interdit", () => {
+  it("champ vide = 0 (même si tout est vide), négatif refusé si interdit", () => {
     const n = (id: string) => id;
-    expect(buildFree(emptyFreeDraft(["A", "B"]), n).error).toMatch(/au moins/);
+    expect(buildFree(emptyFreeDraft(["A", "B"]), n).round).toEqual({ points: { A: 0, B: 0 } });
     expect(buildFree({ players: ["A", "B"], texts: { A: "12,5" }, negatives: [] }, n).round).toEqual({ points: { A: 12.5, B: 0 } });
     expect(buildFree({ players: ["A"], texts: { A: "4" }, negatives: ["A"] }, n, false).error).toMatch(/négatif/);
     expect(FREE.decodeRound(FREE.encodeRound({ points: { A: 1 } }))).toEqual({ points: { A: 1 } });
@@ -209,6 +209,8 @@ describe("Compteur libre et cœur", () => {
     const players = [{ id: "A", name: "Ana" }, { id: "B", name: "Bob" }];
     expect(describeTarget(players, { A: 10, B: 20 }, null, true)).toBeNull();
     expect(describeTarget(players, { A: 10, B: 20 }, 100, true)).toBe("Objectif : 100 points");
+    expect(describeTarget(players, { A: 10, B: 20 }, 66, true, true)).toBe("Le premier à 66 a perdu")
+    expect(describeTarget(players, { A: 10, B: 70 }, 66, true, true)).toBe("Bob a atteint 66 : fin de partie. En tête : Ana (10).");
     expect(describeTarget(players, { A: 50, B: 101 }, 100, true)).toBe("Objectif de 100 atteint par Bob. En tête : Ana (50).");
   });
 });
