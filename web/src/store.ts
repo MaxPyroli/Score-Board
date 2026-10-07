@@ -70,3 +70,11 @@ export function rememberGroup(names: string[]) {
     localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
   } catch { /* sans importance */ }
 }
+
+/** Oublie un groupe de joueurs récents (il n'est plus proposé à la création d'une partie). */
+export function forgetGroup(names: string[]) {
+  const same = (a: string[], b: string[]) => a.length === b.length && a.every((n, i) => n.toLowerCase() === b[i].toLowerCase());
+  try {
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(loadGroups().filter((g) => !same(g, names))));
+  } catch { /* sans importance */ }
+}

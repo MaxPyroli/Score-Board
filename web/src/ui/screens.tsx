@@ -3,7 +3,7 @@ import { Dialog, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from
 import { finishMatch, isFinished, isLobby, SETTING_LOBBY, isPending, matchWithRound, matchWithoutLastRound, plain, ranking, renamePlayer, resumeMatch, revealResults, validName, type Player, type StoredMatch } from "../core";
 import { sharingConfigured } from "../backend";
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
-import { loadGroups, newId, rememberGroup } from "../store";
+import { forgetGroup, loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
 import { Crown, MoreIcon, ShareIcon } from "./PlusMinus";
 import { ChangelogSheet } from "./ChangelogSheet";
@@ -242,7 +242,16 @@ export function NewMatchScreen({ game, onBack, onStart, onInvite }: {
       return next;
     });
 
-  const groups = loadGroups();
+  const [groups, setGroups] = useState<string[][]>(loadGroups);
+  const removeGroup = (g: string[]) => {
+    forgetGroup(g);
+    setGroups(loadGroups());
+    // Les noms pré-remplis de la prochaine partie sont ceux de la dernière : s'ils viennent de ce groupe, on les oublie aussi.
+    try {
+      const last = JSON.parse(localStorage.getItem(NAMES_KEY) ?? "[]");
+      if (Array.isArray(last) && last.length === g.length && last.every((n: unknown, i: number) => typeof n === "string" && n.toLowerCase() === g[i].toLowerCase())) localStorage.removeItem(NAMES_KEY);
+    } catch { /* sans importance */ }
+  };
   const useGroup = (group: string[]) => {
     setCount(Math.min(game.maxPlayers, Math.max(game.minPlayers, group.length)));
     setNames(group.slice(0, game.maxPlayers));
@@ -294,7 +303,10 @@ export function NewMatchScreen({ game, onBack, onStart, onInvite }: {
           <Section title="Joueurs récents">
             <div className="chips">
               {groups.map((g) => (
-                <button key={g.join("|")} type="button" className="chip" onClick={() => useGroup(g)}>{g.join(", ")}</button>
+                <span key={g.join("|")} className="chip-group">
+                  <button type="button" className="chip" onClick={() => useGroup(g)}>{g.join(", ")}</button>
+                  <button type="button" className="icon forget" aria-label={`Oublier ${g.join(", ")}`} onClick={() => removeGroup(g)}>✕</button>
+                </span>
               ))}
             </div>
           </Section>

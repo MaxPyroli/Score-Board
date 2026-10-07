@@ -645,3 +645,6 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .share-compact .qr { flex: none; width: 150px; height: 150px; margin: 0; }
 .share-compact .code { font-size: 1.9rem; margin: 2px 0; text-align: left; }
 .share-compact .hint { margin: 0; }
+.chip-group { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
+.chip-group .chip { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip-group .icon.forget { min-width: 32px; height: 32px; font-size: 1rem; color: var(--muted); }
