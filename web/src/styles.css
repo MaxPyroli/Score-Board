@@ -585,3 +585,24 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 }
 .title-text { overflow-wrap: break-word; }
 .score.big.long, .score.big.vlong { padding-left: 6px; padding-right: 6px; min-width: 0; }
+
+/* ---- Téléphone en mode paysage : peu de hauteur, on compacte les barres et on met les éléments côte à côte ---- */
+.dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.screen { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .topbar { padding-top: calc(env(safe-area-inset-top) + 4px); padding-bottom: 8px; }
+  .scrim { padding: 10px; }
+  .dialog { max-height: calc(100dvh - 20px); padding: 14px 18px; }
+  .games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* barre du bas : le résumé à gauche, les boutons à droite, sur une seule ligne */
+  .bottom { display: flex; align-items: center; gap: 14px; padding-top: 6px; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+  .bottom-info { flex: 1; min-width: 0; }
+  .bottom-info > * { margin-top: 0; margin-bottom: 0; }
+  .bottom .buttons { margin: 0; padding: 0; flex: none; width: min(46%, 340px); }
+  .bottom > .btn { flex: 1; width: auto; }
+  .fab { padding: 12px 20px; bottom: calc(env(safe-area-inset-bottom) + 10px); right: max(16px, calc(50% - 304px), calc(env(safe-area-inset-right) + 12px)); }
+  .final .trophy { font-size: 2.4rem; }
+  .final .headline { font-size: 1.6rem; margin-top: 4px; }
+  .final .center-all { gap: 10px; min-height: 80%; }
+}
+@media (orientation: landscape) and (max-height: 520px) { .game strong, .game .hint { max-width: 64%; } }

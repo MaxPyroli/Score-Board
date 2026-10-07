@@ -342,7 +342,7 @@ export function NewMatchScreen({ game, onBack, onStart }: {
         )}
       </main>
       <footer className="bottom">
-        {setupProblem && <p className="error">{setupProblem}</p>}
+        {setupProblem && <p className="error bottom-info">{setupProblem}</p>}
         <button className="btn" disabled={duplicates || badNumber || !!setupProblem} onClick={start}>Commencer la partie</button>
       </footer>
     </div>
