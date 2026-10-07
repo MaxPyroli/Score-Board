@@ -491,7 +491,7 @@ button.card { text-align: left; width: 100%; }
   border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 var(--sink) 0 var(--cast);
   transition: transform .28s cubic-bezier(.3, 1.9, .5, 1), box-shadow .2s ease-out;
 }
-.card.ticket:has(.ticket-main:active), .card.ticket.pressed { transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast); }
+.card.ticket:has(.ticket-main:active), .card.ticket:has(.ticket-main.pressed) { transition-duration: .04s; transform: translateY(var(--sink)); box-shadow: 0 0 0 var(--cast); }
 .ticket-main { flex: 1; display: flex; min-width: 0; padding: 0; background: none; border: 0; text-align: left; color: inherit; }
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);

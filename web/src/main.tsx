@@ -5,7 +5,7 @@ import App from "./App";
 import "./styles.css";
 
 // Clic rapide : on retient le clic un court instant pour que l'animation d'enfoncement soit toujours visible, puis on le rejoue.
-const PRESSABLE = ".btn, .fab, .chip, .card.choice, .icon.round, .game, .card.round";
+const PRESSABLE = ".btn, .fab, .chip, .card.choice, .icon.round, .game, .card.round, .ticket-main";
 const PRESS_MS = 140;
 let replaying: Element | null = null;
 if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
