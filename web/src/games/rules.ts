@@ -103,7 +103,7 @@ const skyjo = (): RulesDoc => ({
   title: "Skyjo",
   summary:
     "Jeu de cartes à 2 à 8 joueurs : on cherche à avoir le moins de points possible. Chacun a douze cartes face cachée, qu'il révèle peu à peu. " +
-    "La partie s'arrête quand un joueur atteint ou dépasse l'objectif (100 points par défaut) : le score le plus bas gagne.",
+    "La partie s'arrête quand un joueur atteint ou dépasse 100 points (réglable) : il a perdu, et le score le plus bas gagne.",
   sections: [
     {
       id: "manche",
@@ -125,7 +125,7 @@ const skyjo = (): RulesDoc => ({
       id: "fin",
       title: "Fin de partie",
       paragraphs: [
-        `Quand un joueur atteint ou dépasse ${SKYJO_DEFAULT_TARGET} points (objectif réglable à la création), la partie s'arrête et le plus petit total l'emporte.`,
+        `Quand un joueur atteint ou dépasse ${SKYJO_DEFAULT_TARGET} points (score réglable à la création), la partie s'arrête et le plus petit total l'emporte.`,
       ],
     },
     {
@@ -166,7 +166,7 @@ const sixQuiPrend = (): RulesDoc => ({
       title: "Dans l'appli",
       bullets: [
         "À chaque manche, tape le nombre de têtes de bœuf ramassées par chaque joueur (un champ vide compte 0).",
-        "La partie s'arrête quand un joueur atteint 66 têtes de bœuf (limite réglable à la création) : l'appli la termine alors toute seule.",
+        "Le premier joueur qui atteint 66 têtes de bœuf a perdu (score réglable à la création) : l'appli termine alors la partie toute seule.",
         "Chaque invité peut saisir lui-même son score depuis son téléphone.",
       ],
     },

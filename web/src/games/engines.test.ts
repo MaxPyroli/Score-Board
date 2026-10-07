@@ -209,7 +209,8 @@ describe("Compteur libre et cœur", () => {
     const players = [{ id: "A", name: "Ana" }, { id: "B", name: "Bob" }];
     expect(describeTarget(players, { A: 10, B: 20 }, null, true)).toBeNull();
     expect(describeTarget(players, { A: 10, B: 20 }, 100, true)).toBe("Objectif : 100 points");
-    expect(describeTarget(players, { A: 10, B: 20 }, 66, true, true)).toBe("La partie s'arrête à 66 têtes de bœuf");
+    expect(describeTarget(players, { A: 10, B: 20 }, 66, true, true)).toBe("Le premier à 66 a perdu")
+    expect(describeTarget(players, { A: 10, B: 70 }, 66, true, true)).toBe("Bob a atteint 66 : fin de partie. En tête : Ana (10).");
     expect(describeTarget(players, { A: 50, B: 101 }, 100, true)).toBe("Objectif de 100 atteint par Bob. En tête : Ana (50).");
   });
 });

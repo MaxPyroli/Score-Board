@@ -125,7 +125,7 @@ export interface GameDefinition {
 
 const targetOption = (def: string | null, endAt = false): NumberOption => ({
   key: SETTING_TARGET,
-  label: endAt ? "La partie s'arrête à (têtes de bœuf)" : "Objectif de points (facultatif)",
+  label: endAt ? "Le premier qui atteint ce score a perdu" : "Objectif de points (facultatif)",
   description: endAt ? "Quand un joueur atteint ou dépasse ce total, la partie est terminée." : "Un message s'affiche quand un joueur l'atteint.",
   default: def,
 });
@@ -426,7 +426,7 @@ function buildGames(): GameDefinition[] {
   const skyjo: GameDefinition = {
     id: skyjoModule.id, displayName: "Skyjo",
     tagline: "2 à 8 joueurs · le plus petit score gagne, points doublés si on termine sans être le plus bas",
-    minPlayers: 2, maxPlayers: 8, options: [], numberOptions: [targetOption(String(SKYJO_DEFAULT_TARGET))],
+    minPlayers: 2, maxPlayers: 8, options: [], numberOptions: [targetOption(String(SKYJO_DEFAULT_TARGET), true)],
     fixedSettings: { [SETTING_LOWEST_WINS]: "true" },
     totals: (m) => totals(skyjoModule, m),
     roundScores: (m) => roundScores(skyjoModule, m),
@@ -435,7 +435,7 @@ function buildGames(): GameDefinition[] {
       return calculerSkyjo(r).finisherDoubled ? { [r.finisherId]: "×2" } : {};
     },
     describeRound: (m, i) => summarizeSkyjo(skyjoModule.decodeRound(m.rounds[i]), nameMap(m)),
-    status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true),
+    status: (m) => describeTarget(m.players, totals(skyjoModule, m), targetOf(m), true, true),
     lowestWins: () => true,
     canFinish: (m) => targetReached(m, totals(skyjoModule, m)),
     quickSteps: () => null,

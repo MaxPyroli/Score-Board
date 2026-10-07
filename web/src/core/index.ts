@@ -105,14 +105,14 @@ export function leader(players: Player[], t: Scores, lowestWins: boolean): Playe
 }
 
 /** Phrase d'état sous le tableau (objectif atteint…), ou `null` sans objectif. */
-/** `endAt` : le seuil est une limite qui arrête la partie (6 qui prend : 66 têtes de bœuf), pas un objectif à atteindre. */
+/** `endAt` : le seuil met fin à la partie (Skyjo, 6 qui prend : le premier qui l'atteint a perdu), ce n'est pas un objectif à atteindre. */
 export function describeTarget(players: Player[], t: Scores, target: number | null, lowestWins: boolean, endAt = false): string | null {
   if (target === null) return null;
   if (endAt) {
     const hit = players.filter((p) => (t[p.id] ?? 0) >= target);
-    if (hit.length === 0) return `La partie s'arrête à ${plain(target)} têtes de bœuf`;
+    if (hit.length === 0) return `Le premier à ${plain(target)} a perdu`;
     const lead = leader(players, t, lowestWins);
-    return `Limite de ${plain(target)} atteinte par ${hit.map((p) => p.name).join(", ")}.${lead ? ` En tête : ${lead.name} (${plain(t[lead.id])}).` : ""}`;
+    return `${hit.map((p) => p.name).join(", ")} ${hit.length > 1 ? "ont" : "a"} atteint ${plain(target)} : fin de partie.${lead ? ` En tête : ${lead.name} (${plain(t[lead.id])}).` : ""}`;
   }
   const reached = players.filter((p) => (t[p.id] ?? 0) >= target);
   const goal = plain(target);

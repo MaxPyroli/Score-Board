@@ -492,8 +492,9 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
               <>
                 <span className="name">
                   {online && (() => {
-                    const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : "off";
-                    return <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : state === "recent" ? "déconnecté depuis peu" : "hors ligne"} />;
+                    // Point vert qui respire = connecté ; point vide = déconnecté depuis peu ; rien = personne n'est associé à ce joueur.
+                    const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : null;
+                    return state && <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : "déconnecté depuis peu"} />;
                   })()}
                   {p.name}
                 </span>
@@ -516,7 +517,6 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
             <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
-        {online && <p className="hint me-note"><span className="dot on" /> connecté · <span className="dot recent" /> déconnecté depuis peu · <span className="dot off" /> hors ligne</p>}
         {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}

@@ -514,3 +514,14 @@ button.card { text-align: left; width: 100%; }
 .entry-card .entry-row { padding: 2px 0; min-height: 0; }
 .entry-card .entry-row .field { height: 38px; width: 76px; padding: 0 8px; font-size: 1rem; }
 .entry-card { gap: 6px; }
+
+/* Points de connexion : vert qui « respire » (halo qui pulse) = connecté en direct ; point vide = déconnecté depuis peu ; rien = personne sur ce joueur */
+.dot.on { background: #34d17c; box-shadow: 0 0 0 0 rgba(52, 209, 124, .7); animation: live-pulse 1.8s ease-out infinite; }
+.dot.recent, .board .dot.recent { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; opacity: .8; }
+.board .dot.recent { color: #fff; }
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(52, 209, 124, .75); transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { box-shadow: 0 0 0 .55em rgba(52, 209, 124, 0); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .dot.on { animation: none; box-shadow: 0 0 0 2px rgba(52, 209, 124, .35); } }
