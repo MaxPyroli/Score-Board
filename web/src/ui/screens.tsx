@@ -4,7 +4,7 @@ import { finishMatch, isFinished, isPending, matchWithRound, matchWithoutLastRou
 import { GAMES, type GameDefinition, type Values } from "../games/registry";
 import { loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
-import { MoreIcon, ShareIcon } from "./PlusMinus";
+import { Crown, MoreIcon, ShareIcon } from "./PlusMinus";
 import { ChangelogSheet } from "./ChangelogSheet";
 import { setAssistantEnabled, useAssistant } from "../assistant";
 import { IS_BETA, PUBLIC_URL } from "../channel";
@@ -490,13 +490,14 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           <PlayerGrid players={match.players} className={match.players.length > 6 ? "many" : ""}>
             {(p) => (
               <>
+                {lead && <span className="crown-slot" aria-hidden={p.id !== lead}>{p.id === lead && <Crown />}</span>}
                 <span className="name">
                   {online && (() => {
                     // Point vert qui respire = connecté ; point vide = déconnecté depuis peu ; rien = personne n'est associé à ce joueur.
                     const state = online.includes(p.id) ? "on" : recent.includes(p.id) ? "recent" : null;
                     return state && <span className={`dot ${state}`} role="img" aria-label={state === "on" ? "connecté" : "déconnecté depuis peu"} />;
                   })()}
-                  {p.name}
+                  <span className="name-text">{p.name}</span>
                 </span>
                 <Score value={totals[p.id] ?? 0} big leader={p.id === lead} />
               </>
@@ -504,6 +505,7 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
           </PlayerGrid>
         </div>
         {note}
+        <div className="board-info">
         {sharing && (
           <p className="hint share-note">
             Partage actif · code {sharing.code} · {sharing.viewers} appareil{sharing.viewers > 1 ? "s" : ""} connecté{sharing.viewers > 1 ? "s" : ""}
@@ -512,11 +514,12 @@ export function MatchScreen({ match, game, onBack, onNewRound, onEditRound, onCh
         {status && <p className="status">{status}</p>}
         {(me !== undefined && me !== null) && (
           <p className="hint me-note">
-            Tu joues : <strong>{pendingName ?? myName}</strong>
+            <span>Tu joues : <strong>{pendingName ?? myName}</strong></span>
             <button onClick={() => setRenameOpen(true)}>changer mon nom</button>
             <button onClick={() => setPickerOpen(true)}>ce n'est pas moi</button>
           </p>
         )}
+        </div>
         {readOnly && game.guestEntry?.(match) && me && !finished && !ended && (
           <GuestEntryCard
             match={match} game={game} meId={me} entries={entries ?? {}} mine={myEntry?.entry ?? null}

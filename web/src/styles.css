@@ -525,3 +525,17 @@ button.card { text-align: left; width: 100%; }
   100% { box-shadow: 0 0 0 .55em rgba(52, 209, 124, 0); transform: scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .dot.on { animation: none; box-shadow: 0 0 0 2px rgba(52, 209, 124, .35); } }
+
+/* Nom du joueur : le point de connexion et son halo ne sont plus rognés (seul le texte du nom est tronqué) */
+.board .name { display: flex; align-items: center; justify-content: center; overflow: visible; max-width: 100%; }
+.board .name .name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.board .name .dot { flex: none; }
+.crown-slot { height: 18px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 1px; }
+.crown { filter: drop-shadow(0 1.5px 0 rgba(0, 0, 0, .3)); }
+
+/* Lignes sous le tableau (partage, état de la partie, « tu joues ») : même marge, même taille, même alignement */
+.board-info { display: flex; flex-direction: column; gap: 4px; margin: 8px 8px 6px; }
+.board-info > p { margin: 0; font-size: .9rem; line-height: 1.35; text-align: left; }
+.board-info .status { font-weight: 600; }
+.board-info .me-note { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.board-info .me-note button { padding: 2px 0; }

@@ -38,3 +38,14 @@ export function MoreIcon() {
     </svg>
   );
 }
+
+/** Petite couronne dorée posée au-dessus du joueur qui mène. */
+export function Crown() {
+  return (
+    <svg className="crown" viewBox="0 0 24 18" width="22" height="16" aria-hidden="true" focusable="false">
+      <path d="M3 15L1.8 5.2l5.3 4.1L12 2l4.9 7.3 5.3-4.1L21 15z" fill="#ffd45a" stroke="#2a2118" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M3.4 15h17.2" stroke="#2a2118" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="12" cy="2.6" r="1.5" fill="#ffd45a" stroke="#2a2118" strokeWidth="1.2" />
+    </svg>
+  );
+}
