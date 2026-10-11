@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Chip, Chips, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
 import { PlusMinus } from "./PlusMinus";
+import { WonderBadge, type WonderSymbol } from "./WonderIcons";
 import { RulesSheet } from "./RulesSheet";
 import { plain, type GameModule, type StoredMatch } from "../core";
 import type { EditorProps } from "../games/registry";
@@ -552,22 +553,20 @@ export function SushiEditor(props: EditorProps) {
 
 // ---------------------------------------------------------------- 7 Wonders
 
-/** Une couleur et un symbole par type de points, comme les cartes du jeu : rouge militaire, bleu civil, jaune commerce, violet guildes, vert sciences. */
-interface WonderField { key: keyof WonderDraft; label: string; icon: string; color: string }
-const WONDER_FIELDS: WonderField[] = [
-  { key: "victories", label: "Victoires", icon: "⚔️", color: "#c0392b" },
-  { key: "defeats", label: "Défaites", icon: "🩸", color: "#8e2a22" },
-  { key: "coins", label: "Pièces", icon: "🪙", color: "#c47f17" },
-  { key: "wonder", label: "Merveille", icon: "🏛️", color: "#a08556" },
-  { key: "civil", label: "Civils", icon: "🏺", color: "#2f6fb5" },
-  { key: "commercial", label: "Commerce", icon: "⚖️", color: "#d4a70a" },
-  { key: "guilds", label: "Guildes", icon: "👑", color: "#7b4aa8" },
-];
-const SCIENCE_FIELDS: WonderField[] = [
-  { key: "compass", label: "Compas", icon: "🧭", color: "#2e8b57" },
-  { key: "gears", label: "Roues", icon: "⚙️", color: "#2e8b57" },
-  { key: "tablets", label: "Tablettes", icon: "📜", color: "#2e8b57" },
-  { key: "wild", label: "Jokers", icon: "✨", color: "#2e8b57" },
+/** Même ordre et mêmes symboles que la feuille de score du jeu : merveille, pièces, militaire, civils (bleu), commerce (jaune), sciences (vert), guildes (violet). */
+interface WonderField { key: keyof WonderDraft; label: string; icon?: string }
+interface WonderRow { symbol: WonderSymbol; color: string; title: string; fields: WonderField[] }
+const WONDER_ROWS: WonderRow[] = [
+  { symbol: "wonder", color: "#d9a21b", title: "Merveille", fields: [{ key: "wonder", label: "Points des étapes" }] },
+  { symbol: "coins", color: "#d9a21b", title: "Pièces", fields: [{ key: "coins", label: "Nombre de pièces" }] },
+  { symbol: "military", color: "#d93a3a", title: "Militaire", fields: [{ key: "victories", label: "Victoires (total)" }, { key: "defeats", label: "Défaites (jetons)" }] },
+  { symbol: "civil", color: "#3b82d6", title: "Civils (bleu)", fields: [{ key: "civil", label: "Points" }] },
+  { symbol: "commerce", color: "#f5a623", title: "Commerce (jaune)", fields: [{ key: "commercial", label: "Points" }] },
+  {
+    symbol: "science", color: "#3a9d4a", title: "Sciences (vert)",
+    fields: [{ key: "compass", label: "Compas", icon: "🧭" }, { key: "gears", label: "Roues", icon: "⚙️" }, { key: "tablets", label: "Tablettes", icon: "📜" }, { key: "wild", label: "Jokers", icon: "✨" }],
+  },
+  { symbol: "guilds", color: "#6b4bb0", title: "Guildes (violet)", fields: [{ key: "guilds", label: "Points" }] },
 ];
 
 export function SevenWondersEditor(props: EditorProps) {
@@ -586,10 +585,10 @@ export function SevenWondersEditor(props: EditorProps) {
   const filled = (id: string) => Object.values(drafts[id] ?? {}).some((v) => v.trim() !== "");
   const player = match.players[current];
   const d = drafts[player.id];
-  const row = (f: WonderField) => (
-    <label key={f.key} className="wrow" style={{ "--c": f.color } as React.CSSProperties}>
-      <span className="wrow-label"><span aria-hidden="true">{f.icon}</span> {f.label}</span>
-      <input className="field" inputMode="numeric" placeholder="0" aria-label={`${f.label} de ${player.name}`} value={d[f.key]} onChange={(e) => set(player.id, f.key, e.target.value)} />
+  const input = (r: WonderRow, f: WonderField) => (
+    <label key={f.key} className="wfield">
+      <span className="wfield-label">{f.icon && <span aria-hidden="true">{f.icon} </span>}{f.label}</span>
+      <input className="field" inputMode="numeric" placeholder="0" aria-label={`${r.title} · ${f.label} de ${player.name}`} value={d[f.key]} onChange={(e) => set(player.id, f.key, e.target.value)} />
     </label>
   );
 
@@ -614,10 +613,13 @@ export function SevenWondersEditor(props: EditorProps) {
       </Chips>
       <div className="card wonder-sheet">
         <strong className="wonder-name">{player.name}</strong>
-        <div className="wrows">{WONDER_FIELDS.map(row)}</div>
-        <div className="wonder-science">
-          <span className="label">🧪 Sciences (cartes vertes)</span>
-          <div className="wrows">{SCIENCE_FIELDS.map(row)}</div>
+        <div className="wrows">
+          {WONDER_ROWS.map((r) => (
+            <div key={r.symbol} className={`wrow ${r.fields.length > 2 ? "multi" : ""}`} style={{ "--c": r.color } as React.CSSProperties}>
+              <div className="wrow-head"><WonderBadge kind={r.symbol} /><strong>{r.title}</strong></div>
+              <div className={`wfields n${r.fields.length}`}>{r.fields.map((f) => input(r, f))}</div>
+            </div>
+          ))}
         </div>
       </div>
       {current < match.players.length - 1 && (

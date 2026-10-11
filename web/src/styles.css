@@ -673,14 +673,18 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .wonder-name { font-size: 1.15rem; }
 .wrows { display: flex; flex-direction: column; gap: 8px; }
 .wrow {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px 6px 12px; border-radius: 12px;
-  background: color-mix(in srgb, var(--c) 13%, transparent); border: 2px solid color-mix(in srgb, var(--c) 50%, transparent); border-left: 8px solid var(--c);
+  display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 12%, transparent); border: 2px solid color-mix(in srgb, var(--c) 45%, transparent);
 }
-.wrow-label { font-weight: 700; font-size: .95rem; }
-.wrow .field { width: 96px; min-height: 40px; }
-.wonder-science { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-.wonder-science .label { color: #2e8b57; font-weight: 800; text-transform: none; font-size: .9rem; }
-@media (prefers-color-scheme: dark) { .wonder-science .label { color: #6fd29a; } }
+.wrow-head { display: flex; align-items: center; gap: 10px; }
+.wrow-head strong { font-size: .98rem; }
+.wbadge { flex: none; border-radius: 9px; border: 2px solid var(--ink); box-sizing: content-box; width: 40px; height: 40px; }
+.wfields { display: grid; gap: 8px; grid-template-columns: 1fr; }
+.wfields.n2 { grid-template-columns: 1fr 1fr; }
+.wfields.n4 { grid-template-columns: 1fr 1fr; }
+.wfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wfield-label { font-size: .78rem; color: var(--muted); font-weight: 600; }
+.wfield .field { width: 100%; min-height: 40px; }
 .hint.suspense { text-align: center; margin: 0 0 4px; }
 
 /* Boutons ronds de la barre du haut (retour, partager, menu) : même épaisseur de trait que les autres boutons */
@@ -692,3 +696,6 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .wonder-science .wf { padding: 6px 6px 8px; }
 .rail-total.secret { color: var(--muted); opacity: .7; }
 .hint.suspense { text-align: center; margin: 0 0 4px; }
+.wrow:has(.wfields.n1) { flex-direction: row; align-items: center; justify-content: space-between; }
+.wfields.n1 { width: 100px; flex: none; }
+.wfields.n1 .wfield-label { display: none; }
