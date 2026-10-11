@@ -579,8 +579,19 @@ export function SevenWondersEditor(props: EditorProps) {
     const round = existing !== undefined ? sevenWondersModule.decodeRound(existing) : null;
     return Object.fromEntries(ids.map((id) => [id, round?.sheets[id] ? wonderDraftFrom(round.sheets[id]) : emptyWonderDraft()]));
   });
+  // Un seul joueur à l'écran à la fois : on passe de l'un à l'autre avec les pastilles ou « Joueur suivant ».
+  const [current, setCurrent] = useState(0);
   const set = (id: string, key: keyof WonderDraft, value: string) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value } }));
   const built = useMemo(() => buildWonders(drafts, ids, nameOf), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
+  const filled = (id: string) => Object.values(drafts[id] ?? {}).some((v) => v.trim() !== "");
+  const player = match.players[current];
+  const d = drafts[player.id];
+  const row = (f: WonderField) => (
+    <label key={f.key} className="wrow" style={{ "--c": f.color } as React.CSSProperties}>
+      <span className="wrow-label"><span aria-hidden="true">{f.icon}</span> {f.label}</span>
+      <input className="field" inputMode="numeric" placeholder="0" aria-label={`${f.label} de ${player.name}`} value={d[f.key]} onChange={(e) => set(player.id, f.key, e.target.value)} />
+    </label>
+  );
 
   return (
     <Frame
@@ -596,29 +607,25 @@ export function SevenWondersEditor(props: EditorProps) {
         )
       }
     >
-      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les points sont calculés pour toi, mais gardés secrets jusqu'à la révélation finale.</p>
-      {match.players.map((p) => {
-        const d = drafts[p.id];
-        const field = (f: WonderField) => (
-          <label key={f.key} className="wf" style={{ "--c": f.color } as React.CSSProperties}>
-            <span className="wf-label"><span aria-hidden="true">{f.icon}</span> {f.label}</span>
-            <input className="field" inputMode="numeric" placeholder="0" aria-label={`${f.label} de ${p.name}`} value={d[f.key]} onChange={(e) => set(p.id, f.key, e.target.value)} />
-          </label>
-        );
-        return (
-          <div key={p.id} className="card rail-card">
-            <div className="rail-head">
-              <strong>{p.name}</strong>
-              <span className="rail-total secret" aria-hidden="true">?</span>
-            </div>
-            <div className="rail-fields">{WONDER_FIELDS.map(field)}</div>
-            <div className="wonder-science">
-              <span className="label">🧪 Sciences (cartes vertes)</span>
-              <div className="rail-fields four">{SCIENCE_FIELDS.map(field)}</div>
-            </div>
-          </div>
-        );
-      })}
+      <Chips>
+        {match.players.map((p, i) => (
+          <Chip key={p.id} label={`${filled(p.id) ? "✓ " : ""}${p.name}`} selected={i === current} onClick={() => setCurrent(i)} />
+        ))}
+      </Chips>
+      <div className="card wonder-sheet">
+        <strong className="wonder-name">{player.name}</strong>
+        <div className="wrows">{WONDER_FIELDS.map(row)}</div>
+        <div className="wonder-science">
+          <span className="label">🧪 Sciences (cartes vertes)</span>
+          <div className="wrows">{SCIENCE_FIELDS.map(row)}</div>
+        </div>
+      </div>
+      {current < match.players.length - 1 && (
+        <button type="button" className="btn outline full" onClick={() => { setCurrent(current + 1); window.scrollTo({ top: 0 }); }}>
+          Joueur suivant : {match.players[current + 1].name} →
+        </button>
+      )}
+      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : nombre de pièces (1 point pour 3). Les points sont calculés pour toi, mais gardés secrets jusqu'à la révélation finale.</p>
     </Frame>
   );
 }
