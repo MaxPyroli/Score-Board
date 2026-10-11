@@ -555,18 +555,19 @@ export function SushiEditor(props: EditorProps) {
 
 /** Même ordre et mêmes symboles que la feuille de score du jeu : merveille, pièces, militaire, civils (bleu), commerce (jaune), sciences (vert), guildes (violet). */
 interface WonderField { key: keyof WonderDraft; label: string; icon?: string }
-interface WonderRow { symbol: WonderSymbol; color: string; title: string; fields: WonderField[] }
+interface WonderRow { symbol: WonderSymbol; color: string; title: string; help: string; fields: WonderField[] }
 const WONDER_ROWS: WonderRow[] = [
-  { symbol: "wonder", color: "#d9a21b", title: "Merveille", fields: [{ key: "wonder", label: "Points des étapes" }] },
-  { symbol: "coins", color: "#d9a21b", title: "Pièces", fields: [{ key: "coins", label: "Nombre de pièces" }] },
-  { symbol: "military", color: "#d93a3a", title: "Militaire", fields: [{ key: "victories", label: "Victoires (total)" }, { key: "defeats", label: "Défaites (jetons)" }] },
-  { symbol: "civil", color: "#3b82d6", title: "Civils (bleu)", fields: [{ key: "civil", label: "Points" }] },
-  { symbol: "commerce", color: "#f5a623", title: "Commerce (jaune)", fields: [{ key: "commercial", label: "Points" }] },
+  { symbol: "wonder", color: "#d9a21b", title: "Merveille", help: 'Additionne les points de victoire des étapes de ta merveille que tu as construites. Les étapes qui donnent des pièces ou des ressources ne comptent pas ici.', fields: [{ key: "wonder", label: "Points des étapes" }] },
+  { symbol: "coins", color: "#d9a21b", title: "Pièces", help: 'Compte toutes tes pièces à la fin de la partie et tape leur nombre. Tu marques 1 point pour 3 pièces : l\'appli fait le calcul (14 pièces = 4 points, le reste ne compte pas).', fields: [{ key: "coins", label: "Nombre de pièces" }] },
+  { symbol: "military", color: "#d93a3a", title: "Militaire", help: 'Victoires : additionne la valeur de tes jetons de victoire (1 point à l\'âge I, 3 à l\'âge II, 5 à l\'âge III). Défaites : tape le nombre de jetons de défaite, chacun retire 1 point.', fields: [{ key: "victories", label: "Victoires (total)" }, { key: "defeats", label: "Défaites (jetons)" }] },
+  { symbol: "civil", color: "#3b82d6", title: "Civils (bleu)", help: 'Additionne les points de victoire inscrits sur tes cartes bleues (bâtiments civils).', fields: [{ key: "civil", label: "Points" }] },
+  { symbol: "commerce", color: "#f5a623", title: "Commerce (jaune)", help: 'Additionne les points de victoire que tes cartes jaunes te donnent à la fin de la partie. Certaines dépendent de tes cartes ou de celles de tes voisins : calcule-les d\'abord. Les pièces qu\'elles rapportent sont déjà dans tes pièces.', fields: [{ key: "commercial", label: "Points" }] },
   {
     symbol: "science", color: "#3a9d4a", title: "Sciences (vert)",
+    help: "Compte les symboles de tes cartes vertes : compas, roues dentées, tablettes. Un joker compte comme le symbole de ton choix (guilde des scientifiques, certaines merveilles) : l'appli le place au mieux. Chaque sorte vaut le carré de son nombre (3 compas = 9), plus 7 points par série de 3 symboles différents.",
     fields: [{ key: "compass", label: "Compas", icon: "🧭" }, { key: "gears", label: "Roues", icon: "⚙️" }, { key: "tablets", label: "Tablettes", icon: "📜" }, { key: "wild", label: "Jokers", icon: "✨" }],
   },
-  { symbol: "guilds", color: "#6b4bb0", title: "Guildes (violet)", fields: [{ key: "guilds", label: "Points" }] },
+  { symbol: "guilds", color: "#6b4bb0", title: "Guildes (violet)", help: 'Additionne les points de tes cartes violettes (guildes). Chaque guilde compte selon tes cartes ou celles de tes voisins, comme indiqué sur la carte : calcule le total avant de le noter.', fields: [{ key: "guilds", label: "Points" }] },
 ];
 
 export function SevenWondersEditor(props: EditorProps) {
@@ -580,6 +581,7 @@ export function SevenWondersEditor(props: EditorProps) {
   });
   // Un seul joueur à l'écran à la fois : on passe de l'un à l'autre avec les pastilles ou « Joueur suivant ».
   const [current, setCurrent] = useState(0);
+  const [help, setHelp] = useState<WonderSymbol | null>(null); // ligne dont l'aide est ouverte
   const set = (id: string, key: keyof WonderDraft, value: string) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value } }));
   const built = useMemo(() => buildWonders(drafts, ids, nameOf), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
   const filled = (id: string) => Object.values(drafts[id] ?? {}).some((v) => v.trim() !== "");
@@ -615,9 +617,18 @@ export function SevenWondersEditor(props: EditorProps) {
         <strong className="wonder-name">{player.name}</strong>
         <div className="wrows">
           {WONDER_ROWS.map((r) => (
-            <div key={r.symbol} className={`wrow ${r.fields.length > 2 ? "multi" : ""}`} style={{ "--c": r.color } as React.CSSProperties}>
-              <div className="wrow-head"><WonderBadge kind={r.symbol} /><strong>{r.title}</strong></div>
-              <div className={`wfields n${r.fields.length}`}>{r.fields.map((f) => input(r, f))}</div>
+            <div key={r.symbol} className="wrow" style={{ "--c": r.color } as React.CSSProperties}>
+              <div className="wrow-line">
+                <div className="wrow-head">
+                  <WonderBadge kind={r.symbol} /><strong>{r.title}</strong>
+                  <button
+                    type="button" className="info-btn" aria-label={`Aide : ${r.title}`} aria-expanded={help === r.symbol}
+                    onClick={() => setHelp(help === r.symbol ? null : r.symbol)}
+                  >?</button>
+                </div>
+                <div className={`wfields n${r.fields.length}`}>{r.fields.map((f) => input(r, f))}</div>
+              </div>
+              {help === r.symbol && <p className="winfo" role="note">{r.help}</p>}
             </div>
           ))}
         </div>
@@ -627,7 +638,7 @@ export function SevenWondersEditor(props: EditorProps) {
           Joueur suivant : {match.players[current + 1].name} →
         </button>
       )}
-      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : nombre de pièces (1 point pour 3). Les points sont calculés pour toi, mais gardés secrets jusqu'à la révélation finale.</p>
+      <p className="hint">Touche « ? » pour savoir quoi remplir. Un champ vide compte 0. Les points sont calculés pour toi, mais gardés secrets jusqu'à la révélation finale.</p>
     </Frame>
   );
 }

@@ -696,10 +696,17 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .wonder-science .wf { padding: 6px 6px 8px; }
 .rail-total.secret { color: var(--muted); opacity: .7; }
 .hint.suspense { text-align: center; margin: 0 0 4px; }
-.wrow:has(.wfields.n1) { flex-direction: row; align-items: center; justify-content: space-between; }
+.wrow-line { display: flex; flex-direction: column; gap: 8px; }
+.wrow-line:has(.wfields.n1) { flex-direction: row; align-items: center; justify-content: space-between; }
 .wfields.n1 { width: 100px; flex: none; }
 .wfields.n1 .wfield-label { display: none; }
 /* Symboles de 7 Wonders : le fond « papier » des trois premiers suit le mode clair / sombre */
 .wbadge { color: var(--ink); }
 .wb-paper { fill: #fffaf0; }
 @media (prefers-color-scheme: dark) { .wb-paper { fill: #23282b; } }
+.info-btn {
+  width: 26px; height: 26px; min-width: 26px; padding: 0; border-radius: 50%; border: 2px solid var(--ink); background: var(--surface); color: var(--text);
+  font-weight: 800; font-size: .85rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.info-btn[aria-expanded="true"] { background: var(--c); color: #fff; }
+.winfo { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 2px dashed color-mix(in srgb, var(--c) 70%, transparent); font-size: .88rem; line-height: 1.4; }
