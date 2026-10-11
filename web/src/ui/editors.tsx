@@ -16,7 +16,7 @@ import {
 } from "../games/rail";
 import { buildSushi, draftFromSheet as sushiDraftFrom, fieldsFor, ROUNDS_BEFORE_DESSERT, scoreSushi, sushiConfig, sushiModule, type SushiDraftSheet } from "../games/sushi";
 import {
-  breakdown as wonderBreakdown, buildWonders, draftFromSheet as wonderDraftFrom, emptyDraft as emptyWonderDraft, sevenWondersModule,
+  buildWonders, draftFromSheet as wonderDraftFrom, emptyDraft as emptyWonderDraft, sevenWondersModule,
   type WonderDraft,
 } from "../games/sevenwonders";
 import { buildFree, changesOf, emptyFreeDraft, freeDraftFrom, negateRound, winnerRound, type FreeDraft, type FreeRound } from "../games/counter";
@@ -581,7 +581,6 @@ export function SevenWondersEditor(props: EditorProps) {
   });
   const set = (id: string, key: keyof WonderDraft, value: string) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value } }));
   const built = useMemo(() => buildWonders(drafts, ids, nameOf), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
-  const parts = (id: string) => { const sh = built.round?.sheets[id]; return sh ? wonderBreakdown(sh) : null; };
 
   return (
     <Frame
@@ -591,18 +590,15 @@ export function SevenWondersEditor(props: EditorProps) {
       onValidate={() => built.round && onSave(sevenWondersModule.encodeRound(built.round))}
       footer={
         built.round ? (
-          <PlayerGrid players={match.players}>
-            {(p) => (<><span className="name">{p.name}</span><Score value={parts(p.id)?.total ?? 0} /></>)}
-          </PlayerGrid>
+          <div className="hint suspense">🤫 Les scores restent secrets : ils seront dévoilés à la fin.</div>
         ) : (
           <div className="error">{built.error}</div>
         )
       }
     >
-      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les sciences sont calculées pour toi.</p>
+      <p className="hint">Un champ vide compte 0. Victoires : somme de tes jetons de victoire ; Défaites : nombre de jetons ; Pièces : le nombre de pièces (1 point pour 3) ; Civils = cartes bleues, Commerce = jaunes, Guildes = violettes. Les points sont calculés pour toi, mais gardés secrets jusqu'à la révélation finale.</p>
       {match.players.map((p) => {
         const d = drafts[p.id];
-        const b = parts(p.id);
         const field = (f: WonderField) => (
           <label key={f.key} className="wf" style={{ "--c": f.color } as React.CSSProperties}>
             <span className="wf-label"><span aria-hidden="true">{f.icon}</span> {f.label}</span>
@@ -613,20 +609,13 @@ export function SevenWondersEditor(props: EditorProps) {
           <div key={p.id} className="card rail-card">
             <div className="rail-head">
               <strong>{p.name}</strong>
-              <span className="rail-total">{b?.total ?? 0}</span>
+              <span className="rail-total secret" aria-hidden="true">?</span>
             </div>
             <div className="rail-fields">{WONDER_FIELDS.map(field)}</div>
             <div className="wonder-science">
               <span className="label">🧪 Sciences (cartes vertes)</span>
               <div className="rail-fields four">{SCIENCE_FIELDS.map(field)}</div>
             </div>
-            {b && (
-              <div className="wonder-parts">
-                <span style={{ "--c": "#c0392b" } as React.CSSProperties}>⚔️ <b>{b.military > 0 ? `+${b.military}` : b.military}</b></span>
-                <span style={{ "--c": "#c47f17" } as React.CSSProperties}>🪙 <b>{b.coins}</b></span>
-                <span style={{ "--c": "#2e8b57" } as React.CSSProperties}>🧪 <b>{b.science}</b></span>
-              </div>
-            )}
           </div>
         );
       })}
