@@ -699,3 +699,7 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .wrow:has(.wfields.n1) { flex-direction: row; align-items: center; justify-content: space-between; }
 .wfields.n1 { width: 100px; flex: none; }
 .wfields.n1 .wfield-label { display: none; }
+/* Symboles de 7 Wonders : le fond « papier » des trois premiers suit le mode clair / sombre */
+.wbadge { color: var(--ink); }
+.wb-paper { fill: #fffaf0; }
+@media (prefers-color-scheme: dark) { .wb-paper { fill: #23282b; } }
