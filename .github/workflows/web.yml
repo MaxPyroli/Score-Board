@@ -7,7 +7,7 @@ on:
   pull_request:
     paths: ["web/**", ".github/workflows/web.yml"]
 
-# Deux versions du site (même GitHub Pages, branche gh-pages) :
+# Deux versions du site (GitHub Pages) :
 #  - publique : à la racine, mise à jour seulement à la fusion sur main ;
 #  - bêta : dans /beta/, mise à jour à chaque envoi sur une branche claude/** (pour tester avant de publier).
 concurrency:
