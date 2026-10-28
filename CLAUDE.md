@@ -8,3 +8,9 @@
 - Ne pas publier l'adresse e-mail du propriétaire dans le code ou sur le site.
 - Les moteurs de règles (Kotlin et TypeScript) gardent les mêmes noms de champs JSON, pour que les parties restent compatibles.
 - Tests : `cd web && npm test` ; Kotlin : `./gradlew :core:test :tarot-engine:test :skyjo-engine:test :freecounter-engine:test :session:test`.
+
+## Charte Paname Dev
+- La charte commune est dans `MaxPyroli/showroom`, fichier `CHARTE.md` (lien brut, branche de travail actuelle : https://raw.githubusercontent.com/MaxPyroli/showroom/claude/modest-babbage-vp5jts/CHARTE.md ; remplacer par `main` quand la branche sera fusionnée). La lire au début d'une tâche qui touche à l'interface, aux textes, aux pages légales, au README ou au store.
+- Identité à utiliser telle quelle : éditeur « Paname Dev », contact `contact@panamedev.fr`, copyright `© 2026 Paname Dev`, mention « Pensé par Paname Dev et codé par Claude » (longue) ou « Codé par Claude » (courte, à côté du ©). Promesse vraie pour toutes les apps : **sans pub, sans pistage** (ne pas écrire « données chez toi » ni « hors-ligne » sauf si c'est exact pour l'app). Aucune requête vers un tiers pour afficher l'app : polices, bibliothèques et scripts hébergés avec l'app ; les services nécessaires (cartes, API, base de données) sont nommés dans la page de confidentialité. Toute app a une page de confidentialité, un seul nom partout et une mention de conception exacte.
+- Si l'app s'écarte de la charte, le signaler à l'utilisateur au lieu de corriger en silence ; si une décision de design est prise dans l'app, la rappeler à l'utilisateur à la fin pour qu'il la fasse noter dans la charte (section 8) depuis la conversation du showroom : une conversation d'app ne modifie pas ce dépôt.
+- Couleur de l'app : Ocre `#878300` (encre `#5f5c02`) pour l'icône ; identifiant Android à venir `fr.panamedev.scoreboard`.

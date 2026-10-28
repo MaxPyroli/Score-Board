@@ -4,9 +4,21 @@ declare const __BUILD_COMMIT__: string;
 declare const __BUILD_DATE__: string;
 
 /** Numéro de version affiché : augmenté de 0.001 uniquement quand on ajoute des fonctionnalités (voir CLAUDE.md). */
-export const APP_VERSION = "0.015";
+export const APP_VERSION = "0.016";
 
 export const CONTACT_URL = "https://github.com/MaxPyroli/Score-Board/issues";
+
+// Identité Paname Dev (charte commune) : valeurs à utiliser telles quelles.
+export const PUBLISHER = "Paname Dev";
+export const CONTACT_EMAIL = "contact@panamedev.fr";
+export const FIRST_YEAR = 2026;
+const year = new Date().getFullYear();
+export const COPYRIGHT = `© ${year > FIRST_YEAR ? `${FIRST_YEAR}–${year}` : FIRST_YEAR} ${PUBLISHER}`;
+/** Version longue (page de confidentialité, à propos, store) et courte (pied de page, à côté du ©). */
+export const CREDIT = `Pensé par ${PUBLISHER} et codé par Claude`;
+export const CREDIT_SHORT = "Codé par Claude";
+/** Dernière modification de la page de confidentialité (à changer à chaque modification du texte). */
+export const PRIVACY_DATE = "28 octobre 2026";
 
 const date = new Date(typeof __BUILD_DATE__ === "string" ? __BUILD_DATE__ : Date.now());
 

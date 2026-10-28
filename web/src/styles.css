@@ -4,9 +4,10 @@
   --surface-2: #ece9e1;
   --text: #1d2420;
   --muted: #647069;
-  --primary: #1f6f5c;
+  /* Ocre de la charte Paname Dev (#878300), un cran plus sombre pour que le blanc reste lisible dessus (contraste 5,3:1) */
+  --primary: #726e00;
   --on-primary: #ffffff;
-  --primary-soft: #d9ece6;
+  --primary-soft: #efecc4;
   --outline: #d6d2c6;
   --pos: #1a7a4c;
   --neg: #b3382c;
@@ -20,9 +21,9 @@
     --surface-2: #272e32;
     --text: #e8ece9;
     --muted: #96a29b;
-    --primary: #5cc3a6;
-    --on-primary: #0b221b;
-    --primary-soft: #1f3a33;
+    --primary: #d4cc4a;
+    --on-primary: #1c1b00;
+    --primary-soft: #3a3800;
     --outline: #353e42;
     --pos: #64d49a;
     --neg: #f08377;
@@ -255,17 +256,19 @@ button.card { text-align: left; width: 100%; }
 .dot.recent { background: #8f9892; }
 
 /* ---- Thèmes des jeux : dégradé (--g1/--g2) et couleur d'accent, appliqués à l'accueil, à la partie et à la saisie ---- */
-:root { --g1: #1f6f5c; --g2: #0f4c3f; }
+:root { --g1: #878300; --g2: #5f5c02; }
 [data-game="tarot"] { --g1: #4b2a7b; --g2: #8e3b7a; --primary: #6d3fb5; --primary-soft: #e9defa; }
 [data-game="skyjo"] { --g1: #0b5d8a; --g2: #1d3f9b; --primary: #1d6fb8; --primary-soft: #dbeafe; }
 [data-game="sixquiprend"] { --g1: #b4430c; --g2: #7c2d12; --primary: #c2570c; --primary-soft: #fde8d6; }
+[data-game="sevenwonders"] { --g1: #c9922b; --g2: #6b3d0a; --primary: #9a6408; --primary-soft: #f8ecc9; }
 [data-game="rail"] { --g1: #8f1d2c; --g2: #4a1020; --primary: #b32a3d; --primary-soft: #fadde1; }
 [data-game="sushi"] { --g1: #e0533d; --g2: #8c2a4a; --primary: #d2452f; --primary-soft: #fde3dd; }
-[data-game="free"] { --g1: #1f6f5c; --g2: #0f4c3f; }
+[data-game="free"] { --g1: #878300; --g2: #5f5c02; }
 @media (prefers-color-scheme: dark) {
   [data-game="tarot"] { --primary: #b99af0; --primary-soft: #2e2147; }
   [data-game="skyjo"] { --primary: #7db7ff; --primary-soft: #18304f; }
   [data-game="sixquiprend"] { --primary: #ffa66b; --primary-soft: #4a2512; }
+  [data-game="sevenwonders"] { --primary: #f0c05a; --primary-soft: #433010; }
   [data-game="rail"] { --primary: #ff8a98; --primary-soft: #4a1b24; }
   [data-game="sushi"] { --primary: #ff9a85; --primary-soft: #4d2119; }
 }
@@ -503,7 +506,7 @@ button.card { text-align: left; width: 100%; }
 @media (prefers-color-scheme: dark) { .ticket-trash, .ticket-main { --edge: rgba(0, 0, 0, .5); } }
 .ticket-spine {
   flex: none; width: 34px; display: flex; align-items: center; justify-content: center; border-right: 2.5px solid var(--ink);
-  background: linear-gradient(180deg, var(--g1, #1f6f5c), var(--g2, #0f4c3f)); color: #fff;
+  background: linear-gradient(180deg, var(--g1, #878300), var(--g2, #5f5c02)); color: #fff;
 }
 .ticket-spine span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; opacity: .92; white-space: nowrap; }
 .ticket-body { flex: 1; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; min-width: 0; }
@@ -658,3 +661,60 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .topbar h1:has(.meeple) { white-space: nowrap; font-size: 1.6rem; font-weight: 800; letter-spacing: -.01em; padding-left: 4px; gap: 10px; }
 .topbar h1 .meeple { width: 34px; height: 34px; }
 @media (max-width: 360px) { .topbar h1:has(.meeple) { font-size: 1.3rem; gap: 6px; } .topbar h1 .meeple { width: 28px; height: 28px; } }
+
+/* Boutons à fond clair (chips, +/−, contours, choix) : pas de reflet ni d'ombre à l'intérieur, sinon ils paraissent creux.
+   Le reflet intérieur est gardé pour les boutons pleins et colorés (principal, fab, cartes de jeux). */
+.chip:not(:active):not(.pressed):not(.sign[aria-pressed="true"]),
+.icon.round:not(:active):not(.pressed),
+.btn.outline:not(:active):not(.pressed),
+.card.choice:not(:active):not(.pressed) { box-shadow: 0 var(--sink) 0 var(--cast); }
+
+/* 7 Wonders : un joueur à la fois, une ligne par type de points (couleur + symbole) */
+.wonder-sheet { padding: 12px; margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+.wonder-name { font-size: 1.15rem; }
+.wrows { display: flex; flex-direction: column; gap: 8px; }
+.wrow {
+  display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border-radius: 12px;
+  background: color-mix(in srgb, var(--c) 12%, transparent); border: 2px solid color-mix(in srgb, var(--c) 45%, transparent);
+}
+.wrow-head { display: flex; align-items: center; gap: 10px; }
+.wrow-head strong { font-size: .98rem; }
+.wbadge { flex: none; border-radius: 9px; border: 2px solid var(--ink); box-sizing: content-box; width: 40px; height: 40px; }
+.wfields { display: grid; gap: 8px; grid-template-columns: 1fr; }
+.wfields.n2 { grid-template-columns: 1fr 1fr; }
+.wfields.n4 { grid-template-columns: 1fr 1fr; }
+.wfield { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.wfield-label { font-size: .78rem; color: var(--muted); font-weight: 600; }
+.wfield .field { width: 100%; min-height: 40px; }
+.hint.suspense { text-align: center; margin: 0 0 4px; }
+
+/* Boutons ronds de la barre du haut (retour, partager, menu) : même épaisseur de trait que les autres boutons */
+.topbar .icon.round.back, .topbar .icon.round.plain { border-width: 3px; }
+.rail-fields > *, .wf .field { min-width: 0; }
+.rail-fields.four { gap: 6px; }
+.wonder-science .wf { padding: 5px 4px 6px; }
+.rail-fields.four { grid-template-columns: repeat(2, 1fr); }
+.wonder-science .wf { padding: 6px 6px 8px; }
+.rail-total.secret { color: var(--muted); opacity: .7; }
+.hint.suspense { text-align: center; margin: 0 0 4px; }
+.wrow-line { display: flex; flex-direction: column; gap: 8px; }
+.wrow-line:has(.wfields.n1) { flex-direction: row; align-items: center; justify-content: space-between; }
+.wfields.n1 { width: 100px; flex: none; }
+.wfields.n1 .wfield-label { display: none; }
+/* Symboles de 7 Wonders : le fond « papier » des trois premiers suit le mode clair / sombre */
+.wbadge { color: var(--ink); }
+.wb-paper { fill: #fffaf0; }
+@media (prefers-color-scheme: dark) { .wb-paper { fill: #23282b; } }
+.info-btn {
+  width: 26px; height: 26px; min-width: 26px; padding: 0; border-radius: 50%; border: 2px solid var(--ink); background: var(--surface); color: var(--text);
+  font-weight: 800; font-size: .85rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.info-btn[aria-expanded="true"] { background: var(--c); color: #fff; }
+.winfo { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 2px dashed color-mix(in srgb, var(--c) 70%, transparent); font-size: .88rem; line-height: 1.4; }
+
+/* Pied de page de l'accueil : liens, crédit, promesse */
+.footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; }
+.footer-links .link-small { font: inherit; }
+.privacy-summary { padding: 14px 16px; border-left: 6px solid var(--primary); display: flex; flex-direction: column; gap: 4px; }
+.privacy-summary p { margin: 0; }
+.rules-body a, .credits a { color: var(--primary); }

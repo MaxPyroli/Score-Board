@@ -103,3 +103,7 @@ de test (onglet *Actions* → dernière exécution → artefact `panagames-debug
 2. ✅ Écrans de base (à valider sur un vrai téléphone via l'APK de la CI).
 3. ✅ Partage de session (code, QR code, Nearby Connections) : à valider sur deux vrais téléphones.
 4. Polissage (dont le Tarot), puis publication sur la Play Console.
+
+---
+
+© 2026 Paname Dev · Codé par Claude · contact@panamedev.fr
