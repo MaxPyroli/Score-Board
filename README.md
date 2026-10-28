@@ -106,4 +106,4 @@ de test (onglet *Actions* → dernière exécution → artefact `panagames-debug
 
 ---
 
-© 2026 Paname Dev · Pensé par Paname Dev et codé par Claude · contact@panamedev.fr
+© 2026 Paname Dev · Codé par Claude · contact@panamedev.fr

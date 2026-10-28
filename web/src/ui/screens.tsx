@@ -10,7 +10,7 @@ import { ChangelogSheet } from "./ChangelogSheet";
 import { PrivacySheet } from "./PrivacySheet";
 import { ASSISTANT_FEATURE, setAssistantEnabled, useAssistant } from "../assistant";
 import { IS_BETA, PUBLIC_URL } from "../channel";
-import { CONTACT_EMAIL, CONTACT_URL, COPYRIGHT, CREDIT, versionLabel } from "../version";
+import { CONTACT_EMAIL, CONTACT_URL, COPYRIGHT, CREDIT_SHORT, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
 import { EndedScreen, FinalScreen, RenameDialog, WhoAreYou } from "./final";
@@ -146,7 +146,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
           <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
           <a href={CONTACT_URL} target="_blank" rel="noreferrer">Signaler un problème</a>
         </span>
-        <span>{COPYRIGHT} · {CREDIT}</span>
+        <span>{COPYRIGHT} · {CREDIT_SHORT}</span>
         <span>Sans pub, sans pistage</span>
       </footer>
       {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
