@@ -7,7 +7,7 @@ on:
   pull_request:
     paths: ["web/**", ".github/workflows/web.yml"]
 
-# Deux versions du site (même GitHub Pages, branche gh-pages) :
+# Deux versions du site (GitHub Pages) :
 #  - publique : à la racine, mise à jour seulement à la fusion sur main ;
 #  - bêta : dans /beta/, mise à jour à chaque envoi sur une branche claude/** (pour tester avant de publier).
 concurrency:
@@ -19,7 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_CHANNEL: ${{ github.ref == 'refs/heads/main' && 'public' || 'beta' }}
-      VITE_PUBLIC_URL: https://maxpyroli.github.io/Score-Board/
+      VITE_PUBLIC_URL: https://scoreboard.panamedev.fr/
+      # Adresse commune de la bêta (charte Paname Dev) : beta.scoreboard.panamedev.fr, servie par GitHub Pages depuis un dépôt à part
+      # (MaxPyroli/Score-Board-beta). Les anciennes adresses (GitHub Pages /beta/ et www.grandpaname.fun) ne redirigent vers elle
+      # que lorsque le secret BETA_REPO_TOKEN existe, c'est-à-dire quand la nouvelle adresse est prête.
+      VITE_SITE_HOST: ${{ github.ref != 'refs/heads/main' && 'beta.scoreboard.panamedev.fr' || 'scoreboard.panamedev.fr' }}
+      VITE_REDIRECT_TO_SITE: ${{ github.ref != 'refs/heads/main' && secrets.BETA_REPO_TOKEN != '' && '1' || '0' }}
+      # Version publique : scoreboard.panamedev.fr, servie par ce dépôt (GitHub Pages, domaine personnalisé : fichier CNAME ci-dessous) ;
+      # GitHub y renvoie lui-même l'ancienne adresse maxpyroli.github.io/Score-Board/.
     defaults:
       run:
         working-directory: web
@@ -55,6 +62,7 @@ jobs:
       cancel-in-progress: false
     env:
       OVH_FTP_HOST: ${{ secrets.OVH_FTP_HOST }}
+      BETA_REPO_TOKEN: ${{ secrets.BETA_REPO_TOKEN }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -68,6 +76,7 @@ jobs:
           publish_dir: dist
           publish_branch: gh-pages
           keep_files: true
+          cname: scoreboard.panamedev.fr
       - name: Publier la bêta (dossier beta)
         if: github.ref != 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
@@ -77,9 +86,21 @@ jobs:
           publish_branch: gh-pages
           destination_dir: beta
           keep_files: true
-      # Bêta aussi sur l'hébergement OVH (adresse à part, installable séparément) : seulement si les secrets existent.
-      # Secrets du dépôt : OVH_FTP_HOST, OVH_FTP_USER, OVH_FTP_PASSWORD, et OVH_FTP_DIR (dossier du site, ex. app/).
-      # Envoi par SFTP (port 22) : le FTPS de l'hébergement OVH n'est pas accepté.
+      # Bêta sur son adresse commune : dépôt à part servi par GitHub Pages (jeton d'écriture limité à ce seul dépôt).
+      - name: Publier la bêta sur son adresse commune
+        if: github.ref != 'refs/heads/main' && env.BETA_REPO_TOKEN != ''
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.BETA_REPO_TOKEN }}
+          external_repository: MaxPyroli/Score-Board-beta
+          publish_dir: dist
+          publish_branch: gh-pages
+          cname: beta.scoreboard.panamedev.fr
+          force_orphan: true
+      # Ancien hébergement OVH (www.grandpaname.fun), par SFTP (port 22 : le FTPS de l'hébergement OVH n'est pas accepté). Secrets du dépôt :
+      #  OVH_FTP_HOST, OVH_FTP_USER, OVH_FTP_PASSWORD ;
+      #  OVH_FTP_DIR : dossier de www.grandpaname.fun (même version, qui redirige vers la nouvelle adresse).
       - name: Publier la bêta sur OVH (SFTP)
         if: github.ref != 'refs/heads/main' && env.OVH_FTP_HOST != ''
         continue-on-error: true
@@ -88,7 +109,10 @@ jobs:
           OVH_FTP_PASSWORD: ${{ secrets.OVH_FTP_PASSWORD }}
           OVH_FTP_DIR: ${{ secrets.OVH_FTP_DIR }}
         run: |
-          # Le dossier est vidé puis remplacé : on refuse les dossiers « larges » par sécurité.
-          case "$OVH_FTP_DIR" in ""|"."|"./"|"/"|"www"|"www/"|"~"|"~/") echo "OVH_FTP_DIR invalide : $OVH_FTP_DIR"; exit 1;; esac
           sudo apt-get install -y -qq lftp > /dev/null
-          lftp -u "$OVH_FTP_USER","$OVH_FTP_PASSWORD" "sftp://$OVH_FTP_HOST:22" -e "set sftp:auto-confirm yes; set net:max-retries 2; mirror -R --delete --verbose=1 dist/ $OVH_FTP_DIR; bye"
+          for DIR in "$OVH_FTP_DIR"; do
+            [ -z "$DIR" ] && continue
+            # Le dossier est vidé puis remplacé : on refuse les dossiers « larges » par sécurité.
+            case "$DIR" in "."|"./"|"/"|"www"|"www/"|"~"|"~/") echo "Dossier invalide : $DIR"; exit 1;; esac
+            lftp -u "$OVH_FTP_USER","$OVH_FTP_PASSWORD" "sftp://$OVH_FTP_HOST:22" -e "set sftp:auto-confirm yes; set net:max-retries 2; mirror -R --delete --verbose=1 dist/ $DIR; bye"
+          done
