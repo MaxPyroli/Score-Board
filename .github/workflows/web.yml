@@ -20,10 +20,11 @@ jobs:
     env:
       VITE_CHANNEL: ${{ github.ref == 'refs/heads/main' && 'public' || 'beta' }}
       VITE_PUBLIC_URL: https://maxpyroli.github.io/Score-Board/
-      # Adresse commune de la bêta (charte Paname Dev). Les anciennes adresses (GitHub Pages /beta/ et www.grandpaname.fun) ne redirigent
-      # vers elle que lorsque le secret OVH_FTP_DIR_BETA existe, c'est-à-dire quand la nouvelle adresse est prête côté OVH.
+      # Adresse commune de la bêta (charte Paname Dev) : beta.scoreboard.panamedev.fr, servie par GitHub Pages depuis un dépôt à part
+      # (MaxPyroli/Score-Board-beta). Les anciennes adresses (GitHub Pages /beta/ et www.grandpaname.fun) ne redirigent vers elle
+      # que lorsque le secret BETA_REPO_TOKEN existe, c'est-à-dire quand la nouvelle adresse est prête.
       VITE_SITE_HOST: ${{ github.ref != 'refs/heads/main' && 'beta.scoreboard.panamedev.fr' || '' }}
-      VITE_REDIRECT_TO_SITE: ${{ github.ref != 'refs/heads/main' && secrets.OVH_FTP_DIR_BETA != '' && '1' || '0' }}
+      VITE_REDIRECT_TO_SITE: ${{ github.ref != 'refs/heads/main' && secrets.BETA_REPO_TOKEN != '' && '1' || '0' }}
     defaults:
       run:
         working-directory: web
@@ -59,6 +60,7 @@ jobs:
       cancel-in-progress: false
     env:
       OVH_FTP_HOST: ${{ secrets.OVH_FTP_HOST }}
+      BETA_REPO_TOKEN: ${{ secrets.BETA_REPO_TOKEN }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -81,10 +83,21 @@ jobs:
           publish_branch: gh-pages
           destination_dir: beta
           keep_files: true
-      # Bêta sur l'hébergement OVH, par SFTP (port 22 : le FTPS de l'hébergement OVH n'est pas accepté). Secrets du dépôt :
+      # Bêta sur son adresse commune : dépôt à part servi par GitHub Pages (jeton d'écriture limité à ce seul dépôt).
+      - name: Publier la bêta sur son adresse commune
+        if: github.ref != 'refs/heads/main' && env.BETA_REPO_TOKEN != ''
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.BETA_REPO_TOKEN }}
+          external_repository: MaxPyroli/Score-Board-beta
+          publish_dir: dist
+          publish_branch: gh-pages
+          cname: beta.scoreboard.panamedev.fr
+          force_orphan: true
+      # Ancien hébergement OVH (www.grandpaname.fun), par SFTP (port 22 : le FTPS de l'hébergement OVH n'est pas accepté). Secrets du dépôt :
       #  OVH_FTP_HOST, OVH_FTP_USER, OVH_FTP_PASSWORD ;
-      #  OVH_FTP_DIR_BETA : dossier du sous-domaine beta.scoreboard.panamedev.fr (la bêta y est publiée) ;
-      #  OVH_FTP_DIR : ancien dossier de www.grandpaname.fun (même version, qui redirige vers la nouvelle adresse).
+      #  OVH_FTP_DIR : dossier de www.grandpaname.fun (même version, qui redirige vers la nouvelle adresse).
       - name: Publier la bêta sur OVH (SFTP)
         if: github.ref != 'refs/heads/main' && env.OVH_FTP_HOST != ''
         continue-on-error: true
@@ -92,10 +105,9 @@ jobs:
           OVH_FTP_USER: ${{ secrets.OVH_FTP_USER }}
           OVH_FTP_PASSWORD: ${{ secrets.OVH_FTP_PASSWORD }}
           OVH_FTP_DIR: ${{ secrets.OVH_FTP_DIR }}
-          OVH_FTP_DIR_BETA: ${{ secrets.OVH_FTP_DIR_BETA }}
         run: |
           sudo apt-get install -y -qq lftp > /dev/null
-          for DIR in "$OVH_FTP_DIR_BETA" "$OVH_FTP_DIR"; do
+          for DIR in "$OVH_FTP_DIR"; do
             [ -z "$DIR" ] && continue
             # Le dossier est vidé puis remplacé : on refuse les dossiers « larges » par sécurité.
             case "$DIR" in "."|"./"|"/"|"www"|"www/"|"~"|"~/") echo "Dossier invalide : $DIR"; exit 1;; esac
