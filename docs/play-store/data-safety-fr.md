@@ -1,6 +1,6 @@
 # Formulaire « Sécurité des données » : réponses
 
-L'application ne collecte rien et ne partage rien avec le développeur ni des tiers.
+L'application **Android** ne collecte rien et ne partage rien avec le développeur ni des tiers. (La version web, elle, partage les parties via Firebase : voir `PRIVACY.md` ; ça ne concerne pas cette fiche.) Contact : contact@panamedev.fr.
 
 - **Collectez-vous ou partagez-vous des données utilisateur ?** Non.
   (Les parties restent sur le téléphone ; le partage entre téléphones est direct, appareil à appareil, et n'atteint jamais le développeur.)

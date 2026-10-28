@@ -1,15 +1,15 @@
 # Fiche Play Store (français) — brouillon
 
-À adapter une fois le nom de l'appli choisi (`{{NOM}}`).
+Nom retenu : **Score Board** (charte Paname Dev). Texte à copier tel quel dans la Play Console.
 
-**Nom** (30 caractères max) : {{NOM}}
+**Nom** (30 caractères max) : Score Board
 
 **Description courte** (80 caractères max) :
 Compte les points de tes jeux de société et partage les scores sans internet.
 
 **Description complète** :
 
-{{NOM}} compte les points de tes jeux de société, avec les vraies règles de chaque jeu : pas un simple compteur.
+Score Board compte les points de tes jeux de société, avec les vraies règles de chaque jeu : pas un simple compteur.
 
 JEUX DISPONIBLES
 • Tarot à 3, 4 ou 5 joueurs : contrats, bouts, poignées, petit au bout, chelem, appelé. Les points de chaque joueur se calculent tout seuls, avec un aperçu en direct.
@@ -25,11 +25,19 @@ PRATIQUE
 PARTAGE ENTRE TÉLÉPHONES
 Partage une partie avec un code à 4 caractères ou un QR code : les autres joueurs suivent les scores en direct sur leur téléphone, sans internet (Bluetooth et Wi-Fi). La connexion se rétablit toute seule quand on revient à proximité.
 
-Sans publicité, sans compte, sans collecte de données.
+Sans pub, sans pistage, sans compte.
 
-{{NOM}} n'est affilié à aucun éditeur de jeux. Les noms de jeux cités appartiennent à leurs propriétaires respectifs.
+Pensé par Paname Dev et codé par Claude. Contact : contact@panamedev.fr
+
+Score Board n'est affilié à aucun éditeur de jeux. Les noms de jeux cités appartiennent à leurs propriétaires respectifs.
 
 **Catégorie** : Cartes (ou Jeux de société)
 **Contact** : e-mail à renseigner ; politique de confidentialité : URL de PRIVACY.md (voir README de ce dossier)
 
 **Visuels à fournir** : icône 512×512 PNG, image de présentation 1024×500, au moins 2 captures d'écran de téléphone (à faire depuis ton téléphone une fois l'appli installée).
+
+**Contact développeur** (champ « e-mail » de la fiche) : contact@panamedev.fr
+
+**Politique de confidentialité** (lien à saisir dans la fiche) : à publier à une adresse web, par exemple sur le site de Score Board ou `https://panamedev.fr` ; contenu : `PRIVACY.md`.
+
+**Copyright / mention courte** (si l'espace manque) : © 2026 Paname Dev · Codé par Claude

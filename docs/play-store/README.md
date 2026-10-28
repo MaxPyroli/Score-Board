@@ -2,7 +2,7 @@
 
 ## 0. À décider avant le premier envoi
 
-L'identifiant de l'appli (`applicationId`, aujourd'hui `com.panagames.app`) est **définitif** dès le premier fichier envoyé à Google. Il faut aussi le nom de l'appli. Ensuite on change les deux dans le code et on continue.
+L'identifiant de l'appli (`applicationId`, aujourd'hui `com.panagames.app`) est **définitif** dès le premier fichier envoyé à Google. Décisions de la charte Paname Dev : nom **Score Board**, identifiant **`fr.panamedev.scoreboard`**. Reste à les changer dans le code (étape à part, avec un test de la CI) avant le premier envoi.
 
 ## 1. Clé d'envoi (une seule fois)
 
