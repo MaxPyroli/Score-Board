@@ -7,9 +7,10 @@ import { forgetGroup, loadGroups, newId, rememberGroup } from "../store";
 import { Meeple } from "./Meeple";
 import { Crown, MoreIcon, ShareIcon } from "./PlusMinus";
 import { ChangelogSheet } from "./ChangelogSheet";
+import { PrivacySheet } from "./PrivacySheet";
 import { ASSISTANT_FEATURE, setAssistantEnabled, useAssistant } from "../assistant";
 import { IS_BETA, PUBLIC_URL } from "../channel";
-import { CONTACT_URL, versionLabel } from "../version";
+import { CONTACT_EMAIL, CONTACT_URL, COPYRIGHT, CREDIT, versionLabel } from "../version";
 import { useMe } from "../me";
 import { useRecentlyGone } from "../presence";
 import { EndedScreen, FinalScreen, RenameDialog, WhoAreYou } from "./final";
@@ -66,6 +67,7 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
 }) {
   const [toDelete, setToDelete] = useState<StoredMatch | null>(null);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const assistant = useAssistant();
   // Les parties terminées vont dans l'historique ; l'accueil ne montre que celles en cours.
   const ongoing = matches.filter((m) => !isFinished(m));
@@ -139,9 +141,16 @@ export function HomeScreen({ matches, onNew, onOpen, onDelete, onJoin, onHistory
           </label>
         )}
         {IS_BETA && <span>Version de test · <a href={PUBLIC_URL}>Version publique</a></span>}
-        <a href={CONTACT_URL} target="_blank" rel="noreferrer">Contact / signaler un problème</a>
+        <span className="footer-links">
+          <button className="link-small" onClick={() => setPrivacyOpen(true)}>Confidentialité</button>
+          <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
+          <a href={CONTACT_URL} target="_blank" rel="noreferrer">Signaler un problème</a>
+        </span>
+        <span>{COPYRIGHT} · {CREDIT}</span>
+        <span>Sans pub, sans pistage</span>
       </footer>
       {changelogOpen && <ChangelogSheet onClose={() => setChangelogOpen(false)} />}
+      {privacyOpen && <PrivacySheet onClose={() => setPrivacyOpen(false)} />}
       {toDelete && (
         <Dialog title="Supprimer la partie ?" onClose={() => setToDelete(null)}>
           <p>Les scores de cette partie seront perdus.</p>

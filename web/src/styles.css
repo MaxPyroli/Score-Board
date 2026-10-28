@@ -710,3 +710,10 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 }
 .info-btn[aria-expanded="true"] { background: var(--c); color: #fff; }
 .winfo { margin: 0; padding: 8px 10px; border-radius: 10px; background: var(--surface); border: 2px dashed color-mix(in srgb, var(--c) 70%, transparent); font-size: .88rem; line-height: 1.4; }
+
+/* Pied de page de l'accueil : liens, crédit, promesse */
+.footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; }
+.footer-links .link-small { font: inherit; }
+.privacy-summary { padding: 14px 16px; border-left: 6px solid var(--primary); display: flex; flex-direction: column; gap: 4px; }
+.privacy-summary p { margin: 0; }
+.rules-body a, .credits a { color: var(--primary); }

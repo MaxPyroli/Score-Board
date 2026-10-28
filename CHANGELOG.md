@@ -5,6 +5,8 @@ Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnal
 ## v0.016 · 8 oct. 2026
 - Nouveau jeu : 7 Wonders (2 à 7 joueurs). Un seul décompte en fin de partie, avec une fiche par joueur : conflits militaires, pièces, merveille, bâtiments civils / commerciaux, guildes et sciences (jokers placés au mieux).
 - Boutons à fond clair (+/−, joueurs récents…) : plus d'effet « creux ».
+- Nouvelle icône aux couleurs de Paname Dev (dé et pion).
+- Page « Confidentialité » (et contact, crédit Paname Dev) en bas de l'accueil.
 
 ## v0.015 · 7 oct. 2026
 - Salle d'attente : à la création d'une partie, « Inviter » partage un code / QR code tout de suite ; chaque invité tape son pseudo sur son téléphone et apparaît tout seul chez l'hôte, qui lance ensuite la partie.
