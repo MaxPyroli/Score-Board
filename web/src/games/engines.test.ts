@@ -100,10 +100,16 @@ describe("Tarot : barème", () => {
 });
 
 describe("Tarot : formulaire", () => {
-  it("brouillon initial valide à 3, 4 et 5 joueurs", () => {
+  it("brouillon initial : preneur (et appelé à 5) à choisir, puis valide à 3, 4 et 5 joueurs", () => {
     for (const n of [3, 4, 5]) {
       const ids = ["A", "B", "C", "D", "E"].slice(0, n);
-      expect(buildRound(initialDraft(ids, false)).error).toBeUndefined();
+      const d = initialDraft(ids, false);
+      expect(buildRound(d).error).toMatch(/preneur/);
+      const avecPreneur = { ...d, preneurId: "A" };
+      if (n === 5) {
+        expect(buildRound(avecPreneur).error).toMatch(/appelé/);
+        expect(buildRound({ ...avecPreneur, appeleId: "B" }).error).toBeUndefined();
+      } else expect(buildRound(avecPreneur).error).toBeUndefined();
     }
   });
 
@@ -167,7 +173,7 @@ describe("Tarot : formulaire", () => {
     const base = round({});
     expect(() => validateRound({ ...base, miseres: [{ joueurId: "Z", type: "ATOUT" }] })).toThrow(/table/);
     expect(() => validateRound({ ...base, miseres: [{ joueurId: "A", type: "ATOUT" }, { joueurId: "A", type: "ATOUT" }] })).toThrow(/deux fois/);
-    let d = initialDraft(["A", "B", "C", "D"], false);
+    let d = { ...initialDraft(["A", "B", "C", "D"], false), preneurId: "A" };
     d = withMisereToggled(d, "B", "TETE");
     expect(buildRound(d).round?.miseres).toEqual([{ joueurId: "B", type: "TETE" }]);
     expect(withMisereToggled(d, "B", "TETE").miseres).toEqual([]);
