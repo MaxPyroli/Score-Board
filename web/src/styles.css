@@ -718,3 +718,6 @@ button:focus-visible, a:focus-visible, .chip:focus-visible, .btn:focus-visible {
 .privacy-summary { padding: 14px 16px; border-left: 6px solid var(--primary); display: flex; flex-direction: column; gap: 4px; }
 .privacy-summary p { margin: 0; }
 .rules-body a, .credits a { color: var(--primary); }
+
+/* Tarot : blancs */
+.misere-row { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildRound, calculer, atoutsRequis, draftFromRound, initialDraft, seuilRequis, summarize, tarotModule,
+  buildRound, calculer, atoutsRequis, withMisereToggled, draftFromRound, initialDraft, seuilRequis, summarize, tarotModule,
   validateRound, withChelem, withPoints, withPointsDelta, pointsDefense, type TarotRound,
 } from "./tarot";
 import { buildSkyjo, calculerSkyjo, emptySkyjoDraft, skyjoModule } from "./skyjo";
@@ -146,6 +146,36 @@ describe("Tarot : formulaire", () => {
     const t = totals(tarotModule, m1);
     expect(somme(t)).toBeCloseTo(0);
     expect(totals(tarotModule, matchWithoutLastRound(m1)).A).toBe(90);
+  });
+
+  it("blancs : 10 points de chaque adversaire, indépendamment du contrat, somme nulle", () => {
+    const base = round({ contract: "PETITE", pointsRealises: 56, bouts: 0 });
+    const sans = calculer(base).points;
+    const avec = calculer({ ...base, miseres: [{ joueurId: "B", type: "ATOUT" }] });
+    // B reçoit 10 des 3 autres : +30 ; les autres paient 10
+    expect(avec.misere).toEqual({ A: -10, B: 30, C: -10, D: -10 });
+    expect(avec.points.B).toBe((sans.B ?? 0) + 30);
+    expect(avec.points.A).toBe((sans.A ?? 0) - 10);
+    expect(somme(avec.points)).toBeCloseTo(0);
+    // deux blancs pour le même joueur, et un blanc pour un autre
+    const deux = calculer({ ...base, miseres: [{ joueurId: "B", type: "ATOUT" }, { joueurId: "B", type: "TETE" }, { joueurId: "C", type: "TETE" }] });
+    expect(deux.misere).toEqual({ A: -30, B: 50, C: 10, D: -30 });
+    expect(somme(deux.points)).toBeCloseTo(0);
+    expect(calculer(base).misere).toEqual({});
+  });
+  it("blancs : saisie, validation, aller-retour et anciennes manches", () => {
+    const base = round({});
+    expect(() => validateRound({ ...base, miseres: [{ joueurId: "Z", type: "ATOUT" }] })).toThrow(/table/);
+    expect(() => validateRound({ ...base, miseres: [{ joueurId: "A", type: "ATOUT" }, { joueurId: "A", type: "ATOUT" }] })).toThrow(/deux fois/);
+    let d = initialDraft(["A", "B", "C", "D"], false);
+    d = withMisereToggled(d, "B", "TETE");
+    expect(buildRound(d).round?.miseres).toEqual([{ joueurId: "B", type: "TETE" }]);
+    expect(withMisereToggled(d, "B", "TETE").miseres).toEqual([]);
+    const r = buildRound(d).round!;
+    expect(tarotModule.decodeRound(tarotModule.encodeRound(r)).miseres).toEqual(r.miseres);
+    expect(buildRound(draftFromRound(r, false)).round).toEqual(r);
+    expect(tarotModule.decodeRound(tarotModule.encodeRound(base)).miseres).toBeUndefined(); // ancienne manche : aucun blanc
+    expect(summarize({ ...base, miseres: [{ joueurId: "B", type: "ATOUT" }] }, (id) => `J${id}`).detail).toMatch(/blanc d'atout \(JB\)$/);
   });
 
   it("résumé de manche", () => {

@@ -2,6 +2,9 @@
 
 Version du site web. Le numéro augmente de 0.001 à chaque nouvelle fonctionnalité (pas pour un correctif).
 
+## v0.017 · 7 nov. 2026
+- Tarot : blancs d'atout et de tête (variante de table), 10 points de chaque adversaire pour celui qui en a un, quel que soit le résultat du contrat.
+
 ## v0.016 · 8 oct. 2026
 - Nouveau jeu : 7 Wonders (2 à 7 joueurs). Un seul décompte en fin de partie, avec une fiche par joueur : conflits militaires, pièces, merveille, bâtiments civils / commerciaux, guildes et sciences (jokers placés au mieux).
 - Boutons à fond clair (+/−, joueurs récents…) : plus d'effet « creux ».

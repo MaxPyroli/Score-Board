@@ -33,6 +33,23 @@ export function atoutsRequis(p: TarotPoignee, joueurs: number): number {
   return row[p];
 }
 
+/**
+ * Blancs, ou « misères » : variante de table (hors règles FFT). Blanc d'atout : aucun atout, l'Excuse comprise ; blanc de tête : aucune
+ * figure (roi, dame, cavalier, valet ; les bouts sont permis). Chaque adversaire paie 10 points à celui qui le déclare, quel que soit
+ * le résultat du contrat ; ce n'est ni multiplié ni réparti par camp.
+ */
+export type TarotMisereType = "ATOUT" | "TETE";
+export const MISERE_POINTS = 10;
+export const MISERES: { id: TarotMisereType; label: string; help: string }[] = [
+  { id: "ATOUT", label: "Blanc d'atout", help: "Aucun atout dans la main, l'Excuse comprise." },
+  { id: "TETE", label: "Blanc de tête", help: "Aucune figure (roi, dame, cavalier, valet) ; les bouts sont permis." },
+];
+export const misereInfo = (t: TarotMisereType) => MISERES.find((x) => x.id === t)!;
+export interface TarotMisere {
+  joueurId: string;
+  type: TarotMisereType;
+}
+
 export interface TarotChelem {
   annonce: boolean;
   reussi: boolean;
@@ -50,6 +67,8 @@ export interface TarotRound {
   poigneeCamp: TarotCamp | null;
   petitAuBoutCamp: TarotCamp | null;
   chelem: TarotChelem | null;
+  /** Blancs déclarés (absent = aucun) : champ ajouté, les anciennes manches restent valables. */
+  miseres?: TarotMisere[];
 }
 
 /** Vérifie la cohérence d'une manche ; lève une erreur au message lisible sinon. */
@@ -71,6 +90,13 @@ export function validateRound(r: TarotRound): void {
     throw new Error("L'appelé n'existe qu'à 5 joueurs.");
   }
   if (r.poignee !== null && r.poigneeCamp === null) throw new Error("Le camp de la poignée doit être précisé.");
+  const vus = new Set<string>();
+  for (const m of r.miseres ?? []) {
+    if (!r.joueurs.includes(m.joueurId)) throw new Error("Le joueur d'un blanc doit faire partie de la table.");
+    if (!MISERES.some((x) => x.id === m.type)) throw new Error(`Blanc inconnu : ${m.type}.`);
+    if (vus.has(`${m.joueurId}:${m.type}`)) throw new Error("Un même blanc ne peut pas être déclaré deux fois par le même joueur.");
+    vus.add(`${m.joueurId}:${m.type}`);
+  }
   if (r.chelem?.reussi && r.pointsRealises !== 91)
     throw new Error("Un chelem réussi implique que le camp d'attaque a fait tous les plis (91 points).");
 }
@@ -88,6 +114,8 @@ export interface TarotRoundResult {
   bonusPetitAuBout: number;
   bonusChelem: number;
   scoreAttaque: number;
+  /** Points des blancs par joueur (chacun reçoit 10 par adversaire, les autres paient 10) ; vide sans blanc. */
+  misere: Scores;
   points: Scores;
 }
 
@@ -121,10 +149,22 @@ export function calculer(round: TarotRound): TarotRoundResult {
   }
 
   const scoreAttaque = scoreContrat + bonusPoignee + bonusPetitAuBout + bonusChelem;
+  const misere = pointsMiseres(round);
+  const points = repartir(round, scoreAttaque);
+  for (const [id, v] of Object.entries(misere)) points[id] = (points[id] ?? 0) + v;
   return {
     seuil, ecart, contratReussi, scoreContrat, bonusPoignee, bonusPetitAuBout, bonusChelem, scoreAttaque,
-    points: repartir(round, scoreAttaque),
+    misere, points,
   };
+}
+
+/** Chaque blanc déclaré : le joueur reçoit 10 de chaque autre joueur. La somme des points reste nulle. */
+export function pointsMiseres(round: TarotRound): Scores {
+  const out: Scores = {};
+  for (const m of round.miseres ?? []) {
+    for (const j of round.joueurs) out[j] = (out[j] ?? 0) + (j === m.joueurId ? MISERE_POINTS * (round.joueurs.length - 1) : -MISERE_POINTS);
+  }
+  return out;
 }
 
 function repartir(round: TarotRound, x: number): Scores {
@@ -155,6 +195,7 @@ export const tarotModule: GameModule<TarotRound> & { SETTING_DEMI_POINTS: string
       joueurs: o.joueurs, preneurId: o.preneurId, appeleId: o.appeleId ?? null, contract: o.contract,
       bouts: o.bouts, pointsRealises: o.pointsRealises, poignee: o.poignee ?? null,
       poigneeCamp: o.poigneeCamp ?? null, petitAuBoutCamp: o.petitAuBoutCamp ?? null, chelem: o.chelem ?? null,
+      ...(Array.isArray(o.miseres) && o.miseres.length ? { miseres: o.miseres as TarotMisere[] } : {}),
     };
   },
 };
@@ -199,7 +240,14 @@ export interface TarotDraft {
   poigneeCamp: TarotCamp;
   petitAuBoutCamp: TarotCamp | null;
   chelem: ChelemChoice;
+  miseres: TarotMisere[];
   demiPoints: boolean;
+}
+
+/** Ajoute ou retire le blanc d'un joueur. */
+export function withMisereToggled(d: TarotDraft, joueurId: string, type: TarotMisereType): TarotDraft {
+  const present = d.miseres.some((m) => m.joueurId === joueurId && m.type === type);
+  return { ...d, miseres: present ? d.miseres.filter((m) => !(m.joueurId === joueurId && m.type === type)) : [...d.miseres, { joueurId, type }] };
 }
 
 export const draftStep = (d: TarotDraft) => (d.demiPoints ? 0.5 : 1);
@@ -216,7 +264,7 @@ export function initialDraft(joueurs: string[], demiPoints: boolean): TarotDraft
   return {
     joueurs, preneurId: joueurs[0], appeleId: joueurs.length === 5 ? joueurs[1] : null,
     contract: "GARDE", bouts: 0, pointsRealises: 56, poignee: null, poigneeCamp: "ATTAQUE",
-    petitAuBoutCamp: null, chelem: "AUCUN", demiPoints,
+    petitAuBoutCamp: null, chelem: "AUCUN", miseres: [], demiPoints,
   };
 }
 
@@ -224,7 +272,7 @@ export function draftFromRound(r: TarotRound, demiPoints: boolean): TarotDraft {
   return {
     joueurs: r.joueurs, preneurId: r.preneurId, appeleId: r.appeleId, contract: r.contract, bouts: r.bouts,
     pointsRealises: r.pointsRealises, poignee: r.poignee, poigneeCamp: r.poigneeCamp ?? "ATTAQUE",
-    petitAuBoutCamp: r.petitAuBoutCamp, chelem: choiceFromChelem(r.chelem),
+    petitAuBoutCamp: r.petitAuBoutCamp, chelem: choiceFromChelem(r.chelem), miseres: r.miseres ?? [],
     // Une manche saisie avec des demi-points reste modifiable avec.
     demiPoints: demiPoints || r.pointsRealises % 1 !== 0,
   };
@@ -250,6 +298,7 @@ export function buildRound(d: TarotDraft): { round?: TarotRound; error?: string 
       contract: d.contract, bouts: d.bouts, pointsRealises: d.pointsRealises, poignee: d.poignee,
       poigneeCamp: d.poignee ? d.poigneeCamp : null, petitAuBoutCamp: d.petitAuBoutCamp,
       chelem: chelemFromChoice(d.chelem),
+      ...(d.miseres.length ? { miseres: d.miseres } : {}),
     };
     validateRound(round);
     return { round };
@@ -276,5 +325,9 @@ export function summarize(round: TarotRound, nameOf: (id: string) => string): { 
   if (round.petitAuBoutCamp) extras.push(`petit au bout (${camp(round.petitAuBoutCamp)})`);
   if (round.chelem && (round.chelem.annonce || round.chelem.reussi))
     extras.push(`chelem ${chelemLabel(choiceFromChelem(round.chelem)).toLowerCase()}`);
+  for (const type of ["ATOUT", "TETE"] as const) {
+    const qui = (round.miseres ?? []).filter((m) => m.type === type).map((m) => nameOf(m.joueurId));
+    if (qui.length) extras.push(`${misereInfo(type).label.toLowerCase()} (${qui.join(", ")})`);
+  }
   return { headline, detail: [bouts, `${plain(round.pointsRealises)} pts`, issue, ...extras].join(" · ") };
 }

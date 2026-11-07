@@ -7,7 +7,7 @@ import { plain, type GameModule, type StoredMatch } from "../core";
 import type { EditorProps } from "../games/registry";
 import {
   atoutsRequis, buildRound, calculer, CHELEM_CHOICES, CONTRACTS, draftFromRound, draftStep, initialDraft, POIGNEES,
-  pointsDefense, pointsVerrouilles, seuilRequis, tarotModule, TOTAL_POINTS, withChelem, withPoints, withPointsDelta,
+  MISERES, MISERE_POINTS, pointsDefense, pointsVerrouilles, seuilRequis, tarotModule, TOTAL_POINTS, withChelem, withMisereToggled, withPoints, withPointsDelta,
   type TarotDraft,
 } from "../games/tarot";
 import { buildSkyjo, calculerSkyjo, emptySkyjoDraft, skyjoDraftFrom, skyjoModule, type SkyjoDraft } from "../games/skyjo";
@@ -199,6 +199,24 @@ export function TarotEditor(props: EditorProps) {
             <Chip key={c.id} label={c.label} selected={draft.chelem === c.id} onClick={() => setDraft((d) => withChelem(d, c.id))} />
           ))}
         </Chips>
+      </Section>
+
+      <Section title="Blancs (variante de table)">
+        <p className="hint">Chaque adversaire paie {MISERE_POINTS} points à celui qui a un blanc, quel que soit le résultat du contrat. Touche le ou les joueurs concernés.</p>
+        {MISERES.map((m) => (
+          <div key={m.id} className="misere-row">
+            <strong>{m.label}</strong>
+            <span className="hint">{m.help}</span>
+            <Chips>
+              {match.players.map((p) => (
+                <Chip
+                  key={p.id} label={p.name} selected={draft.miseres.some((x) => x.joueurId === p.id && x.type === m.id)}
+                  onClick={() => setDraft((d) => withMisereToggled(d, p.id, m.id))}
+                />
+              ))}
+            </Chips>
+          </div>
+        ))}
       </Section>
     </Frame>
   );

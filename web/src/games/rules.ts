@@ -87,11 +87,23 @@ const tarot = (): RulesDoc => ({
       },
     },
     {
+      id: "blancs",
+      title: "Les blancs (variante de table)",
+      paragraphs: [
+        "Ce n'est pas dans les règles officielles de la FFT : certaines tables jouent les « blancs » ou « misères ». Dans l'appli, un joueur qui en a un reçoit 10 points de chaque adversaire, quel que soit le résultat du contrat ; ce n'est ni multiplié par le contrat ni réparti par camp.",
+      ],
+      bullets: [
+        "Blanc d'atout : aucun atout dans la main, l'Excuse comprise.",
+        "Blanc de tête : aucune figure (roi, dame, cavalier, valet) ; les bouts sont permis.",
+        "Un joueur peut avoir les deux, et plusieurs joueurs peuvent avoir le même blanc.",
+      ],
+    },
+    {
       id: "appli",
       title: "Dans l'appli",
       bullets: [
         "Choisis le preneur (et l'appelé à 5 joueurs), le contrat et le nombre de bouts, puis règle les points faits par l'attaque avec le curseur : les points de la défense s'affichent en miroir.",
-        "Ajoute la poignée, le petit au bout et le chelem s'il y en a eu : l'aperçu des points se met à jour en direct.",
+        "Ajoute la poignée, le petit au bout, le chelem et les blancs s'il y en a eu : l'aperçu des points se met à jour en direct.",
         "Option « demi-points » à la création de la partie pour les tables qui comptent les 0,5.",
         "Le Tarot se saisit depuis l'appareil de l'hôte.",
       ],
