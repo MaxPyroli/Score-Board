@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildRound, calculer, atoutsRequis, withMisereToggled, draftFromRound, initialDraft, seuilRequis, summarize, tarotModule,
-  validateRound, withChelem, withPoints, withPointsDelta, pointsDefense, type TarotRound,
+  validateRound, withChelem, withPoints, withPointsDelta, pointsDefense, type TarotDraft, type TarotRound,
 } from "./tarot";
 import { buildSkyjo, calculerSkyjo, emptySkyjoDraft, skyjoModule } from "./skyjo";
 import { buildFree, emptyFreeDraft, FREE } from "./counter";
@@ -105,7 +105,8 @@ describe("Tarot : formulaire", () => {
       const ids = ["A", "B", "C", "D", "E"].slice(0, n);
       const d = initialDraft(ids, false);
       expect(buildRound(d).error).toMatch(/preneur/);
-      const avecPreneur = { ...d, preneurId: "A" };
+      expect(buildRound({ ...d, preneurId: "A", appeleId: "B" }).error).toMatch(/contrat/);
+      const avecPreneur: TarotDraft = { ...d, preneurId: "A", contract: "GARDE" };
       if (n === 5) {
         expect(buildRound(avecPreneur).error).toMatch(/appelé/);
         expect(buildRound({ ...avecPreneur, appeleId: "B" }).error).toBeUndefined();
@@ -173,7 +174,7 @@ describe("Tarot : formulaire", () => {
     const base = round({});
     expect(() => validateRound({ ...base, miseres: [{ joueurId: "Z", type: "ATOUT" }] })).toThrow(/table/);
     expect(() => validateRound({ ...base, miseres: [{ joueurId: "A", type: "ATOUT" }, { joueurId: "A", type: "ATOUT" }] })).toThrow(/deux fois/);
-    let d = { ...initialDraft(["A", "B", "C", "D"], false), preneurId: "A" };
+    let d: TarotDraft = { ...initialDraft(["A", "B", "C", "D"], false), preneurId: "A", contract: "GARDE" };
     d = withMisereToggled(d, "B", "TETE");
     expect(buildRound(d).round?.miseres).toEqual([{ joueurId: "B", type: "TETE" }]);
     expect(withMisereToggled(d, "B", "TETE").miseres).toEqual([]);

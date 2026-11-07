@@ -233,7 +233,7 @@ export interface TarotDraft {
   joueurs: string[];
   preneurId: string;
   appeleId: string | null;
-  contract: TarotContract;
+  contract: TarotContract | null;
   bouts: number;
   pointsRealises: number;
   poignee: TarotPoignee | null;
@@ -263,7 +263,7 @@ function snap(d: TarotDraft, value: number): number {
 export function initialDraft(joueurs: string[], demiPoints: boolean): TarotDraft {
   return {
     joueurs, preneurId: "", appeleId: null, // aucun choix par défaut : il faut désigner le preneur
-    contract: "GARDE", bouts: 0, pointsRealises: 56, poignee: null, poigneeCamp: "ATTAQUE",
+    contract: null, bouts: 0, pointsRealises: 56, poignee: null, poigneeCamp: "ATTAQUE",
     petitAuBoutCamp: null, chelem: "AUCUN", miseres: [], demiPoints,
   };
 }
@@ -294,6 +294,7 @@ export function withChelem(d: TarotDraft, choice: ChelemChoice): TarotDraft {
 export function buildRound(d: TarotDraft): { round?: TarotRound; error?: string } {
   try {
     if (!d.preneurId) throw new Error("Choisis le preneur.");
+    if (!d.contract) throw new Error("Choisis le contrat.");
     if (d.joueurs.length === 5 && !d.appeleId) throw new Error("Choisis l'appelé.");
     const round: TarotRound = {
       joueurs: d.joueurs, preneurId: d.preneurId, appeleId: d.joueurs.length === 5 ? d.appeleId : null,
