@@ -5,7 +5,7 @@ const TTL_MS = 12 * 60 * 60 * 1000;
 
 export interface Resume {
   /** Écran à rouvrir : une partie, ou l'écran « rejoindre ». */
-  view?: { kind: "match"; matchId: string } | { kind: "join" };
+  view?: { kind: "match"; matchId: string } | { kind: "round"; matchId: string; index: number | null } | { kind: "join" };
   /** Partage en cours côté hôte (le code est conservé pour que les invités restent connectés). */
   hosting?: { matchId: string; code: string };
   /** Partie suivie côté invité. */

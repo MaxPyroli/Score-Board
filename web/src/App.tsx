@@ -5,6 +5,7 @@ import { SETTING_FINISHED, finishMatch, isLobby, lobbyJoin, JOIN_REQUEST, type S
 import { gameById } from "./games/registry";
 import { newId, useMatches } from "./store";
 import { loadResume, patchResume } from "./resume";
+import { clearDrafts, draftScope } from "./draftState";
 import { UpdateBanner, useAppUpdate } from "./pwa";
 import { HistoryScreen, HomeScreen, MatchScreen, NewMatchScreen } from "./ui/screens";
 import { JoinScreen, ShareDialog } from "./ui/share";
@@ -34,7 +35,9 @@ function endIfReached(before: StoredMatch, after: StoredMatch): StoredMatch {
 
 /** Pile d'écrans reliée à l'historique du navigateur : le bouton « retour » du téléphone fonctionne. */
 function useNav(initial?: Screen) {
-  const [stack, setStack] = useState<Screen[]>(() => (initial ? [{ kind: "home" }, initial] : [{ kind: "home" }]));
+  const [stack, setStack] = useState<Screen[]>(() =>
+    initial?.kind === "round" ? [{ kind: "home" }, { kind: "match", matchId: initial.matchId }, initial]
+    : initial ? [{ kind: "home" }, initial] : [{ kind: "home" }]);
 
   useEffect(() => {
     // Après une actualisation, le navigateur garde son historique : on ne le recrée que s'il ne correspond pas.
@@ -72,6 +75,7 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
     const view = resume.view;
     const screen: Screen | undefined =
       view?.kind === "match" && matches.some((m) => m.id === view.matchId) ? { kind: "match", matchId: view.matchId }
+      : view?.kind === "round" && matches.some((m) => m.id === view.matchId) ? { kind: "round", matchId: view.matchId, index: view.index }
       : view?.kind === "join" && resume.joined ? { kind: "join" }
       : undefined;
     return { resume, screen };
@@ -172,7 +176,8 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
   // Mémorise l'écran courant pour le rouvrir après une actualisation.
   useEffect(() => {
     patchResume({
-      view: screen.kind === "match" || screen.kind === "round" ? { kind: "match", matchId: screen.matchId }
+      view: screen.kind === "match" ? { kind: "match", matchId: screen.matchId }
+        : screen.kind === "round" ? { kind: "round", matchId: screen.matchId, index: screen.index }
         : screen.kind === "join" ? { kind: "join" } : undefined,
     });
   }, [screen]);
@@ -329,14 +334,22 @@ function Screens({ onIdle }: { onIdle(idle: boolean): void }) {
 
   const index = screen.index;
   return (
-    <game.Editor
-      match={match}
-      roundIndex={index}
-      onSave={(raw) => { save(index === null ? endIfReached(match, matchWithRound(match, raw)) : matchWithRoundReplaced(match, index, raw)); nav.back(); }}
-      onDelete={index === null ? undefined : () => { save(matchWithoutRound(match, index)); nav.back(); }}
-      onCancel={nav.back}
-    />
+    <DraftCleaner scope={draftScope(match.id, index)}>
+      <game.Editor
+        match={match}
+        roundIndex={index}
+        onSave={(raw) => { save(index === null ? endIfReached(match, matchWithRound(match, raw)) : matchWithRoundReplaced(match, index, raw)); nav.back(); }}
+        onDelete={index === null ? undefined : () => { save(matchWithoutRound(match, index)); nav.back(); }}
+        onCancel={nav.back}
+      />
+    </DraftCleaner>
   );
+}
+
+/** Efface le brouillon quand on quitte l'écran de saisie (enregistrement ou annulation), mais pas en cas d'actualisation. */
+function DraftCleaner({ scope, children }: { scope: string; children: React.ReactNode }) {
+  useEffect(() => () => clearDrafts(scope), [scope]);
+  return <>{children}</>;
 }
 
 function Missing({ onBack }: { onBack(): void }) {

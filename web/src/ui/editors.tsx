@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { draftScope, useDraft } from "../draftState";
 import { Chip, Chips, PlayerGrid, RulesButton, Score, Section, Stepper, TopBar } from "./components";
 import { PlusMinus } from "./PlusMinus";
 import { WonderBadge, type WonderSymbol } from "./WonderIcons";
@@ -64,7 +65,7 @@ function Frame(props: EditorProps & { children: React.ReactNode; footer: React.R
 export function TarotEditor(props: EditorProps) {
   const { match, roundIndex, onSave } = props;
   const demiPoints = match.settings[tarotModule.SETTING_DEMI_POINTS] === "true";
-  const [draft, setDraft] = useState<TarotDraft>(() => {
+  const [draft, setDraft] = useDraft<TarotDraft>(draftScope(match.id, roundIndex), "draft", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     return existing !== undefined
       ? draftFromRound(tarotModule.decodeRound(existing), demiPoints)
@@ -259,7 +260,7 @@ export function SkyjoEditor(props: EditorProps) {
   const { match, roundIndex, onSave } = props;
   const ids = match.players.map((p) => p.id);
   const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
-  const [draft, setDraft] = useState<SkyjoDraft>(() => {
+  const [draft, setDraft] = useDraft<SkyjoDraft>(draftScope(match.id, roundIndex), "draft", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     return existing !== undefined ? skyjoDraftFrom(skyjoModule.decodeRound(existing), ids) : emptySkyjoDraft(ids);
   });
@@ -317,7 +318,7 @@ export function CounterEditor(props: EditorProps & { module: GameModule<FreeRoun
   const { match, roundIndex, onSave, module, allowNegative, negate } = props;
   const ids = match.players.map((p) => p.id);
   const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
-  const [draft, setDraft] = useState<FreeDraft>(() => {
+  const [draft, setDraft] = useDraft<FreeDraft>(draftScope(match.id, roundIndex), "draft", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     if (existing === undefined) return emptyFreeDraft(ids);
     const round = module.decodeRound(existing);
@@ -348,7 +349,7 @@ export function CounterEditor(props: EditorProps & { module: GameModule<FreeRoun
 export function WinnerEditor(props: EditorProps & { module: GameModule<FreeRound> }) {
   const { match, roundIndex, onSave, module } = props;
   const ids = match.players.map((p) => p.id);
-  const [winners, setWinners] = useState<string[]>(() => {
+  const [winners, setWinners] = useDraft<string[]>(draftScope(match.id, roundIndex), "winners", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     return existing !== undefined ? changesOf(module.decodeRound(existing), ids).map((c) => c.id) : [];
   });
@@ -401,7 +402,7 @@ export function RailEditor(props: EditorProps) {
   const config = railConfig(match.settings);
   const ids = match.players.map((p) => p.id);
   const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
-  const [drafts, setDrafts] = useState<Record<string, RailDraftSheet>>(() => {
+  const [drafts, setDrafts] = useDraft<Record<string, RailDraftSheet>>(draftScope(match.id, roundIndex), "drafts", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     const round = existing !== undefined ? railModule.decodeRound(existing) : null;
     return Object.fromEntries(ids.map((id) => [id, round?.sheets[id] ? draftFromSheet(round.sheets[id]) : emptyDraftSheet()]));
@@ -511,7 +512,7 @@ export function SushiEditor(props: EditorProps) {
   const existing = roundIndex !== null ? sushiModule.decodeRound(match.rounds[roundIndex]) : null;
   const dessert = existing ? existing.dessert : match.rounds.length >= ROUNDS_BEFORE_DESSERT;
   const fields = useMemo(() => fieldsFor(config, dessert), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [drafts, setDrafts] = useState<Record<string, SushiDraftSheet>>(() =>
+  const [drafts, setDrafts] = useDraft<Record<string, SushiDraftSheet>>(draftScope(match.id, roundIndex), "drafts", () =>
     Object.fromEntries(ids.map((id) => [id, sushiDraftFrom(existing?.sheets[id])])));
   const set = (id: string, key: string, value: number) =>
     setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value ? String(value) : "" } }));
@@ -592,13 +593,13 @@ export function SevenWondersEditor(props: EditorProps) {
   const { match, roundIndex, onSave } = props;
   const ids = match.players.map((p) => p.id);
   const nameOf = (id: string) => match.players.find((p) => p.id === id)?.name ?? id;
-  const [drafts, setDrafts] = useState<Record<string, WonderDraft>>(() => {
+  const [drafts, setDrafts] = useDraft<Record<string, WonderDraft>>(draftScope(match.id, roundIndex), "drafts", () => {
     const existing = roundIndex !== null ? match.rounds[roundIndex] : undefined;
     const round = existing !== undefined ? sevenWondersModule.decodeRound(existing) : null;
     return Object.fromEntries(ids.map((id) => [id, round?.sheets[id] ? wonderDraftFrom(round.sheets[id]) : emptyWonderDraft()]));
   });
   // Un seul joueur à l'écran à la fois : on passe de l'un à l'autre avec les pastilles ou « Joueur suivant ».
-  const [current, setCurrent] = useState(0);
+  const [current, setCurrent] = useDraft(draftScope(match.id, roundIndex), "current", () => 0);
   const [help, setHelp] = useState<WonderSymbol | null>(null); // ligne dont l'aide est ouverte
   const set = (id: string, key: keyof WonderDraft, value: string) => setDrafts((d) => ({ ...d, [id]: { ...d[id], [key]: value } }));
   const built = useMemo(() => buildWonders(drafts, ids, nameOf), [drafts]); // eslint-disable-line react-hooks/exhaustive-deps
